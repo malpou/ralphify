@@ -15,13 +15,45 @@ from ralphify.detector import detect_project
 
 app = typer.Typer()
 
-BANNER = """\
-[bold blue] ██████   █████  ██      ██████  ██   ██ ██ ███████ ██    ██
- ██   ██ ██   ██ ██      ██   ██ ██   ██ ██ ██       ██  ██
- ██████  ███████ ██      ██████  ███████ ██ █████     ████
- ██   ██ ██   ██ ██      ██      ██   ██ ██ ██         ██
- ██   ██ ██   ██ ███████ ██      ██   ██ ██ ██         ██[/bold blue]
-"""
+BANNER_LINES = [
+    "██████╗░░█████╗░██╗░░░░░██████╗░██╗░░██╗██╗███████╗██╗░░░██╗",
+    "██╔══██╗██╔══██╗██║░░░░░██╔══██╗██║░░██║██║██╔════╝╚██╗░██╔╝",
+    "██████╔╝███████║██║░░░░░██████╔╝███████║██║█████╗░░░╚████╔╝░",
+    "██╔══██╗██╔══██║██║░░░░░██╔═══╝░██╔══██║██║██╔══╝░░░░╚██╔╝░░",
+    "██║░░██║██║░░██║███████╗██║░░░░░██║░░██║██║██║░░░░░░░░██║░░░",
+    "╚═╝░░╚═╝╚═╝░░╚═╝╚══════╝╚═╝░░░░░╚═╝░░╚═╝╚═╝╚═╝░░░░░░░░╚═╝░░░",
+]
+
+TAGLINE = "Harness toolkit for autonomous AI coding loops"
+
+
+BANNER_COLORS = [
+    "#FFD90F",  # Simpsons yellow
+    "#FFD90F",
+    "#D4D86A",  # transition
+    "#7EBFA0",  # transition
+    "#4DC8D9",  # Ralph's teal shirt
+    "#4DC8D9",
+]
+
+
+def _print_banner() -> None:
+    width = shutil.get_terminal_size().columns
+    art_width = max(len(line) for line in BANNER_LINES)
+    pad = max(0, (width - art_width) // 2)
+    prefix = " " * pad
+
+    rprint()
+    for line, color in zip(BANNER_LINES, BANNER_COLORS):
+        rprint(f"[bold {color}]{prefix}{line}[/bold {color}]")
+    rprint()
+    rprint(f"[italic cyan]{TAGLINE:^{width}}[/italic cyan]")
+    rprint(f"{'':^{width}}")
+    help_text = "Run 'ralph --help' for usage information"
+    rprint(f"[dim]{help_text:^{width}}[/dim]")
+    star_text = "⭐ Star us on GitHub: https://github.com/computerlovetech/ralphify"
+    rprint(f"[dim]{star_text:^{width}}[/dim]")
+    rprint()
 
 
 def _version_callback(value: bool) -> None:
@@ -36,7 +68,7 @@ def main_callback(
     version: bool = typer.Option(False, "--version", "-V", help="Show version and exit.", callback=_version_callback, is_eager=True),
 ) -> None:
     """Harness toolkit for autonomous AI coding loops."""
-    rprint(BANNER)
+    _print_banner()
     if ctx.invoked_subcommand is None:
         raise typer.Exit()
 
