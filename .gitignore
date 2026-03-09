@@ -1,1 +1,5 @@
 context/repos/
+__pycache__/
+*.egg-info/
+dist/
+.venv/
