@@ -9,7 +9,23 @@ from rich import print as rprint
 
 from ralphify.detector import detect_project
 
-app = typer.Typer(help="Harness toolkit for autonomous AI coding loops.")
+app = typer.Typer()
+
+BANNER = """\
+[bold blue] ██████   █████  ██      ██████  ██   ██ ██ ███████ ██    ██
+ ██   ██ ██   ██ ██      ██   ██ ██   ██ ██ ██       ██  ██
+ ██████  ███████ ██      ██████  ███████ ██ █████     ████
+ ██   ██ ██   ██ ██      ██      ██   ██ ██ ██         ██
+ ██   ██ ██   ██ ███████ ██      ██   ██ ██ ██         ██[/bold blue]
+"""
+
+
+@app.callback(invoke_without_command=True)
+def main_callback(ctx: typer.Context) -> None:
+    """Harness toolkit for autonomous AI coding loops."""
+    rprint(BANNER)
+    if ctx.invoked_subcommand is None:
+        raise typer.Exit()
 
 CONFIG_FILENAME = "ralph.toml"
 
