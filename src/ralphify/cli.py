@@ -93,6 +93,17 @@ def main_callback(
 
 CONFIG_FILENAME = "ralph.toml"
 
+
+def _load_config() -> dict:
+    """Load and return the ralph.toml config, exiting if not found."""
+    config_path = Path(CONFIG_FILENAME)
+    if not config_path.exists():
+        rprint(f"[red]{CONFIG_FILENAME} not found. Run 'ralph init' first.[/red]")
+        raise typer.Exit(1)
+    with open(config_path, "rb") as f:
+        return tomllib.load(f)
+
+
 RALPH_TOML_TEMPLATE = """\
 [agent]
 command = "claude"
@@ -185,21 +196,25 @@ def init(
     rprint("Edit PROMPT.md to customize your agent's behavior.")
 
 
+def _scaffold_primitive(kind: str, name: str, filename: str, template: str) -> None:
+    """Create a new ralph primitive directory and template file."""
+    prim_dir = Path(".ralph") / kind / name
+    prim_file = prim_dir / filename
+    label = filename.split(".")[0].capitalize()
+    if prim_file.exists():
+        rprint(f"[red]{label} '{name}' already exists at {prim_file}[/red]")
+        raise typer.Exit(1)
+    prim_dir.mkdir(parents=True, exist_ok=True)
+    prim_file.write_text(template)
+    rprint(f"[green]Created {prim_file}[/green]")
+
+
 @new_app.command()
 def check(
     name: str = typer.Argument(help="Name of the new check."),
 ) -> None:
     """Create a new check. Checks are scripts that run after each iteration to validate the agent's work (e.g. tests, linters)."""
-    check_dir = Path(".ralph") / "checks" / name
-    check_md = check_dir / "CHECK.md"
-
-    if check_md.exists():
-        rprint(f"[red]Check '{name}' already exists at {check_md}[/red]")
-        raise typer.Exit(1)
-
-    check_dir.mkdir(parents=True, exist_ok=True)
-    check_md.write_text(CHECK_MD_TEMPLATE)
-    rprint(f"[green]Created {check_md}[/green]")
+    _scaffold_primitive("checks", name, "CHECK.md", CHECK_MD_TEMPLATE)
 
 
 @new_app.command()
@@ -207,16 +222,7 @@ def instruction(
     name: str = typer.Argument(help="Name of the new instruction."),
 ) -> None:
     """Create a new instruction. Instructions are template-based prompts injected into the agent's context each iteration."""
-    inst_dir = Path(".ralph") / "instructions" / name
-    inst_md = inst_dir / "INSTRUCTION.md"
-
-    if inst_md.exists():
-        rprint(f"[red]Instruction '{name}' already exists at {inst_md}[/red]")
-        raise typer.Exit(1)
-
-    inst_dir.mkdir(parents=True, exist_ok=True)
-    inst_md.write_text(INSTRUCTION_MD_TEMPLATE)
-    rprint(f"[green]Created {inst_md}[/green]")
+    _scaffold_primitive("instructions", name, "INSTRUCTION.md", INSTRUCTION_MD_TEMPLATE)
 
 
 @new_app.command()
@@ -224,30 +230,13 @@ def context(
     name: str = typer.Argument(help="Name of the new context."),
 ) -> None:
     """Create a new context. Contexts are dynamic data sources (scripts or static text) injected before each iteration."""
-    ctx_dir = Path(".ralph") / "contexts" / name
-    ctx_md = ctx_dir / "CONTEXT.md"
-
-    if ctx_md.exists():
-        rprint(f"[red]Context '{name}' already exists at {ctx_md}[/red]")
-        raise typer.Exit(1)
-
-    ctx_dir.mkdir(parents=True, exist_ok=True)
-    ctx_md.write_text(CONTEXT_MD_TEMPLATE)
-    rprint(f"[green]Created {ctx_md}[/green]")
+    _scaffold_primitive("contexts", name, "CONTEXT.md", CONTEXT_MD_TEMPLATE)
 
 
 @app.command()
 def status() -> None:
     """Show current configuration and validate setup."""
-    config_path = Path(CONFIG_FILENAME)
-
-    if not config_path.exists():
-        rprint(f"[red]✗ {CONFIG_FILENAME} not found. Run 'ralph init' first.[/red]")
-        raise typer.Exit(1)
-
-    with open(config_path, "rb") as f:
-        config = tomllib.load(f)
-
+    config = _load_config()
     agent = config["agent"]
     command = agent["command"]
     args = agent.get("args", [])
@@ -354,15 +343,7 @@ def run(
 ) -> None:
     """Run the autonomous coding loop."""
     _print_banner()
-    config_path = Path(CONFIG_FILENAME)
-
-    if not config_path.exists():
-        rprint(f"[red]{CONFIG_FILENAME} not found. Run 'ralph init' first.[/red]")
-        raise typer.Exit(1)
-
-    with open(config_path, "rb") as f:
-        config = tomllib.load(f)
-
+    config = _load_config()
     agent = config["agent"]
     command = agent["command"]
     args = agent.get("args", [])
@@ -388,10 +369,9 @@ def run(
     timed_out = 0
 
     check_failures_text = ""
-    checks = discover_checks()
-    if checks:
-        enabled = [c for c in checks if c.enabled]
-        rprint(f"[dim]Checks: {len(enabled)} enabled[/dim]")
+    enabled_checks = [c for c in discover_checks() if c.enabled]
+    if enabled_checks:
+        rprint(f"[dim]Checks: {len(enabled_checks)} enabled[/dim]")
 
     contexts = discover_contexts()
     enabled_contexts = [c for c in contexts if c.enabled] if contexts else []
@@ -476,12 +456,10 @@ def run(
                         rprint("[red]Stopping due to --stop-on-error.[/red]")
                         break
 
-            if checks:
-                enabled_checks = [c for c in checks if c.enabled]
-                if enabled_checks:
-                    check_results = run_all_checks(enabled_checks, Path("."))
-                    _print_check_summary(check_results)
-                    check_failures_text = format_check_failures(check_results)
+            if enabled_checks:
+                check_results = run_all_checks(enabled_checks, Path("."))
+                _print_check_summary(check_results)
+                check_failures_text = format_check_failures(check_results)
 
             if delay > 0 and (n is None or iteration < n):
                 rprint(f"[dim]Waiting {delay}s...[/dim]")

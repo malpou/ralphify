@@ -4,7 +4,7 @@ import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._frontmatter import MAX_OUTPUT_LEN, parse_frontmatter
+from ralphify._frontmatter import MAX_OUTPUT_LEN, find_run_script, parse_frontmatter
 from ralphify._output import collect_output
 
 
@@ -46,13 +46,7 @@ def discover_checks(root: Path = Path(".")) -> list[Check]:
         text = check_md.read_text()
         frontmatter, body = parse_frontmatter(text)
 
-        # Look for run.* executable
-        script = None
-        for f in sorted(entry.iterdir()):
-            if f.name.startswith("run.") and f.is_file():
-                script = f
-                break
-
+        script = find_run_script(entry)
         command = frontmatter.get("command")
 
         if not script and not command:

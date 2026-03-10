@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 
 MAX_OUTPUT_LEN = 5000
@@ -46,3 +47,11 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
 
     body = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL).strip()
     return frontmatter, body
+
+
+def find_run_script(directory: Path) -> Path | None:
+    """Find the first run.* script in a primitive directory."""
+    for f in sorted(directory.iterdir()):
+        if f.name.startswith("run.") and f.is_file():
+            return f
+    return None
