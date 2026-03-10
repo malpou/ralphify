@@ -6,7 +6,8 @@ from typer.testing import CliRunner
 
 from ralphify import __version__
 from ralphify.checks import Check, CheckResult, parse_check_md
-from ralphify.cli import app, CONFIG_FILENAME, RALPH_TOML_TEMPLATE, PROMPT_TEMPLATE, CHECK_MD_TEMPLATE, _format_duration
+from ralphify.instructions import Instruction
+from ralphify.cli import app, CONFIG_FILENAME, RALPH_TOML_TEMPLATE, PROMPT_TEMPLATE, CHECK_MD_TEMPLATE, INSTRUCTION_MD_TEMPLATE, _format_duration
 
 runner = CliRunner()
 
@@ -678,3 +679,130 @@ class TestNewCheck:
         check_md = tmp_path / ".ralph" / "checks" / "empty-body" / "CHECK.md"
         _, body = parse_check_md(check_md.read_text())
         assert body == ""
+
+
+def _setup_instruction(tmp_path, name="coding-style", enabled=True, content="Use type hints."):
+    """Helper to create an instruction directory with INSTRUCTION.md."""
+    inst_dir = tmp_path / ".ralph" / "instructions" / name
+    inst_dir.mkdir(parents=True, exist_ok=True)
+    enabled_str = "true" if enabled else "false"
+    (inst_dir / "INSTRUCTION.md").write_text(
+        f"---\nenabled: {enabled_str}\n---\n{content}"
+    )
+    return inst_dir
+
+
+class TestNewInstruction:
+    def test_creates_instruction_directory_and_file(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(app, ["new", "instruction", "my-style"])
+        assert result.exit_code == 0
+        inst_md = tmp_path / ".ralph" / "instructions" / "my-style" / "INSTRUCTION.md"
+        assert inst_md.exists()
+        content = inst_md.read_text()
+        assert "enabled:" in content
+
+    def test_refuses_existing_instruction(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        inst_dir = tmp_path / ".ralph" / "instructions" / "my-style"
+        inst_dir.mkdir(parents=True)
+        (inst_dir / "INSTRUCTION.md").write_text("original content")
+
+        result = runner.invoke(app, ["new", "instruction", "my-style"])
+        assert result.exit_code == 1
+        assert "already exists" in result.output
+        assert (inst_dir / "INSTRUCTION.md").read_text() == "original content"
+
+    def test_creates_ralph_dirs_if_missing(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        assert not (tmp_path / ".ralph").exists()
+        result = runner.invoke(app, ["new", "instruction", "fresh"])
+        assert result.exit_code == 0
+        assert (tmp_path / ".ralph" / "instructions" / "fresh" / "INSTRUCTION.md").exists()
+
+    def test_default_body_stripped_to_empty(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(app, ["new", "instruction", "empty-body"])
+        assert result.exit_code == 0
+        inst_md = tmp_path / ".ralph" / "instructions" / "empty-body" / "INSTRUCTION.md"
+        _, body = parse_check_md(inst_md.read_text())
+        assert body == ""
+
+
+class TestStatusInstructions:
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+    def test_no_instructions_shows_none(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("prompt")
+
+        result = runner.invoke(app, ["status"])
+        assert result.exit_code == 0
+        assert "Instructions:" in result.output
+        assert "none" in result.output
+
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+    def test_found_instructions_shown(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("prompt")
+        _setup_instruction(tmp_path, "coding-style", content="Use type hints.")
+        _setup_instruction(tmp_path, "testing", content="Write tests first.")
+
+        result = runner.invoke(app, ["status"])
+        assert result.exit_code == 0
+        assert "2 found" in result.output
+        assert "coding-style" in result.output
+        assert "testing" in result.output
+
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+    def test_disabled_instruction_display(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("prompt")
+        _setup_instruction(tmp_path, "enabled-inst", enabled=True)
+        _setup_instruction(tmp_path, "disabled-inst", enabled=False)
+
+        result = runner.invoke(app, ["status"])
+        assert result.exit_code == 0
+        assert "2 found" in result.output
+
+
+class TestRunInstructions:
+    @patch("ralphify.cli.subprocess.run", side_effect=_ok)
+    def test_instructions_injected_into_prompt(self, mock_run, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("Base prompt.\n\n{{ instructions }}")
+        _setup_instruction(tmp_path, "style", content="Use black formatting.")
+
+        result = runner.invoke(app, ["run", "-n", "1"])
+        assert result.exit_code == 0
+        prompt_sent = mock_run.call_args.kwargs["input"]
+        assert "Use black formatting." in prompt_sent
+        assert "{{ instructions }}" not in prompt_sent
+
+    @patch("ralphify.cli.run_all_checks")
+    @patch("ralphify.cli.subprocess.run", side_effect=_ok)
+    def test_instructions_resolved_before_check_failures(self, mock_agent, mock_run_checks, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("Base.\n\n{{ instructions }}")
+        _setup_instruction(tmp_path, "style", content="Use black.")
+        _setup_check(tmp_path, "lint", "ruff check .", body="Fix lint.")
+
+        mock_run_checks.return_value = [
+            _make_check_result(passed=False, exit_code=1, output="err\n", failure_instruction="Fix lint.")
+        ]
+
+        result = runner.invoke(app, ["run", "-n", "2"])
+        assert result.exit_code == 0
+
+        # Second iteration: instructions resolved + check failures appended
+        second_input = mock_agent.call_args_list[1].kwargs["input"]
+        assert "Use black." in second_input
+        assert "Check Failures" in second_input
+        # Instructions should come before check failures
+        inst_pos = second_input.index("Use black.")
+        fail_pos = second_input.index("Check Failures")
+        assert inst_pos < fail_pos

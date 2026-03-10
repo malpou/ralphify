@@ -15,6 +15,7 @@ rprint = _console.print
 
 from ralphify import __version__
 from ralphify.checks import discover_checks, run_all_checks, format_check_failures
+from ralphify.instructions import discover_instructions, resolve_instructions
 from ralphify.detector import detect_project
 
 app = typer.Typer()
@@ -102,6 +103,19 @@ Example: "Fix all lint errors. Do not add noqa comments."
 -->
 """
 
+INSTRUCTION_MD_TEMPLATE = """\
+---
+enabled: true
+---
+<!--
+Write your instruction content below.
+This text will be injected into PROMPT.md every iteration.
+
+Use {{ instructions.<name> }} in PROMPT.md to place this specifically,
+or {{ instructions }} to inject all enabled instructions.
+-->
+"""
+
 PROMPT_TEMPLATE = """\
 # Prompt
 
@@ -162,6 +176,23 @@ def check(
     rprint(f"[green]Created {check_md}[/green]")
 
 
+@new_app.command()
+def instruction(
+    name: str = typer.Argument(help="Name of the new instruction."),
+) -> None:
+    """Create a new instruction scaffold."""
+    inst_dir = Path(".ralph") / "instructions" / name
+    inst_md = inst_dir / "INSTRUCTION.md"
+
+    if inst_md.exists():
+        rprint(f"[red]Instruction '{name}' already exists at {inst_md}[/red]")
+        raise typer.Exit(1)
+
+    inst_dir.mkdir(parents=True, exist_ok=True)
+    inst_md.write_text(INSTRUCTION_MD_TEMPLATE)
+    rprint(f"[green]Created {inst_md}[/green]")
+
+
 @app.command()
 def status() -> None:
     """Show current configuration and validate setup."""
@@ -208,6 +239,16 @@ def status() -> None:
             rprint(f"  {icon} {check.name:<18} {cmd_display}")
     else:
         rprint(f"\n[bold]Checks:[/bold]  [dim]none[/dim]")
+
+    instructions = discover_instructions()
+    if instructions:
+        rprint(f"\n[bold]Instructions:[/bold]  {len(instructions)} found")
+        for inst in instructions:
+            preview = inst.content[:50] + "..." if len(inst.content) > 50 else inst.content
+            icon = "[green]✓[/green]" if inst.enabled else "[dim]○[/dim]"
+            rprint(f"  {icon} {inst.name:<18} {preview}")
+    else:
+        rprint(f"\n[bold]Instructions:[/bold]  [dim]none[/dim]")
 
     if issues:
         rprint(f"\n[red]Not ready.[/red] Fix the issues above before running.")
@@ -299,6 +340,11 @@ def run(
         enabled = [c for c in checks if c.enabled]
         rprint(f"[dim]Checks: {len(enabled)} enabled[/dim]")
 
+    instructions = discover_instructions()
+    if instructions:
+        enabled_inst = [i for i in instructions if i.enabled]
+        rprint(f"[dim]Instructions: {len(enabled_inst)} enabled[/dim]")
+
     try:
         iteration = 0
         while True:
@@ -308,6 +354,8 @@ def run(
 
             rprint(f"\n[bold blue]── Iteration {iteration} ──[/bold blue]")
             prompt = prompt_path.read_text()
+            if instructions:
+                prompt = resolve_instructions(prompt, instructions)
             if check_failures_text:
                 prompt = prompt + "\n\n" + check_failures_text
 
