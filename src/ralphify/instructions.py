@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._frontmatter import parse_frontmatter
+from ralphify._frontmatter import discover_primitives
 from ralphify.resolver import resolve_placeholders
 
 
@@ -20,32 +20,15 @@ _BULK_PATTERN = re.compile(r"\{\{\s*instructions\s*\}\}")
 
 def discover_instructions(root: Path = Path(".")) -> list[Instruction]:
     """Discover instructions in root/.ralph/instructions/ directories."""
-    instructions_dir = root / ".ralph" / "instructions"
-    if not instructions_dir.is_dir():
-        return []
-
-    instructions = []
-    for entry in sorted(instructions_dir.iterdir()):
-        if not entry.is_dir():
-            continue
-
-        instruction_md = entry / "INSTRUCTION.md"
-        if not instruction_md.exists():
-            continue
-
-        text = instruction_md.read_text()
-        frontmatter, body = parse_frontmatter(text)
-
-        instructions.append(
-            Instruction(
-                name=entry.name,
-                path=entry,
-                enabled=frontmatter.get("enabled", True),
-                content=body,
-            )
+    return [
+        Instruction(
+            name=entry.name,
+            path=entry,
+            enabled=frontmatter.get("enabled", True),
+            content=body,
         )
-
-    return instructions
+        for entry, frontmatter, body in discover_primitives(root, "instructions", "INSTRUCTION.md")
+    ]
 
 
 def resolve_instructions(prompt: str, instructions: list[Instruction]) -> str:

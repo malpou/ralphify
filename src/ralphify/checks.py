@@ -2,7 +2,7 @@ import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._frontmatter import find_run_script, parse_frontmatter
+from ralphify._frontmatter import discover_primitives, find_run_script
 from ralphify._output import truncate_output
 from ralphify._runner import run_command
 
@@ -29,22 +29,8 @@ class CheckResult:
 
 def discover_checks(root: Path = Path(".")) -> list[Check]:
     """Discover checks in root/.ralph/checks/ directories."""
-    checks_dir = root / ".ralph" / "checks"
-    if not checks_dir.is_dir():
-        return []
-
     checks = []
-    for entry in sorted(checks_dir.iterdir()):
-        if not entry.is_dir():
-            continue
-
-        check_md = entry / "CHECK.md"
-        if not check_md.exists():
-            continue
-
-        text = check_md.read_text()
-        frontmatter, body = parse_frontmatter(text)
-
+    for entry, frontmatter, body in discover_primitives(root, "checks", "CHECK.md"):
         script = find_run_script(entry)
         command = frontmatter.get("command")
 

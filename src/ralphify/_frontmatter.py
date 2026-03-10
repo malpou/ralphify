@@ -1,4 +1,5 @@
 import re
+from collections.abc import Iterator
 from pathlib import Path
 
 
@@ -55,3 +56,29 @@ def find_run_script(directory: Path) -> Path | None:
         if f.name.startswith("run.") and f.is_file():
             return f
     return None
+
+
+def discover_primitives(
+    root: Path, kind: str, marker: str
+) -> Iterator[tuple[Path, dict, str]]:
+    """Yield (directory, frontmatter, body) for each primitive found.
+
+    Scans ``root/.ralph/{kind}/`` for subdirectories containing a
+    *marker* file (e.g. ``CHECK.md``), parses its frontmatter, and
+    yields results in alphabetical order.
+    """
+    primitives_dir = root / ".ralph" / kind
+    if not primitives_dir.is_dir():
+        return
+
+    for entry in sorted(primitives_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+
+        marker_file = entry / marker
+        if not marker_file.exists():
+            continue
+
+        text = marker_file.read_text()
+        frontmatter, body = parse_frontmatter(text)
+        yield entry, frontmatter, body

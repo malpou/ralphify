@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._frontmatter import find_run_script, parse_frontmatter
+from ralphify._frontmatter import discover_primitives, find_run_script
 from ralphify._output import truncate_output
 from ralphify._runner import run_command
 from ralphify.resolver import resolve_placeholders
@@ -33,30 +33,14 @@ _BULK_PATTERN = re.compile(r"\{\{\s*contexts\s*\}\}")
 
 def discover_contexts(root: Path = Path(".")) -> list[Context]:
     """Discover contexts in root/.ralph/contexts/ directories."""
-    contexts_dir = root / ".ralph" / "contexts"
-    if not contexts_dir.is_dir():
-        return []
-
     contexts = []
-    for entry in sorted(contexts_dir.iterdir()):
-        if not entry.is_dir():
-            continue
-
-        context_md = entry / "CONTEXT.md"
-        if not context_md.exists():
-            continue
-
-        text = context_md.read_text()
-        frontmatter, body = parse_frontmatter(text)
-
-        script = find_run_script(entry)
-
+    for entry, frontmatter, body in discover_primitives(root, "contexts", "CONTEXT.md"):
         contexts.append(
             Context(
                 name=entry.name,
                 path=entry,
                 command=frontmatter.get("command"),
-                script=script,
+                script=find_run_script(entry),
                 timeout=frontmatter.get("timeout", 30),
                 enabled=frontmatter.get("enabled", True),
                 static_content=body,
