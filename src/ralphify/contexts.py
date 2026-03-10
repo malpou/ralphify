@@ -1,4 +1,3 @@
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,10 +24,6 @@ class ContextResult:
     output: str
     success: bool
     timed_out: bool = False
-
-
-_NAMED_PATTERN = re.compile(r"\{\{\s*contexts\.([a-zA-Z0-9_-]+)\s*\}\}")
-_BULK_PATTERN = re.compile(r"\{\{\s*contexts\s*\}\}")
 
 
 def discover_contexts(root: Path = Path(".")) -> list[Context]:
@@ -105,4 +100,4 @@ def resolve_contexts(prompt: str, results: list[ContextResult]) -> str:
         if rendered:
             available[r.context.name] = rendered
 
-    return resolve_placeholders(prompt, available, _NAMED_PATTERN, _BULK_PATTERN)
+    return resolve_placeholders(prompt, available, "contexts")

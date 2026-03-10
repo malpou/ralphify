@@ -4,10 +4,11 @@ import re
 def resolve_placeholders(
     prompt: str,
     available: dict[str, str],
-    named_pattern: re.Pattern,
-    bulk_pattern: re.Pattern,
+    kind: str,
 ) -> str:
     """Replace template placeholders in a prompt string.
+
+    *kind* is the placeholder category (e.g. "contexts" or "instructions").
 
     - Named placeholders (e.g. {{ kind.name }}) -> specific content
     - Bulk placeholder (e.g. {{ kind }}) -> all not already placed
@@ -15,6 +16,9 @@ def resolve_placeholders(
     """
     if not available:
         return prompt
+
+    named_pattern = re.compile(r"\{\{\s*" + re.escape(kind) + r"\.([a-zA-Z0-9_-]+)\s*\}\}")
+    bulk_pattern = re.compile(r"\{\{\s*" + re.escape(kind) + r"\s*\}\}")
 
     placed: set[str] = set()
     has_named = False

@@ -1,4 +1,3 @@
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -12,10 +11,6 @@ class Instruction:
     path: Path
     enabled: bool = True
     content: str = ""
-
-
-_NAMED_PATTERN = re.compile(r"\{\{\s*instructions\.([a-zA-Z0-9_-]+)\s*\}\}")
-_BULK_PATTERN = re.compile(r"\{\{\s*instructions\s*\}\}")
 
 
 def discover_instructions(root: Path = Path(".")) -> list[Instruction]:
@@ -39,4 +34,4 @@ def resolve_instructions(prompt: str, instructions: list[Instruction]) -> str:
     - If no placeholders found → append all at end
     """
     available = {i.name: i.content for i in instructions if i.enabled and i.content}
-    return resolve_placeholders(prompt, available, _NAMED_PATTERN, _BULK_PATTERN)
+    return resolve_placeholders(prompt, available, "instructions")
