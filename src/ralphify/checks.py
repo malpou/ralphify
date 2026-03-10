@@ -5,6 +5,8 @@ import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
+from ralphify._output import collect_output
+
 
 @dataclass
 class Check:
@@ -131,30 +133,18 @@ def run_check(check: Check, project_root: Path) -> CheckResult:
             cwd=project_root,
             timeout=check.timeout,
         )
-        output = ""
-        if result.stdout:
-            output += result.stdout
-        if result.stderr:
-            output += result.stderr
-
         return CheckResult(
             check=check,
             passed=result.returncode == 0,
             exit_code=result.returncode,
-            output=output,
+            output=collect_output(result.stdout, result.stderr),
         )
     except subprocess.TimeoutExpired as e:
-        output = ""
-        if e.stdout:
-            output += e.stdout if isinstance(e.stdout, str) else e.stdout.decode()
-        if e.stderr:
-            output += e.stderr if isinstance(e.stderr, str) else e.stderr.decode()
-
         return CheckResult(
             check=check,
             passed=False,
             exit_code=-1,
-            output=output,
+            output=collect_output(e.stdout, e.stderr),
             timed_out=True,
         )
 

@@ -11,6 +11,7 @@ import typer
 from rich.console import Console
 
 from ralphify import __version__
+from ralphify._output import collect_output
 from ralphify.checks import discover_checks, run_all_checks, format_check_failures
 from ralphify.contexts import discover_contexts, run_all_contexts, resolve_contexts
 from ralphify.instructions import discover_instructions, resolve_instructions
@@ -418,12 +419,7 @@ def run(
                     result = subprocess.run(cmd, input=prompt, text=True, capture_output=True, timeout=timeout)
                     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
                     log_file = log_path_dir / f"{iteration:03d}_{timestamp}.log"
-                    output = ""
-                    if result.stdout:
-                        output += result.stdout
-                    if result.stderr:
-                        output += result.stderr
-                    log_file.write_text(output)
+                    log_file.write_text(collect_output(result.stdout, result.stderr))
                     # Replay to terminal
                     if result.stdout:
                         sys.stdout.write(result.stdout)
@@ -441,12 +437,7 @@ def run(
                 if log_path_dir:
                     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
                     log_file = log_path_dir / f"{iteration:03d}_{timestamp}.log"
-                    output = ""
-                    if e.stdout:
-                        output += e.stdout if isinstance(e.stdout, str) else e.stdout.decode()
-                    if e.stderr:
-                        output += e.stderr if isinstance(e.stderr, str) else e.stderr.decode()
-                    log_file.write_text(output)
+                    log_file.write_text(collect_output(e.stdout, e.stderr))
                     status_msg += f" → {log_file}"
                 status_msg += "[/yellow]"
                 rprint(status_msg)

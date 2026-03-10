@@ -4,6 +4,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from ralphify._output import collect_output
 from ralphify.checks import parse_check_md
 from ralphify.resolver import resolve_placeholders
 
@@ -91,27 +92,15 @@ def run_context(context: Context, project_root: Path) -> ContextResult:
             cwd=project_root,
             timeout=context.timeout,
         )
-        output = ""
-        if result.stdout:
-            output += result.stdout
-        if result.stderr:
-            output += result.stderr
-
         return ContextResult(
             context=context,
-            output=output,
+            output=collect_output(result.stdout, result.stderr),
             success=result.returncode == 0,
         )
     except subprocess.TimeoutExpired as e:
-        output = ""
-        if e.stdout:
-            output += e.stdout if isinstance(e.stdout, str) else e.stdout.decode()
-        if e.stderr:
-            output += e.stderr if isinstance(e.stderr, str) else e.stderr.decode()
-
         return ContextResult(
             context=context,
-            output=output,
+            output=collect_output(e.stdout, e.stderr),
             success=False,
             timed_out=True,
         )
