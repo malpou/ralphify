@@ -15,6 +15,7 @@ rprint = _console.print
 
 from ralphify import __version__
 from ralphify.checks import discover_checks, run_all_checks, format_check_failures
+from ralphify.contexts import discover_contexts, run_all_contexts, resolve_contexts
 from ralphify.instructions import discover_instructions, resolve_instructions
 from ralphify.detector import detect_project
 
@@ -116,6 +117,21 @@ or {{ instructions }} to inject all enabled instructions.
 -->
 """
 
+CONTEXT_MD_TEMPLATE = """\
+---
+command: git log --oneline -10
+timeout: 30
+enabled: true
+---
+<!--
+Optional static text injected above the command output.
+The command runs each iteration and its stdout is appended.
+
+Use {{ contexts.<name> }} in PROMPT.md to place this specifically,
+or {{ contexts }} to inject all enabled contexts.
+-->
+"""
+
 PROMPT_TEMPLATE = """\
 # Prompt
 
@@ -193,6 +209,23 @@ def instruction(
     rprint(f"[green]Created {inst_md}[/green]")
 
 
+@new_app.command()
+def context(
+    name: str = typer.Argument(help="Name of the new context."),
+) -> None:
+    """Create a new context scaffold."""
+    ctx_dir = Path(".ralph") / "contexts" / name
+    ctx_md = ctx_dir / "CONTEXT.md"
+
+    if ctx_md.exists():
+        rprint(f"[red]Context '{name}' already exists at {ctx_md}[/red]")
+        raise typer.Exit(1)
+
+    ctx_dir.mkdir(parents=True, exist_ok=True)
+    ctx_md.write_text(CONTEXT_MD_TEMPLATE)
+    rprint(f"[green]Created {ctx_md}[/green]")
+
+
 @app.command()
 def status() -> None:
     """Show current configuration and validate setup."""
@@ -239,6 +272,16 @@ def status() -> None:
             rprint(f"  {icon} {check.name:<18} {cmd_display}")
     else:
         rprint(f"\n[bold]Checks:[/bold]  [dim]none[/dim]")
+
+    contexts = discover_contexts()
+    if contexts:
+        rprint(f"\n[bold]Contexts:[/bold]  {len(contexts)} found")
+        for ctx in contexts:
+            cmd_display = str(ctx.script.name) if ctx.script else ctx.command or "(static)"
+            icon = "[green]✓[/green]" if ctx.enabled else "[dim]○[/dim]"
+            rprint(f"  {icon} {ctx.name:<18} {cmd_display}")
+    else:
+        rprint(f"\n[bold]Contexts:[/bold]  [dim]none[/dim]")
 
     instructions = discover_instructions()
     if instructions:
@@ -340,6 +383,11 @@ def run(
         enabled = [c for c in checks if c.enabled]
         rprint(f"[dim]Checks: {len(enabled)} enabled[/dim]")
 
+    contexts = discover_contexts()
+    enabled_contexts = [c for c in contexts if c.enabled] if contexts else []
+    if enabled_contexts:
+        rprint(f"[dim]Contexts: {len(enabled_contexts)} enabled[/dim]")
+
     instructions = discover_instructions()
     if instructions:
         enabled_inst = [i for i in instructions if i.enabled]
@@ -354,6 +402,9 @@ def run(
 
             rprint(f"\n[bold blue]── Iteration {iteration} ──[/bold blue]")
             prompt = prompt_path.read_text()
+            if enabled_contexts:
+                context_results = run_all_contexts(enabled_contexts, Path("."))
+                prompt = resolve_contexts(prompt, context_results)
             if instructions:
                 prompt = resolve_instructions(prompt, instructions)
             if check_failures_text:

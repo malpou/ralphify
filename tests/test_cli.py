@@ -6,8 +6,9 @@ from typer.testing import CliRunner
 
 from ralphify import __version__
 from ralphify.checks import Check, CheckResult, parse_check_md
+from ralphify.contexts import Context, ContextResult
 from ralphify.instructions import Instruction
-from ralphify.cli import app, CONFIG_FILENAME, RALPH_TOML_TEMPLATE, PROMPT_TEMPLATE, CHECK_MD_TEMPLATE, INSTRUCTION_MD_TEMPLATE, _format_duration
+from ralphify.cli import app, CONFIG_FILENAME, RALPH_TOML_TEMPLATE, PROMPT_TEMPLATE, CHECK_MD_TEMPLATE, INSTRUCTION_MD_TEMPLATE, CONTEXT_MD_TEMPLATE, _format_duration
 
 runner = CliRunner()
 
@@ -806,3 +807,178 @@ class TestRunInstructions:
         inst_pos = second_input.index("Use black.")
         fail_pos = second_input.index("Check Failures")
         assert inst_pos < fail_pos
+
+
+def _setup_context(tmp_path, name="git-history", command="git log --oneline -5",
+                   enabled=True, body=""):
+    """Helper to create a context directory with CONTEXT.md."""
+    ctx_dir = tmp_path / ".ralph" / "contexts" / name
+    ctx_dir.mkdir(parents=True, exist_ok=True)
+    enabled_str = "true" if enabled else "false"
+    parts = [f"---\nenabled: {enabled_str}"]
+    if command:
+        parts[0] = f"---\ncommand: {command}\nenabled: {enabled_str}"
+    parts.append(f"---\n{body}")
+    (ctx_dir / "CONTEXT.md").write_text("\n".join(parts))
+    return ctx_dir
+
+
+class TestNewContext:
+    def test_creates_context_directory_and_file(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(app, ["new", "context", "git-history"])
+        assert result.exit_code == 0
+        ctx_md = tmp_path / ".ralph" / "contexts" / "git-history" / "CONTEXT.md"
+        assert ctx_md.exists()
+        content = ctx_md.read_text()
+        assert "command:" in content
+        assert "timeout:" in content
+        assert "enabled:" in content
+
+    def test_refuses_existing_context(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ctx_dir = tmp_path / ".ralph" / "contexts" / "git-history"
+        ctx_dir.mkdir(parents=True)
+        (ctx_dir / "CONTEXT.md").write_text("original content")
+
+        result = runner.invoke(app, ["new", "context", "git-history"])
+        assert result.exit_code == 1
+        assert "already exists" in result.output
+        assert (ctx_dir / "CONTEXT.md").read_text() == "original content"
+
+    def test_creates_ralph_dirs_if_missing(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        assert not (tmp_path / ".ralph").exists()
+        result = runner.invoke(app, ["new", "context", "fresh"])
+        assert result.exit_code == 0
+        assert (tmp_path / ".ralph" / "contexts" / "fresh" / "CONTEXT.md").exists()
+
+    def test_default_body_stripped_to_empty(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(app, ["new", "context", "empty-body"])
+        assert result.exit_code == 0
+        ctx_md = tmp_path / ".ralph" / "contexts" / "empty-body" / "CONTEXT.md"
+        _, body = parse_check_md(ctx_md.read_text())
+        assert body == ""
+
+
+class TestStatusContexts:
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+    def test_no_contexts_shows_none(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("prompt")
+
+        result = runner.invoke(app, ["status"])
+        assert result.exit_code == 0
+        assert "Contexts:" in result.output
+        assert "none" in result.output
+
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+    def test_found_contexts_shown(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("prompt")
+        _setup_context(tmp_path, "git-history", "git log --oneline -5")
+        _setup_context(tmp_path, "coverage", "coverage report")
+
+        result = runner.invoke(app, ["status"])
+        assert result.exit_code == 0
+        assert "2 found" in result.output
+        assert "git-history" in result.output
+        assert "coverage" in result.output
+
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+    def test_disabled_context_display(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("prompt")
+        _setup_context(tmp_path, "enabled-ctx", "echo ok", enabled=True)
+        _setup_context(tmp_path, "disabled-ctx", "echo skip", enabled=False)
+
+        result = runner.invoke(app, ["status"])
+        assert result.exit_code == 0
+        assert "2 found" in result.output
+
+
+class TestRunContexts:
+    @patch("ralphify.cli.run_all_contexts")
+    @patch("ralphify.cli.subprocess.run", side_effect=_ok)
+    def test_contexts_injected_into_prompt(self, mock_agent, mock_run_contexts, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("Base.\n\n{{ contexts }}")
+        _setup_context(tmp_path, "git-log", "git log --oneline -5")
+
+        ctx = Context(name="git-log", path=Path("/fake"), command="git log", enabled=True)
+        mock_run_contexts.return_value = [
+            ContextResult(context=ctx, output="abc123 fix bug\n", success=True)
+        ]
+
+        result = runner.invoke(app, ["run", "-n", "1"])
+        assert result.exit_code == 0
+        prompt_sent = mock_agent.call_args.kwargs["input"]
+        assert "abc123 fix bug" in prompt_sent
+        assert "{{ contexts }}" not in prompt_sent
+
+    @patch("ralphify.cli.run_all_contexts")
+    @patch("ralphify.cli.subprocess.run", side_effect=_ok)
+    def test_contexts_resolved_before_instructions(self, mock_agent, mock_run_contexts, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("Base.\n\n{{ contexts }}\n\n{{ instructions }}")
+        _setup_context(tmp_path, "git-log", "git log --oneline -5")
+        _setup_instruction(tmp_path, "style", content="Use black.")
+
+        ctx = Context(name="git-log", path=Path("/fake"), command="git log", enabled=True)
+        mock_run_contexts.return_value = [
+            ContextResult(context=ctx, output="abc123 fix\n", success=True)
+        ]
+
+        result = runner.invoke(app, ["run", "-n", "1"])
+        assert result.exit_code == 0
+        prompt_sent = mock_agent.call_args.kwargs["input"]
+        assert "abc123 fix" in prompt_sent
+        assert "Use black." in prompt_sent
+        # Contexts should come before instructions
+        ctx_pos = prompt_sent.index("abc123 fix")
+        inst_pos = prompt_sent.index("Use black.")
+        assert ctx_pos < inst_pos
+
+    @patch("ralphify.cli.run_all_contexts")
+    @patch("ralphify.cli.subprocess.run", side_effect=_ok)
+    def test_disabled_contexts_not_run(self, mock_agent, mock_run_contexts, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("prompt")
+        _setup_context(tmp_path, "enabled", "echo ok", enabled=True)
+        _setup_context(tmp_path, "disabled", "echo skip", enabled=False)
+
+        ctx = Context(name="enabled", path=Path("/fake"), command="echo ok", enabled=True)
+        mock_run_contexts.return_value = [
+            ContextResult(context=ctx, output="ok\n", success=True)
+        ]
+
+        result = runner.invoke(app, ["run", "-n", "1"])
+        assert result.exit_code == 0
+        # run_all_contexts called with only enabled contexts
+        contexts_arg = mock_run_contexts.call_args.args[0]
+        assert len(contexts_arg) == 1
+        assert contexts_arg[0].name == "enabled"
+
+    @patch("ralphify.cli.run_all_contexts")
+    @patch("ralphify.cli.subprocess.run", side_effect=_ok)
+    def test_contexts_run_each_iteration(self, mock_agent, mock_run_contexts, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "PROMPT.md").write_text("{{ contexts }}")
+        _setup_context(tmp_path, "info", "echo hi")
+
+        ctx = Context(name="info", path=Path("/fake"), command="echo hi", enabled=True)
+        mock_run_contexts.return_value = [
+            ContextResult(context=ctx, output="hi\n", success=True)
+        ]
+
+        result = runner.invoke(app, ["run", "-n", "3"])
+        assert result.exit_code == 0
+        assert mock_run_contexts.call_count == 3
