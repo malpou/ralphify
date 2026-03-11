@@ -68,10 +68,10 @@ CREATE TABLE IF NOT EXISTS events (
 # Maps iteration-end event types to their database status values.
 # Explicit mapping avoids deriving status from event names via string
 # manipulation, which would break silently if event names changed.
-_ITERATION_STATUS: dict[str, str] = {
-    EventType.ITERATION_COMPLETED.value: "completed",
-    EventType.ITERATION_FAILED.value: "failed",
-    EventType.ITERATION_TIMED_OUT.value: "timed_out",
+_ITERATION_STATUS: dict[EventType, str] = {
+    EventType.ITERATION_COMPLETED: "completed",
+    EventType.ITERATION_FAILED: "failed",
+    EventType.ITERATION_TIMED_OUT: "timed_out",
 }
 
 
@@ -81,15 +81,15 @@ class Store:
     def __init__(self, db_path: Path | str | None = None) -> None:
         self._db_path = Path(db_path) if db_path else DEFAULT_DB_PATH
         self._db: aiosqlite.Connection | None = None
-        self._event_handlers: dict[str, Callable[..., Any]] = {
-            EventType.RUN_STARTED.value: self._on_run_started,
-            EventType.RUN_STOPPED.value: self._on_run_stopped,
-            EventType.ITERATION_STARTED.value: self._on_iteration_started,
-            EventType.ITERATION_COMPLETED.value: self._on_iteration_ended,
-            EventType.ITERATION_FAILED.value: self._on_iteration_ended,
-            EventType.ITERATION_TIMED_OUT.value: self._on_iteration_ended,
-            EventType.CHECK_PASSED.value: self._on_check_result,
-            EventType.CHECK_FAILED.value: self._on_check_result,
+        self._event_handlers: dict[EventType, Callable[..., Any]] = {
+            EventType.RUN_STARTED: self._on_run_started,
+            EventType.RUN_STOPPED: self._on_run_stopped,
+            EventType.ITERATION_STARTED: self._on_iteration_started,
+            EventType.ITERATION_COMPLETED: self._on_iteration_ended,
+            EventType.ITERATION_FAILED: self._on_iteration_ended,
+            EventType.ITERATION_TIMED_OUT: self._on_iteration_ended,
+            EventType.CHECK_PASSED: self._on_check_result,
+            EventType.CHECK_FAILED: self._on_check_result,
         }
 
     async def init(self) -> None:
@@ -127,17 +127,23 @@ class Store:
         """
         db = self._conn
         run_id = event["run_id"]
-        event_type = event["type"]
+        event_type_str = event["type"]
         data = event.get("data", {})
         timestamp = event["timestamp"]
 
-        # Append to events table
+        # Append to events table (store the string value for SQL portability)
         await db.execute(
             "INSERT INTO events (run_id, event_type, data, timestamp) VALUES (?, ?, ?, ?)",
-            (run_id, event_type, json.dumps(data), timestamp),
+            (run_id, event_type_str, json.dumps(data), timestamp),
         )
 
-        # Upsert materialized views via dispatch
+        # Convert to enum for type-safe handler dispatch
+        try:
+            event_type = EventType(event_type_str)
+        except ValueError:
+            await db.commit()
+            return
+
         handler = self._event_handlers.get(event_type)
         if handler:
             await handler(event_type, run_id, data, timestamp)
@@ -145,7 +151,7 @@ class Store:
         await db.commit()
 
     async def _on_run_started(
-        self, event_type: str, run_id: str, data: dict[str, Any], timestamp: str,
+        self, event_type: EventType, run_id: str, data: dict[str, Any], timestamp: str,
     ) -> None:
         db = self._conn
         await db.execute(
@@ -159,7 +165,7 @@ class Store:
         )
 
     async def _on_run_stopped(
-        self, event_type: str, run_id: str, data: dict[str, Any], timestamp: str,
+        self, event_type: EventType, run_id: str, data: dict[str, Any], timestamp: str,
     ) -> None:
         db = self._conn
         await db.execute(
@@ -176,7 +182,7 @@ class Store:
         )
 
     async def _on_iteration_started(
-        self, event_type: str, run_id: str, data: dict[str, Any], timestamp: str,
+        self, event_type: EventType, run_id: str, data: dict[str, Any], timestamp: str,
     ) -> None:
         db = self._conn
         iteration = data.get("iteration", 0)
@@ -191,7 +197,7 @@ class Store:
         )
 
     async def _on_iteration_ended(
-        self, event_type: str, run_id: str, data: dict[str, Any], timestamp: str,
+        self, event_type: EventType, run_id: str, data: dict[str, Any], timestamp: str,
     ) -> None:
         db = self._conn
         iteration = data.get("iteration", 0)
@@ -211,7 +217,7 @@ class Store:
         )
 
     async def _on_check_result(
-        self, event_type: str, run_id: str, data: dict[str, Any], timestamp: str,
+        self, event_type: EventType, run_id: str, data: dict[str, Any], timestamp: str,
     ) -> None:
         db = self._conn
         iteration = data.get("iteration", 0)
@@ -223,7 +229,7 @@ class Store:
                 run_id,
                 iteration,
                 data.get("check_name", ""),
-                1 if event_type == "check_passed" else 0,
+                1 if event_type == EventType.CHECK_PASSED else 0,
                 data.get("exit_code"),
                 1 if data.get("timed_out") else 0,
             ),
