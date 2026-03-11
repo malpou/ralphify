@@ -75,6 +75,8 @@ complete:
 - Agent output (truncated to 5,000 characters, same as the CLI)
 - Check results with individual pass/fail/timeout indicators
 - Duration and return codes
+- **Live agent activity stream** (Claude Code only) — see tool calls and text
+  output as they happen
 
 Each check gets a **sparkline bar** showing its pass/fail history across
 iterations. Green means pass, red means fail, yellow means timeout — useful for
@@ -164,6 +166,40 @@ Click **New Run** in the sidebar to open the run modal. It lets you:
 
 Once a run starts, you can **pause**, **resume**, or **stop** it from the
 sidebar or the controls bar above the iteration view on the Runs tab.
+
+## Live agent activity stream
+
+When the agent command is Claude Code, the dashboard shows a real-time activity
+feed inside each iteration. Instead of waiting for the iteration to finish, you
+can watch the agent think, call tools, and produce output as it happens.
+
+The activity stream appears below each iteration card on the Runs tab and shows:
+
+- **Tool calls** — each tool invocation (Read, Edit, Bash, Grep, Write, Glob,
+  etc.) appears as a color-coded badge with a summary of the input (file path,
+  command, or search pattern). Click a tool call to expand and see its full
+  result in a dark terminal-style panel.
+- **Text output** — the agent's reasoning and responses stream in as they are
+  generated.
+- **Cost and token stats** — when the iteration completes, the header shows the
+  total cost (USD) and token count for that iteration.
+
+The feed auto-scrolls to follow new activity. Scroll up manually to pause
+auto-scroll and review earlier output — it resumes when you scroll back to the
+bottom.
+
+!!! info "Claude Code only"
+    The live activity stream requires Claude Code as the agent command. When
+    Claude Code is detected, ralphify automatically adds
+    `--output-format stream-json --verbose` to the agent command and streams
+    each JSON line as an event. Other agents fall back to the standard
+    `subprocess.run()` path — you'll still see the full output once the
+    iteration completes, but not the live feed.
+
+!!! tip "Tool result truncation"
+    Long tool results are truncated to 2,000 characters in the activity stream
+    to keep the UI responsive. The full output is still captured in the
+    iteration log file if you use `--log-dir`.
 
 ## Adjusting settings mid-run
 
@@ -654,6 +690,19 @@ Every event has `type`, `run_id`, `timestamp`, and `data`. The table below lists
 |---|---|---|
 | `contexts_resolved` | Contexts injected into prompt | `iteration`, `count` |
 | `prompt_assembled` | Full prompt built | `iteration`, `prompt_length` |
+
+**Agent activity**
+
+| Event type | When | Data fields |
+|---|---|---|
+| `agent_activity` | Each line of streamed agent output (Claude Code only) | `raw` (dict — one parsed JSON line from the agent's `stream-json` output) |
+
+The `raw` dict contains the original Claude Code stream event. Common shapes
+include `stream_event` (with `content_block_start`, `content_block_delta`,
+`content_block_stop` sub-events for tool calls and text), `user` (tool results),
+and `result` (final cost/token summary). See the
+[Claude Code streaming docs](https://docs.anthropic.com/en/docs/claude-code)
+for the full schema.
 
 **Other**
 
