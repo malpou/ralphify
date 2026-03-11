@@ -111,7 +111,9 @@ Ralphify waits for the process to finish. If `--timeout` is set and the agent ex
 
 ### Logging
 
-When `--log-dir` is set, each iteration's stdout and stderr are captured and written to a timestamped log file (e.g., `001_20250115-142301.log`). The output is still printed to the terminal in real time.
+When `--log-dir` is set, each iteration's stdout and stderr are captured and written to a timestamped log file (e.g., `001_20250115-142301.log`). The output is replayed to the terminal after the iteration completes — you'll still see everything, but not until the agent finishes.
+
+Without `--log-dir`, agent output goes directly to the terminal in real time.
 
 ## Validation
 

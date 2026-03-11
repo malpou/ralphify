@@ -129,6 +129,20 @@ A context can also be purely static (no command) — just omit the `command` fie
 | `timeout` | int | `30` | Max seconds before the command is killed |
 | `enabled` | bool | `true` | Set to `false` to skip without deleting |
 
+### Using a script instead of a command
+
+Just like checks, you can place an executable script named `run.*` (e.g. `run.sh`, `run.py`) in the context directory instead of using a `command` in frontmatter:
+
+```
+.ralph/contexts/project-info/
+├── CONTEXT.md
+└── run.sh
+```
+
+If both a `command` and a `run.*` script exist, the script takes precedence.
+
+This is useful for contexts that need more complex logic than a single shell command — for example, querying an API, combining multiple data sources, or running a Python script that formats output.
+
 ### Placement in the prompt
 
 By default, all context output is appended to the end of the prompt. To control where it appears, use placeholders in your `PROMPT.md`:
