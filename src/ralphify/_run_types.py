@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
@@ -62,6 +63,7 @@ class RunState:
     completed: int = 0
     failed: int = 0
     timed_out: int = 0
+    started_at: datetime | None = None
 
     _stop_requested: bool = False
     _pause_event: threading.Event = field(default_factory=threading.Event)

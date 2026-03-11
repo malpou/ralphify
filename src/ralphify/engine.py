@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, NamedTuple
 from ralphify._events import Event, EventEmitter, EventType, NullEmitter
@@ -350,6 +350,7 @@ def run_loop(
 
     emit = _BoundEmitter(emitter, state.run_id)
     state.status = RunStatus.RUNNING
+    state.started_at = datetime.now(timezone.utc)
 
     log_path_dir: Path | None = None
     if config.log_dir:

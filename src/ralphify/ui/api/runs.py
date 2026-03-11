@@ -48,6 +48,9 @@ def _get_run_or_404(mgr: RunManager, run_id: str) -> ManagedRun:
 
 
 def _run_response(managed: ManagedRun) -> RunResponse:
+    started_at = None
+    if managed.state.started_at is not None:
+        started_at = managed.state.started_at.isoformat()
     return RunResponse(
         run_id=managed.state.run_id,
         status=managed.state.status.value,
@@ -56,6 +59,7 @@ def _run_response(managed: ManagedRun) -> RunResponse:
         failed=managed.state.failed,
         timed_out=managed.state.timed_out,
         prompt_name=managed.config.prompt_name,
+        started_at=started_at,
     )
 
 

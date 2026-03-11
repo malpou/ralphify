@@ -24,6 +24,45 @@ const sidebarOpen = signal(false);  // mobile sidebar drawer
 
 const activeRun = computed(() => runs.value.find(r => r.run_id === activeRunId.value));
 
+// ── Time helpers ────────────────────────────────────────────────────
+
+function formatElapsed(startIso) {
+  if (!startIso) return null;
+  const start = new Date(startIso);
+  const now = new Date();
+  const seconds = Math.floor((now - start) / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m`;
+}
+
+function formatTimeAgo(iso) {
+  if (!iso) return '';
+  const date = new Date(iso);
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function formatDateTime(iso) {
+  if (!iso) return '';
+  const date = new Date(iso);
+  return date.toLocaleString(undefined, {
+    month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
 function selectRun(run_id) {
   if (run_id === activeRunId.value) return;
   activeRunId.value = run_id;
@@ -71,13 +110,13 @@ function connectWs() {
 }
 
 function handleEvent(event) {
-  const { type, run_id, data } = event;
+  const { type, run_id, data, timestamp } = event;
 
   if (type === 'run_started') {
     const existing = runs.value.find(r => r.run_id === run_id);
     if (existing) {
       // Merge extra data (prompt_name, check counts, etc.) from the event
-      updateRun(run_id, { status: 'running', ...data });
+      updateRun(run_id, { status: 'running', started_at: timestamp || existing.started_at, ...data });
     } else {
       runs.value = [...runs.value, {
         run_id,
@@ -86,6 +125,7 @@ function handleEvent(event) {
         completed: 0,
         failed: 0,
         timed_out: 0,
+        started_at: timestamp,
         ...data,
       }];
     }
@@ -149,7 +189,7 @@ function handleEvent(event) {
     const status = data.reason === 'completed' ? 'completed'
                  : data.reason === 'error' ? 'failed'
                  : 'stopped';
-    updateRun(run_id, { status, ...data });
+    updateRun(run_id, { status, stopped_at: timestamp, ...data });
     // Mark any in-progress iterations as crashed/stopped
     if (status !== 'completed') {
       const run = runs.value.find(r => r.run_id === run_id);
@@ -353,19 +393,28 @@ function Sidebar() {
 }
 
 function RunCard({ run }) {
-  const isActive = activeRunId.value === run.run_id;
+  const isSelected = activeRunId.value === run.run_id;
   const total = run.completed + run.failed;
   const passRate = total > 0 ? (run.completed / total) * 100 : 0;
   const shortId = run.run_id.length > 8 ? run.run_id.slice(0, 8) : run.run_id;
   const displayTitle = run.prompt_name || shortId;
+  const isRunning = ['running', 'paused', 'pending'].includes(run.status);
+
+  // Live elapsed time for active runs
+  const [elapsed, setElapsed] = useState(() => formatElapsed(run.started_at));
+  useEffect(() => {
+    if (!isRunning || !run.started_at) return;
+    const timer = setInterval(() => setElapsed(formatElapsed(run.started_at)), 1000);
+    return () => clearInterval(timer);
+  }, [isRunning, run.started_at]);
 
   return html`
-    <div class="run-card ${isActive ? 'active' : ''}" onClick=${() => { selectRun(run.run_id); sidebarOpen.value = false; }}>
+    <div class="run-card ${isSelected ? 'active' : ''}" onClick=${() => { selectRun(run.run_id); sidebarOpen.value = false; }}>
       <div class="run-badge ${run.status}"></div>
       <div class="run-card-info">
         <div class="run-card-title">${displayTitle}</div>
         <div class="run-card-meta">
-          ${run.prompt_name ? shortId + ' · ' : ''}iter ${run.iteration || 0}${total > 0 ? ` · ${Math.round(passRate)}%` : ''}
+          ${run.prompt_name ? shortId + ' · ' : ''}iter ${run.iteration || 0}${total > 0 ? ` · ${Math.round(passRate)}%` : ''}${isRunning && elapsed ? ` · ${elapsed}` : ''}
         </div>
       </div>
       ${total > 0 && html`
@@ -597,6 +646,21 @@ function RunOverview({ run }) {
         ? `Run completed with ${passRate}% pass rate across ${total} iterations.`
         : `Run ${run.status}. ${run.iteration || total} iteration${(run.iteration || total) !== 1 ? 's' : ''} ran.`;
 
+  const isActive = ['running', 'paused', 'pending'].includes(run.status);
+
+  // Live elapsed time for active runs
+  const [elapsed, setElapsed] = useState(formatElapsed(run.started_at));
+  useEffect(() => {
+    if (!isActive || !run.started_at) return;
+    const timer = setInterval(() => setElapsed(formatElapsed(run.started_at)), 1000);
+    return () => clearInterval(timer);
+  }, [isActive, run.started_at]);
+
+  // For finished runs, show total duration if we have both timestamps
+  const duration = !isActive && run.started_at && run.stopped_at
+    ? formatElapsed(run.started_at)  // stopped_at - started_at would be better, but this shows total from start
+    : null;
+
   return html`
     <div class="run-overview">
       <div class="run-overview-header">
@@ -604,7 +668,20 @@ function RunOverview({ run }) {
           <h2>${run.prompt_name || 'Ad-hoc run'}</h2>
           <span class="run-status-badge ${run.status}">${run.status}</span>
         </div>
-        <span style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted)">${run.run_id.length > 8 ? run.run_id.slice(0, 8) : run.run_id}</span>
+        <div class="run-overview-meta">
+          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted)">${run.run_id.length > 8 ? run.run_id.slice(0, 8) : run.run_id}</span>
+          ${run.started_at && html`
+            <span class="run-overview-time">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              ${isActive
+                ? html`<span>Running for <strong>${elapsed}</strong></span>`
+                : html`<span title=${formatDateTime(run.started_at)}>${formatTimeAgo(run.started_at)}</span>`
+              }
+            </span>
+          `}
+        </div>
       </div>
       <div class="run-overview-body">
         <div class="run-progress-ring">
@@ -1416,6 +1493,10 @@ function HistoryView() {
                   <span class="history-card-meta-id">${shortId}</span>
                   <span>\u00b7</span>
                   <span>${r.iteration || total} iteration${(r.iteration || total) !== 1 ? 's' : ''}</span>
+                  ${r.started_at && html`
+                    <span>\u00b7</span>
+                    <span class="history-card-time" title=${formatDateTime(r.started_at)}>${formatTimeAgo(r.started_at)}</span>
+                  `}
                   <span class="history-status-badge ${r.status}">${r.status}</span>
                 </div>
               </div>

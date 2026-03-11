@@ -32,6 +32,7 @@ class RunResponse(BaseModel):
     failed: int
     timed_out: int
     prompt_name: str | None = None
+    started_at: str | None = None
 
 
 class PrimitiveResponse(BaseModel):
