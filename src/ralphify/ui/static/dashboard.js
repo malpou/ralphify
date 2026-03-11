@@ -23,6 +23,14 @@ const toastMessage = signal(null);  // { text, type: 'error' | 'info' }
 
 const activeRun = computed(() => runs.value.find(r => r.run_id === activeRunId.value));
 
+function selectRun(run_id) {
+  if (run_id === activeRunId.value) return;
+  activeRunId.value = run_id;
+  // Auto-select the latest iteration for the new run
+  const runIters = iterations.value[run_id] || [];
+  activeIteration.value = runIters.length > 0 ? runIters[runIters.length - 1].iteration : null;
+}
+
 function showToast(text, type = 'error') {
   toastMessage.value = { text, type };
   globalThis.setTimeout(() => { toastMessage.value = null; }, 4000);
@@ -80,7 +88,7 @@ function handleEvent(event) {
         ...data,
       }];
     }
-    if (!activeRunId.value) activeRunId.value = run_id;
+    if (!activeRunId.value) selectRun(run_id);
   }
 
   else if (type === 'iteration_started') {
@@ -90,6 +98,10 @@ function handleEvent(event) {
       ...iterations.value,
       [run_id]: [...runIters, { iteration: data.iteration, status: 'running' }],
     };
+    // Auto-select the latest iteration for the active run
+    if (run_id === activeRunId.value) {
+      activeIteration.value = data.iteration;
+    }
   }
 
   else if (type === 'iteration_completed') {
@@ -201,7 +213,7 @@ async function createRun(config) {
       runs.value = [...runs.value, { ...run, status: run.status || 'running' }];
     }
     showNewRunModal.value = false;
-    activeRunId.value = run.run_id;
+    selectRun(run.run_id);
     activeTab.value = 'runs';
   } catch (e) {
     showToast(e.message);
@@ -310,7 +322,7 @@ function RunCard({ run }) {
   const displayTitle = run.prompt_name || shortId;
 
   return html`
-    <div class="run-card ${isActive ? 'active' : ''}" onClick=${() => activeRunId.value = run.run_id}>
+    <div class="run-card ${isActive ? 'active' : ''}" onClick=${() => selectRun(run.run_id)}>
       <div class="run-badge ${run.status}"></div>
       <div class="run-card-info">
         <div class="run-card-title">${displayTitle}</div>
@@ -1143,7 +1155,7 @@ function HistoryView() {
             : html`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
 
           return html`
-            <div key=${r.run_id} class="history-card" onClick=${() => { activeRunId.value = r.run_id; activeTab.value = 'runs'; }}>
+            <div key=${r.run_id} class="history-card" onClick=${() => { selectRun(r.run_id); activeTab.value = 'runs'; }}>
               <div class="history-card-status-icon ${r.status}">
                 ${statusIcon}
               </div>
