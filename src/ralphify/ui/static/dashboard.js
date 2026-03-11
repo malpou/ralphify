@@ -242,7 +242,15 @@ function startRunWithPrompt(name) {
 async function loadRuns() {
   try {
     const data = await api('GET', '/runs');
-    runs.value = data;
+    // Merge server state with local state to preserve fields added by WS events
+    // (e.g. prompt_name from run_started, lastError from log_message).
+    const existing = new Map(runs.value.map(r => [r.run_id, r]));
+    const merged = data.map(r => ({ ...(existing.get(r.run_id) || {}), ...r }));
+    // Also keep any local-only runs not yet on the server
+    for (const [id, local] of existing) {
+      if (!data.find(r => r.run_id === id)) merged.push(local);
+    }
+    runs.value = merged;
   } catch (e) { /* server may not be ready */ }
 }
 
@@ -597,13 +605,13 @@ function TimelineView({ run }) {
 
   return html`
     <${RunOverview} run=${run} />
-    <${Timeline} iterations=${runIters} selectedIteration=${selectedIter} />
+    <${Timeline} iterations=${runIters} selectedIteration=${selectedIter} run=${run} />
     ${selected && html`<${IterationPanel} iteration=${selected} />`}
     ${Object.keys(health).length > 0 && html`<${CheckHealthPanel} health=${health} />`}
   `;
 }
 
-function Timeline({ iterations: iters, selectedIteration }) {
+function Timeline({ iterations: iters, selectedIteration, run }) {
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -612,11 +620,18 @@ function Timeline({ iterations: iters, selectedIteration }) {
     }
   }, [iters.length]);
 
+  const isActive = ['running', 'paused', 'pending'].includes(run?.status);
+  const emptyMsg = isActive
+    ? 'Waiting for iterations...'
+    : run?.iteration > 0
+      ? 'Iteration details not available (run was started before this session).'
+      : 'No iterations recorded.';
+
   return html`
     <div class="timeline" ref=${scrollRef}>
       ${iters.length === 0 && html`
         <div style="color: var(--text-secondary); font-size: 13px; padding: 4px">
-          Waiting for iterations...
+          ${emptyMsg}
         </div>
       `}
       ${iters.map(it => html`
