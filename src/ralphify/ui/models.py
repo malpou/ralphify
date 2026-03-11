@@ -1,6 +1,6 @@
 """Pydantic models for the REST API."""
 from __future__ import annotations
-from pydantic import BaseModel
+from pydantic import BaseModel  # ty: ignore[unresolved-import]
 
 
 class RunCreate(BaseModel):

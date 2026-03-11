@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException  # ty: ignore[unresolved-import]
 
 from ralphify.engine import RunConfig
 from ralphify.manager import RunManager
