@@ -71,5 +71,5 @@ Read the full writeup: [Ralph Wiggum as a "software engineer"](https://ghuntley.
 - [Writing Your Prompt](prompts.md) — how to write prompts that produce useful work
 - [Cookbook](cookbook.md) — complete, copy-pasteable setups for Python, TypeScript, bug fixing, and docs
 - [Primitives](primitives.md) — add checks, contexts, and instructions to your loop
-- [CLI Reference](cli.md) — all commands and options
+- [Configuration & CLI](cli.md) — `ralph.toml` format, all commands, and options
 - [Troubleshooting](troubleshooting.md) — common issues and how to fix them

@@ -185,9 +185,9 @@ Done: 12 iteration(s) — 10 succeeded, 2 failed
 
 When you run `ralph init`, ralphify detects your project type by looking for marker files:
 
-| Files found | Detected type |
+| File found | Detected type |
 |---|---|
-| `pyproject.toml`, `setup.py`, `setup.cfg` | Python |
+| `pyproject.toml` | Python |
 | `package.json` | Node.js |
 | `Cargo.toml` | Rust |
 | `go.mod` | Go |

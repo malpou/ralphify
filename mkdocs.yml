@@ -55,5 +55,5 @@ nav:
   - Writing Your Prompt: prompts.md
   - Cookbook: cookbook.md
   - Primitives: primitives.md
-  - CLI Reference: cli.md
+  - Configuration & CLI: cli.md
   - Troubleshooting: troubleshooting.md

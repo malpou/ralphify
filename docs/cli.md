@@ -1,15 +1,72 @@
-# CLI Reference
+# Configuration & CLI Reference
 
-## `ralph`
+## `ralph.toml`
+
+The `ralph.toml` file configures how ralphify runs your agent. It's created by `ralph init` and lives in your project root.
+
+```toml
+[agent]
+command = "claude"
+args = ["-p", "--dangerously-skip-permissions"]
+prompt = "PROMPT.md"
+```
+
+### Fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `command` | string | yes | The agent CLI executable to run |
+| `args` | list of strings | no | Arguments passed to the command |
+| `prompt` | string | yes | Path to the prompt file (relative to project root) |
+
+The assembled prompt is piped to the agent command as **stdin**. The full command executed each iteration is:
+
+```
+<command> <args...> < assembled_prompt
+```
+
+### Using a different agent
+
+Ralphify works with any CLI that reads a prompt from stdin. To use a different agent, change the `command` and `args` fields:
+
+```toml
+# Claude Code (default)
+[agent]
+command = "claude"
+args = ["-p", "--dangerously-skip-permissions"]
+prompt = "PROMPT.md"
+```
+
+```toml
+# Any custom script that reads stdin
+[agent]
+command = "bash"
+args = ["-c", "cat - | my-agent-wrapper"]
+prompt = "PROMPT.md"
+```
+
+The only requirement is that the command reads the prompt from stdin and exits when done.
+
+---
+
+## CLI Commands
+
+### `ralph`
 
 With no subcommand, prints the banner and help text.
 
 ```bash
-ralph --version   # Show version
-ralph --help      # Show help
+ralph            # Show banner and help
+ralph --version  # Show version
+ralph --help     # Show help
 ```
 
-## `ralph init`
+| Option | Short | Description |
+|---|---|---|
+| `--version` | `-V` | Show version and exit |
+| `--help` | | Show help and exit |
+
+### `ralph init`
 
 Initialize a project with `ralph.toml` and `PROMPT.md`.
 
@@ -18,7 +75,13 @@ ralph init
 ralph init --force   # Overwrite existing files
 ```
 
-## `ralph run`
+| Option | Short | Default | Description |
+|---|---|---|---|
+| `--force` | `-f` | off | Overwrite existing `ralph.toml` and `PROMPT.md` |
+
+During init, ralphify detects your project type by looking for manifest files (`pyproject.toml`, `package.json`, `Cargo.toml`, `go.mod`). The detected type is displayed but doesn't currently change the generated configuration — all project types get the same defaults.
+
+### `ralph run`
 
 Start the autonomous coding loop.
 
@@ -33,13 +96,19 @@ ralph run --log-dir ralph_logs     # Save output to log files
 
 | Option | Short | Default | Description |
 |---|---|---|---|
-| `--n` | `-n` | unlimited | Max number of iterations |
+| `-n` | | unlimited | Max number of iterations |
 | `--stop-on-error` | `-s` | off | Stop loop if agent exits non-zero |
 | `--delay` | `-d` | `0` | Seconds to wait between iterations |
 | `--timeout` | `-t` | none | Max seconds per iteration |
 | `--log-dir` | `-l` | none | Directory for iteration log files |
 
-## `ralph status`
+Options can be combined:
+
+```bash
+ralph run -n 10 --timeout 300 --log-dir ralph_logs --stop-on-error
+```
+
+### `ralph status`
 
 Show current configuration, validate setup, and list all discovered primitives.
 
@@ -47,7 +116,15 @@ Show current configuration, validate setup, and list all discovered primitives.
 ralph status
 ```
 
-## `ralph new`
+This command checks:
+
+- Whether the prompt file exists
+- Whether the agent command is on PATH
+- All discovered checks, contexts, and instructions (with enabled/disabled status)
+
+If everything is configured correctly, it prints "Ready to run." If not, it tells you exactly what's wrong.
+
+### `ralph new`
 
 Scaffold new primitives. Each command creates a directory under `.ralph/` with a template file.
 
@@ -56,3 +133,5 @@ ralph new check <name>         # Create .ralph/checks/<name>/CHECK.md
 ralph new instruction <name>   # Create .ralph/instructions/<name>/INSTRUCTION.md
 ralph new context <name>       # Create .ralph/contexts/<name>/CONTEXT.md
 ```
+
+The created template files include placeholder frontmatter and comments explaining how to configure each primitive. See [Primitives](primitives.md) for full details on each type.
