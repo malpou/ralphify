@@ -154,21 +154,224 @@ FastAPI (uvicorn)
 
 ## REST API
 
-The dashboard exposes a REST API you can use directly:
+The dashboard exposes a REST API you can use to script runs, manage primitives,
+and build custom integrations. All examples below assume the dashboard is running
+at `http://127.0.0.1:8765`.
 
-| Method | Endpoint                                              | Description                    |
-|--------|-------------------------------------------------------|--------------------------------|
-| POST   | `/api/runs`                                           | Create and start a new run     |
-| GET    | `/api/runs`                                           | List all runs                  |
-| GET    | `/api/runs/{run_id}`                                  | Get run details and iterations |
-| POST   | `/api/runs/{run_id}/pause`                            | Pause a running run            |
-| POST   | `/api/runs/{run_id}/resume`                           | Resume a paused run            |
-| POST   | `/api/runs/{run_id}/stop`                             | Stop a run                     |
-| PATCH  | `/api/runs/{run_id}/settings`                         | Update runtime settings        |
-| GET    | `/api/projects/{project_dir}/primitives`              | List all primitives            |
-| GET    | `/api/projects/{project_dir}/primitives/{kind}/{name}`| Get a specific primitive       |
-| PUT    | `/api/projects/{project_dir}/primitives/{kind}/{name}`| Update a primitive             |
-| POST   | `/api/projects/{project_dir}/primitives/{kind}`       | Create a new primitive         |
-| DELETE | `/api/projects/{project_dir}/primitives/{kind}/{name}`| Delete a primitive             |
+### Runs
 
-Connect to `/ws` for live event streaming via WebSocket.
+#### Start a new run
+
+```bash
+curl -X POST http://127.0.0.1:8765/api/runs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_dir": ".",
+    "max_iterations": 5,
+    "delay": 2,
+    "timeout": 300,
+    "stop_on_error": true
+  }'
+```
+
+The request body accepts these fields:
+
+| Field            | Type          | Default      | Description                                         |
+|------------------|---------------|--------------|-----------------------------------------------------|
+| `project_dir`    | string        | `"."`        | Path to the project directory                       |
+| `prompt_file`    | string        | `"PROMPT.md"`| Path to the prompt file                             |
+| `prompt_text`    | string\|null  | `null`       | Inline prompt text (overrides `prompt_file`)        |
+| `prompt_name`    | string\|null  | `null`       | Named prompt to use from `.ralph/prompts/`          |
+| `command`        | string\|null  | `null`       | Agent command (reads from `ralph.toml` if omitted)  |
+| `args`           | list\|null    | `null`       | Agent arguments (reads from `ralph.toml` if omitted)|
+| `max_iterations` | int\|null     | `null`       | Max iterations (`null` = unlimited)                 |
+| `delay`          | float         | `0`          | Seconds to wait between iterations                  |
+| `timeout`        | float\|null   | `null`       | Seconds before killing a stuck iteration            |
+| `stop_on_error`  | bool          | `false`      | Stop the loop if the agent exits non-zero           |
+| `log_dir`        | string\|null  | `null`       | Directory to save iteration logs                    |
+
+Response:
+
+```json
+{
+  "run_id": "a1b2c3d4",
+  "status": "running",
+  "iteration": 0,
+  "completed": 0,
+  "failed": 0,
+  "timed_out": 0
+}
+```
+
+You can provide a prompt three ways — pick one:
+
+- **`prompt_file`** — path to a markdown file (default: reads `PROMPT.md`)
+- **`prompt_text`** — raw prompt string passed inline
+- **`prompt_name`** — name of a prompt in `.ralph/prompts/`
+
+#### List all runs
+
+```bash
+curl http://127.0.0.1:8765/api/runs
+```
+
+```json
+[
+  {
+    "run_id": "a1b2c3d4",
+    "status": "running",
+    "iteration": 3,
+    "completed": 2,
+    "failed": 1,
+    "timed_out": 0
+  }
+]
+```
+
+#### Get run details
+
+```bash
+curl http://127.0.0.1:8765/api/runs/a1b2c3d4
+```
+
+Returns the same shape as the list response, for a single run.
+
+#### Pause, resume, and stop
+
+```bash
+curl -X POST http://127.0.0.1:8765/api/runs/a1b2c3d4/pause
+curl -X POST http://127.0.0.1:8765/api/runs/a1b2c3d4/resume
+curl -X POST http://127.0.0.1:8765/api/runs/a1b2c3d4/stop
+```
+
+All three return the updated run status.
+
+#### Update settings mid-run
+
+Change runtime settings without restarting:
+
+```bash
+curl -X PATCH http://127.0.0.1:8765/api/runs/a1b2c3d4/settings \
+  -H "Content-Type: application/json" \
+  -d '{"max_iterations": 10, "delay": 5}'
+```
+
+All fields are optional — only the ones you include are updated:
+
+| Field            | Type         | Description                           |
+|------------------|--------------|---------------------------------------|
+| `max_iterations` | int\|null    | New iteration limit                   |
+| `delay`          | float\|null  | New delay between iterations          |
+| `timeout`        | float\|null  | New timeout per iteration             |
+| `stop_on_error`  | bool\|null   | Whether to stop on agent errors       |
+
+### Primitives
+
+Primitive endpoints use a base64-encoded `project_dir` in the URL path. Encode
+it with:
+
+```bash
+PROJECT=$(echo -n "/path/to/project" | base64)
+```
+
+#### List all primitives
+
+```bash
+curl http://127.0.0.1:8765/api/projects/$PROJECT/primitives
+```
+
+```json
+[
+  {
+    "kind": "checks",
+    "name": "tests",
+    "enabled": true,
+    "content": "Fix all failing tests.",
+    "frontmatter": {"command": "uv run pytest -x", "timeout": 120, "enabled": true}
+  },
+  {
+    "kind": "contexts",
+    "name": "git-log",
+    "enabled": true,
+    "content": "## Recent commits",
+    "frontmatter": {"command": "git log --oneline -10", "timeout": 10, "enabled": true}
+  }
+]
+```
+
+#### Get a specific primitive
+
+```bash
+curl http://127.0.0.1:8765/api/projects/$PROJECT/primitives/checks/tests
+```
+
+#### Create a new primitive
+
+```bash
+curl -X POST http://127.0.0.1:8765/api/projects/$PROJECT/primitives/checks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Fix all type errors.",
+    "frontmatter": {
+      "name": "typecheck",
+      "command": "uv run mypy src/",
+      "timeout": 60,
+      "enabled": true
+    }
+  }'
+```
+
+The `name` field in `frontmatter` is required — it determines the directory name
+under `.ralph/checks/typecheck/CHECK.md`.
+
+#### Update a primitive
+
+```bash
+curl -X PUT http://127.0.0.1:8765/api/projects/$PROJECT/primitives/checks/tests \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Fix all failing tests. Do not skip or delete tests.",
+    "frontmatter": {"command": "uv run pytest -x", "timeout": 180, "enabled": true}
+  }'
+```
+
+#### Delete a primitive
+
+```bash
+curl -X DELETE http://127.0.0.1:8765/api/projects/$PROJECT/primitives/checks/typecheck
+```
+
+Returns `204 No Content` on success.
+
+### WebSocket
+
+Connect to `/api/ws` for live event streaming:
+
+```javascript
+const ws = new WebSocket("ws://127.0.0.1:8765/api/ws");
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log(data.type, data.run_id, data.data);
+};
+```
+
+Events are JSON objects with this shape:
+
+```json
+{
+  "type": "iteration_start",
+  "run_id": "a1b2c3d4",
+  "timestamp": "2026-03-11T14:23:01.123456",
+  "data": { }
+}
+```
+
+You can filter events by run ID:
+
+```javascript
+ws.send(JSON.stringify({ "action": "subscribe", "run_id": "a1b2c3d4" }));
+```
+
+Send `{"action": "subscribe", "run_id": "*"}` to receive events from all runs
+(this is the default on connect).

@@ -729,8 +729,8 @@ function PromptsView() {
     return html`
       <div class="prompts-empty">
         <div class="prompts-empty-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <g stroke="url(#pig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+            <g stroke="url(#pig)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </g>
             <defs>
@@ -752,12 +752,14 @@ function PromptsView() {
     `;
   }
 
+  const enabledCount = allPrompts.filter(p => p.enabled).length;
+
   return html`
     <div class="prompts-view">
       <div class="prompts-header">
-        <div>
-          <h2>Prompts</h2>
-          <p>Pick a prompt and run it, or create a new one.</p>
+        <div class="prompts-header-text">
+          <h2>Prompts<span class="prompts-count">${allPrompts.length}</span></h2>
+          <p>${enabledCount} ready to run${allPrompts.length > enabledCount ? ` \u00b7 ${allPrompts.length - enabledCount} disabled` : ''}</p>
         </div>
         <button class="btn btn-primary" onClick=${() => setView({ page: 'create' })}>
           + New Prompt
@@ -794,28 +796,30 @@ function PromptCard({ prompt, onEdit, onRun }) {
   const desc = prompt.frontmatter?.description || '';
   const cleaned = prompt.content ? stripMarkdown(prompt.content) : '';
   const contentPreview = cleaned
-    ? cleaned.slice(0, 180) + (cleaned.length > 180 ? '\u2026' : '')
+    ? cleaned.slice(0, 200) + (cleaned.length > 200 ? '\u2026' : '')
     : '';
 
   return html`
     <div class="prompt-tile ${!prompt.enabled ? 'disabled' : ''}" onClick=${onEdit}>
-      <div class="prompt-tile-header">
-        <div class="prompt-tile-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
+      <div class="prompt-tile-body">
+        <div class="prompt-tile-header">
+          <div class="prompt-tile-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div class="prompt-tile-info">
+            <h3 class="prompt-tile-name">${prompt.name}</h3>
+            ${desc && html`<p class="prompt-tile-desc">${desc}</p>`}
+          </div>
+          ${!prompt.enabled && html`<span class="prompt-tile-badge">Disabled</span>`}
         </div>
-        <div class="prompt-tile-info">
-          <h3 class="prompt-tile-name">${prompt.name}</h3>
-          ${desc && html`<p class="prompt-tile-desc">${desc}</p>`}
-        </div>
-        ${!prompt.enabled && html`<span class="prompt-tile-badge">Disabled</span>`}
+        ${contentPreview && html`<div class="prompt-tile-preview">${contentPreview}</div>`}
       </div>
-      ${contentPreview && html`<div class="prompt-tile-preview">${contentPreview}</div>`}
       <div class="prompt-tile-actions">
-        <button class="btn btn-sm" onClick=${(e) => { e.stopPropagation(); onEdit(); }}>Edit</button>
+        <button class="btn-edit" onClick=${(e) => { e.stopPropagation(); onEdit(); }}>Edit</button>
         ${onRun && html`
-          <button class="btn btn-primary btn-sm" onClick=${(e) => { e.stopPropagation(); onRun(); }}>
+          <button class="btn-run" onClick=${(e) => { e.stopPropagation(); onRun(); }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
