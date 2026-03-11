@@ -346,6 +346,66 @@ When you run `ralph run`, the prompt is resolved in this order (first match wins
 
 Named prompts support all the same features as the root `PROMPT.md`: context and instruction placeholders resolve as normal, and check failures are appended after each iteration.
 
+## Behavior notes
+
+Important runtime behaviors that affect how you design and organize your primitives.
+
+### Execution order
+
+Primitives are discovered and executed in **alphabetical order by directory name**. This applies to checks, contexts, and instructions alike.
+
+If execution order matters — for example, you want a fast lint check to run before a slow test suite — use number prefixes:
+
+```
+.ralph/checks/
+├── 01-lint/          ← runs first (fast feedback)
+│   └── CHECK.md
+├── 02-typecheck/     ← runs second
+│   └── CHECK.md
+└── 03-tests/         ← runs last (slowest)
+    └── CHECK.md
+```
+
+All checks run regardless of whether earlier checks pass or fail — there is no short-circuiting.
+
+### Naming
+
+A primitive's name is its **directory name**, not a field in frontmatter. The name `tests` comes from the directory `.ralph/checks/tests/`, not from anything inside `CHECK.md`. This name is used in:
+
+- `ralph status` output
+- Check failure headings in the prompt
+- Placeholder references like `{{ contexts.git-log }}`
+- `ralph prompts list` output
+
+### Frontmatter format
+
+Frontmatter uses a simplified `key: value` format — **not full YAML**. Each line is one field:
+
+```markdown
+---
+command: uv run pytest -x
+timeout: 120
+enabled: true
+---
+```
+
+Limitations:
+
+- No nested structures, lists, or multi-line values
+- Lines starting with `#` are treated as comments and ignored
+- Only `timeout` (coerced to int) and `enabled` (coerced to bool) have type coercion — all other fields are strings
+- Values for `enabled` are truthy if they match `true`, `yes`, or `1` (case-insensitive)
+
+### Context command failures
+
+Context output is injected into the prompt **regardless of the command's exit code**. Even if a context command exits non-zero, its stdout and stderr are still captured and included. This is intentional — commands like `pytest --tb=line -q` often exit non-zero (because tests are failing) but produce exactly the output you want the agent to see.
+
+If a context command produces no output at all, only its static content (the body below the frontmatter) is injected. If it has neither output nor static content, it contributes nothing to the prompt.
+
+### Disabled primitives
+
+Setting `enabled: false` in frontmatter skips the primitive during execution but does **not** hide it. Disabled primitives still appear in `ralph status` (marked with a different indicator) and are still discovered — they're just filtered out before running. This makes it easy to toggle primitives on and off without deleting directories.
+
 ## Directory structure
 
 ```
