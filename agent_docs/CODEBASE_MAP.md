@@ -32,7 +32,7 @@ docs/                   # MkDocs site (Material theme) — user-facing documenta
 
 ## Architecture: how the pieces connect
 
-The main loop lives in `cli.py:run()` (line ~337). Here's the flow:
+The main loop lives in `cli.py:run()` (line ~344). Here's the flow:
 
 ```
 ralph run

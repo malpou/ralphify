@@ -6,6 +6,7 @@
   <a href="https://pypi.org/project/ralphify/"><img src="https://img.shields.io/pypi/v/ralphify?color=blue" alt="PyPI version"></a>
   <a href="https://pypi.org/project/ralphify/"><img src="https://img.shields.io/pypi/pyversions/ralphify" alt="Python versions"></a>
   <a href="https://github.com/computerlovetech/ralphify/blob/main/LICENSE"><img src="https://img.shields.io/github/license/computerlovetech/ralphify" alt="License"></a>
+  <a href="https://computerlovetech.github.io/ralphify/"><img src="https://img.shields.io/badge/docs-computerlovetech.github.io%2Fralphify-blue" alt="Documentation"></a>
 </p>
 
 Put your AI coding agent in a `while True` loop and let it ship.
