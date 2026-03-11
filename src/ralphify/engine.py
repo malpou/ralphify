@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, NamedTuple
 from ralphify._events import Event, EventEmitter, EventType, NullEmitter
 from ralphify._output import collect_output, format_duration
 from ralphify.checks import (
@@ -172,26 +172,39 @@ def _discover_enabled_primitives(root: Path) -> EnabledPrimitives:
     )
 
 
-def _wait_for_resume(state: RunState, emitter: EventEmitter) -> bool:
+class _BoundEmitter:
+    """Wraps an EventEmitter with a fixed run_id for concise emission.
+
+    Engine-internal helper so every call site doesn't have to repeat
+    ``Event(type=..., run_id=state.run_id, data={...})``.
+    """
+
+    def __init__(self, emitter: EventEmitter, run_id: str) -> None:
+        self._emitter = emitter
+        self._run_id = run_id
+
+    def __call__(
+        self, event_type: EventType, data: dict[str, Any] | None = None,
+    ) -> None:
+        self._emitter.emit(Event(
+            type=event_type, run_id=self._run_id, data=data or {},
+        ))
+
+
+def _wait_for_resume(state: RunState, emit: _BoundEmitter) -> bool:
     """Block until the run is resumed or a stop is requested.
 
     Returns ``True`` if the run should continue, ``False`` if a stop was
     requested while paused.
     """
-    emitter.emit(Event(
-        type=EventType.RUN_PAUSED,
-        run_id=state.run_id,
-    ))
+    emit(EventType.RUN_PAUSED)
     while not state.wait_for_unpause(timeout=0.25):
         if state.stop_requested:
             break
     if state.stop_requested:
         state.status = RunStatus.STOPPED
         return False
-    emitter.emit(Event(
-        type=EventType.RUN_RESUMED,
-        run_id=state.run_id,
-    ))
+    emit(EventType.RUN_RESUMED)
     return True
 
 
@@ -199,7 +212,7 @@ def _handle_loop_transitions(
     state: RunState,
     config: RunConfig,
     primitives: EnabledPrimitives,
-    emitter: EventEmitter,
+    emit: _BoundEmitter,
 ) -> tuple[bool, EnabledPrimitives]:
     """Handle stop, pause, and reload transitions at the top of each iteration.
 
@@ -212,20 +225,16 @@ def _handle_loop_transitions(
         return False, primitives
 
     if state.paused:
-        if not _wait_for_resume(state, emitter):
+        if not _wait_for_resume(state, emit):
             return False, primitives
 
     if state.consume_reload_request():
         primitives = _discover_enabled_primitives(config.project_root)
-        emitter.emit(Event(
-            type=EventType.PRIMITIVES_RELOADED,
-            run_id=state.run_id,
-            data={
-                "checks": len(primitives.checks),
-                "contexts": len(primitives.contexts),
-                "instructions": len(primitives.instructions),
-            },
-        ))
+        emit(EventType.PRIMITIVES_RELOADED, {
+            "checks": len(primitives.checks),
+            "contexts": len(primitives.contexts),
+            "instructions": len(primitives.instructions),
+        })
 
     return True, primitives
 
@@ -262,7 +271,7 @@ def _execute_agent(
     config: RunConfig,
     state: RunState,
     log_path_dir: Path | None,
-    emitter: EventEmitter,
+    emit: _BoundEmitter,
 ) -> int | None:
     """Run the agent subprocess and emit the result event.
 
@@ -318,18 +327,14 @@ def _execute_agent(
         event_type = EventType.ITERATION_FAILED
         state_detail = f"failed with exit code {returncode} ({duration})"
 
-    emitter.emit(Event(
-        type=event_type,
-        run_id=state.run_id,
-        data={
-            "iteration": iteration,
-            "returncode": returncode,
-            "duration": elapsed,
-            "duration_formatted": duration,
-            "detail": state_detail,
-            "log_file": str(log_file) if log_file else None,
-        },
-    ))
+    emit(event_type, {
+        "iteration": iteration,
+        "returncode": returncode,
+        "duration": elapsed,
+        "duration_formatted": duration,
+        "detail": state_detail,
+        "log_file": str(log_file) if log_file else None,
+    })
     return returncode
 
 
@@ -337,7 +342,7 @@ def _run_checks_phase(
     enabled_checks: list[Check],
     project_root: Path,
     state: RunState,
-    emitter: EventEmitter,
+    emit: _BoundEmitter,
 ) -> str:
     """Execute all checks, emit per-check and summary events.
 
@@ -346,11 +351,7 @@ def _run_checks_phase(
     """
     iteration = state.iteration
 
-    emitter.emit(Event(
-        type=EventType.CHECKS_STARTED,
-        run_id=state.run_id,
-        data={"iteration": iteration, "count": len(enabled_checks)},
-    ))
+    emit(EventType.CHECKS_STARTED, {"iteration": iteration, "count": len(enabled_checks)})
 
     check_results = run_all_checks(enabled_checks, project_root)
 
@@ -364,23 +365,18 @@ def _run_checks_phase(
             "timed_out": cr.timed_out,
         }
         results_data.append(result)
-        emitter.emit(Event(
-            type=EventType.CHECK_PASSED if cr.passed else EventType.CHECK_FAILED,
-            run_id=state.run_id,
-            data={"iteration": iteration, **result},
-        ))
+        emit(
+            EventType.CHECK_PASSED if cr.passed else EventType.CHECK_FAILED,
+            {"iteration": iteration, **result},
+        )
 
     passed = sum(1 for r in results_data if r["passed"])
-    emitter.emit(Event(
-        type=EventType.CHECKS_COMPLETED,
-        run_id=state.run_id,
-        data={
-            "iteration": iteration,
-            "passed": passed,
-            "failed": len(results_data) - passed,
-            "results": results_data,
-        },
-    ))
+    emit(EventType.CHECKS_COMPLETED, {
+        "iteration": iteration,
+        "passed": passed,
+        "failed": len(results_data) - passed,
+        "results": results_data,
+    })
 
     return format_check_failures(check_results)
 
@@ -391,7 +387,7 @@ def _run_iteration(
     primitives: EnabledPrimitives,
     log_path_dir: Path | None,
     check_failures_text: str,
-    emitter: EventEmitter,
+    emit: _BoundEmitter,
 ) -> tuple[str, bool]:
     """Execute one iteration of the agent loop.
 
@@ -402,11 +398,7 @@ def _run_iteration(
     """
     iteration = state.iteration
 
-    emitter.emit(Event(
-        type=EventType.ITERATION_STARTED,
-        run_id=state.run_id,
-        data={"iteration": iteration},
-    ))
+    emit(EventType.ITERATION_STARTED, {"iteration": iteration})
 
     # Run contexts (subprocess I/O)
     context_results: list[ContextResult] = []
@@ -414,37 +406,25 @@ def _run_iteration(
         context_results = run_all_contexts(
             primitives.contexts, config.project_root,
         )
-        emitter.emit(Event(
-            type=EventType.CONTEXTS_RESOLVED,
-            run_id=state.run_id,
-            data={"iteration": iteration, "count": len(primitives.contexts)},
-        ))
+        emit(EventType.CONTEXTS_RESOLVED, {"iteration": iteration, "count": len(primitives.contexts)})
 
     # Assemble prompt (pure text resolution)
     prompt = _assemble_prompt(
         config, primitives, context_results, check_failures_text,
     )
-    emitter.emit(Event(
-        type=EventType.PROMPT_ASSEMBLED,
-        run_id=state.run_id,
-        data={"iteration": iteration, "prompt_length": len(prompt)},
-    ))
+    emit(EventType.PROMPT_ASSEMBLED, {"iteration": iteration, "prompt_length": len(prompt)})
 
     returncode = _execute_agent(
-        prompt, config, state, log_path_dir, emitter,
+        prompt, config, state, log_path_dir, emit,
     )
 
     if returncode != 0 and config.stop_on_error:
-        emitter.emit(Event(
-            type=EventType.LOG_MESSAGE,
-            run_id=state.run_id,
-            data={"message": "Stopping due to --stop-on-error.", "level": "error"},
-        ))
+        emit(EventType.LOG_MESSAGE, {"message": "Stopping due to --stop-on-error.", "level": "error"})
         return check_failures_text, False
 
     if primitives.checks:
         check_failures_text = _run_checks_phase(
-            primitives.checks, config.project_root, state, emitter,
+            primitives.checks, config.project_root, state, emit,
         )
 
     return check_failures_text, True
@@ -467,6 +447,7 @@ def run_loop(
     if emitter is None:
         emitter = NullEmitter()
 
+    emit = _BoundEmitter(emitter, state.run_id)
     state.status = RunStatus.RUNNING
 
     log_path_dir: Path | None = None
@@ -477,24 +458,20 @@ def run_loop(
     check_failures_text = ""
     primitives = _discover_enabled_primitives(config.project_root)
 
-    emitter.emit(Event(
-        type=EventType.RUN_STARTED,
-        run_id=state.run_id,
-        data={
-            "checks": len(primitives.checks),
-            "contexts": len(primitives.contexts),
-            "instructions": len(primitives.instructions),
-            "max_iterations": config.max_iterations,
-            "timeout": config.timeout,
-            "delay": config.delay,
-            "prompt_name": config.prompt_name,
-        },
-    ))
+    emit(EventType.RUN_STARTED, {
+        "checks": len(primitives.checks),
+        "contexts": len(primitives.contexts),
+        "instructions": len(primitives.instructions),
+        "max_iterations": config.max_iterations,
+        "timeout": config.timeout,
+        "delay": config.delay,
+        "prompt_name": config.prompt_name,
+    })
 
     try:
         while True:
             should_continue, primitives = _handle_loop_transitions(
-                state, config, primitives, emitter,
+                state, config, primitives, emit,
             )
             if not should_continue:
                 break
@@ -504,7 +481,7 @@ def run_loop(
                 break
 
             check_failures_text, should_continue = _run_iteration(
-                config, state, primitives, log_path_dir, check_failures_text, emitter,
+                config, state, primitives, log_path_dir, check_failures_text, emit,
             )
             if not should_continue:
                 break
@@ -513,11 +490,7 @@ def run_loop(
             if config.delay > 0 and (
                 config.max_iterations is None or state.iteration < config.max_iterations
             ):
-                emitter.emit(Event(
-                    type=EventType.LOG_MESSAGE,
-                    run_id=state.run_id,
-                    data={"message": f"Waiting {config.delay}s...", "level": "info"},
-                ))
+                emit(EventType.LOG_MESSAGE, {"message": f"Waiting {config.delay}s...", "level": "info"})
                 time.sleep(config.delay)
 
     except KeyboardInterrupt:
@@ -525,15 +498,11 @@ def run_loop(
     except Exception as exc:
         state.status = RunStatus.FAILED
         tb = traceback.format_exc()
-        emitter.emit(Event(
-            type=EventType.LOG_MESSAGE,
-            run_id=state.run_id,
-            data={
-                "message": f"Run crashed: {exc}",
-                "level": "error",
-                "traceback": tb,
-            },
-        ))
+        emit(EventType.LOG_MESSAGE, {
+            "message": f"Run crashed: {exc}",
+            "level": "error",
+            "traceback": tb,
+        })
 
     if state.status == RunStatus.RUNNING:
         state.status = RunStatus.COMPLETED
@@ -544,14 +513,10 @@ def run_loop(
         else "completed"
     )
     total = state.completed + state.failed
-    emitter.emit(Event(
-        type=EventType.RUN_STOPPED,
-        run_id=state.run_id,
-        data={
-            "reason": reason,
-            "total": total,
-            "completed": state.completed,
-            "failed": state.failed,
-            "timed_out": state.timed_out,
-        },
-    ))
+    emit(EventType.RUN_STOPPED, {
+        "reason": reason,
+        "total": total,
+        "completed": state.completed,
+        "failed": state.failed,
+        "timed_out": state.timed_out,
+    })
