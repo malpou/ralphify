@@ -52,14 +52,14 @@ docs/contributing/      # Contributor documentation (this section)
 
 ## Architecture: how the pieces connect
 
-The CLI entry point is `cli.py:run()`, which parses options, resolves the prompt via the priority chain, and delegates to `engine.py:run_loop()` for the actual iteration cycle. The engine emits structured events via an `EventEmitter`, making the same loop reusable from both CLI and web UI contexts.
+The CLI entry point is `cli.py:run()`, which parses options, resolves the prompt source via `prompts.py:resolve_prompt_source()`, and delegates to `engine.py:run_loop()` for the actual iteration cycle. The engine emits structured events via an `EventEmitter`, making the same loop reusable from both CLI and web UI contexts.
 
 ```
 ralph run
   │
-  ├── cli.py:run() — parse options, resolve prompt, print banner
+  ├── cli.py:run() — parse options, print banner
   │   ├── Load config from ralph.toml
-  │   ├── Resolve prompt via priority chain (--prompt > name > --prompt-file > toml > root)
+  │   ├── Resolve prompt via prompts.resolve_prompt_source() (--prompt > name > --prompt-file > toml > root)
   │   └── Build RunConfig and call engine.run_loop()
   │
   └── engine.py:run_loop(config, state, emitter)
@@ -121,7 +121,7 @@ The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders 
 
 1. **`engine.py`** — The core run loop. Uses `RunConfig` and `RunState` (from `_run_types.py`) and `EventEmitter`. This is where iteration logic lives.
 2. **`_run_types.py`** — `RunConfig`, `RunState`, and `RunStatus`. These are the shared data types used by the engine, CLI, manager, and UI. Separated so modules that only need the types don't pull in execution logic.
-3. **`cli.py`** — All CLI commands and prompt resolution. Delegates to `engine.run_loop()` for the actual loop. Scaffold templates live in `_templates.py`. Terminal event rendering lives in `_console_emitter.py`.
+3. **`cli.py`** — All CLI commands. Delegates to `engine.run_loop()` for the actual loop. Prompt source resolution (name vs. file path vs. inline) lives in `prompts.py:resolve_prompt_source()`. Scaffold templates live in `_templates.py`. Terminal event rendering lives in `_console_emitter.py`.
 4. **`_frontmatter.py`** — The primitive discovery system. Understanding `discover_primitives()` and `parse_frontmatter()` is essential for working on checks/contexts/instructions/prompts.
 5. **`resolver.py`** — Template placeholder logic shared by contexts and instructions. Small file but critical — changes here affect both.
 
