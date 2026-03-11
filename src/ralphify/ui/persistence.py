@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 import aiosqlite
@@ -60,6 +61,16 @@ CREATE TABLE IF NOT EXISTS events (
     FOREIGN KEY (run_id) REFERENCES runs(run_id)
 );
 """
+
+
+# Maps iteration-end event types to their database status values.
+# Explicit mapping avoids deriving status from event names via string
+# manipulation, which would break silently if event names changed.
+_ITERATION_STATUS: dict[str, str] = {
+    "iteration_completed": "completed",
+    "iteration_failed": "failed",
+    "iteration_timed_out": "timed_out",
+}
 
 
 class Store:
@@ -172,7 +183,7 @@ class Store:
     ) -> None:
         db = self._conn
         iteration = data.get("iteration", 0)
-        status = event_type.replace("iteration_", "")
+        status = _ITERATION_STATUS[event_type]
         await db.execute(
             "UPDATE iterations SET status = ?, returncode = ?, "
             "duration = ?, finished_at = ? "
@@ -206,7 +217,7 @@ class Store:
             ),
         )
 
-    _event_handlers: dict[str, Any] = {
+    _event_handlers: dict[str, Callable[..., Any]] = {
         "run_started": _on_run_started,
         "run_stopped": _on_run_stopped,
         "iteration_started": _on_iteration_started,
