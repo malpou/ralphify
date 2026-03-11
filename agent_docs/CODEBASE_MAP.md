@@ -47,7 +47,7 @@ agent_docs/             # Documentation for AI coding agents
 
 ## Architecture: how the pieces connect
 
-The CLI entry point is `cli.py:run()` (line ~433), which parses options, resolves the prompt via the priority chain, and delegates to `engine.py:run_loop()` for the actual iteration cycle. The engine emits structured events via an `EventEmitter`, making the same loop reusable from both CLI and web UI contexts.
+The CLI entry point is `cli.py:run()` (line ~325), which parses options, resolves the prompt via the priority chain, and delegates to `engine.py:run_loop()` for the actual iteration cycle. The engine emits structured events via an `EventEmitter`, making the same loop reusable from both CLI and web UI contexts.
 
 ```
 ralph run
