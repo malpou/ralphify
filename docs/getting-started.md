@@ -224,6 +224,8 @@ Contexts:  1 found
 
 Instructions:  none
 
+Prompts:  none
+
 Ready to run.
 ```
 

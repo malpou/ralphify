@@ -146,7 +146,7 @@ This command checks:
 
 - Whether the prompt file exists
 - Whether the agent command is on PATH
-- All discovered checks, contexts, and instructions (with enabled/disabled status)
+- All discovered checks, contexts, instructions, and named prompts (with enabled/disabled status)
 
 If everything is configured correctly, it prints "Ready to run." If not, it tells you exactly what's wrong.
 
