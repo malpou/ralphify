@@ -185,11 +185,6 @@ def _wait_for_resume(state: RunState, emitter: EventEmitter) -> bool:
             break
     if state.stop_requested:
         state.status = RunStatus.STOPPED
-        emitter.emit(Event(
-            type=EventType.RUN_STOPPED,
-            run_id=state.run_id,
-            data={"reason": "user_requested"},
-        ))
         return False
     emitter.emit(Event(
         type=EventType.RUN_RESUMED,
@@ -212,11 +207,6 @@ def _handle_loop_transitions(
     """
     if state.stop_requested:
         state.status = RunStatus.STOPPED
-        emitter.emit(Event(
-            type=EventType.RUN_STOPPED,
-            run_id=state.run_id,
-            data={"reason": "user_requested"},
-        ))
         return False, primitives
 
     if state.paused:
@@ -499,12 +489,13 @@ def run_loop(
     if state.status == RunStatus.RUNNING:
         state.status = RunStatus.COMPLETED
 
+    reason = "user_requested" if state.status == RunStatus.STOPPED else "completed"
     total = state.completed + state.failed
     emitter.emit(Event(
         type=EventType.RUN_STOPPED,
         run_id=state.run_id,
         data={
-            "reason": "completed",
+            "reason": reason,
             "total": total,
             "completed": state.completed,
             "failed": state.failed,
