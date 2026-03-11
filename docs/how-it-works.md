@@ -6,19 +6,44 @@ This page explains what ralphify does under the hood during each iteration, how 
 
 Each time the loop runs an iteration, ralphify follows these steps in order:
 
-```
-1. Read PROMPT.md from disk
-2. Run context commands and inject their output
-3. Inject instruction content
-4. Append check failures from the previous iteration
-5. Pipe the assembled prompt to the agent via stdin
-6. Wait for the agent to finish (or timeout)
-7. Run checks against the current state of the project
-8. Store any check failures for the next iteration
-9. Wait (if --delay is set), then go to step 1
+``` mermaid
+flowchart TD
+    A["📄 Read PROMPT.md from disk"] --> B["Run context commands"]
+    B --> C["Inject context output into prompt"]
+    C --> D["Inject instruction content"]
+    D --> E{"Check failures\nfrom previous\niteration?"}
+    E -- Yes --> F["Append failure output to prompt"]
+    E -- No --> G["🤖 Pipe assembled prompt\nto agent via stdin"]
+    F --> G
+    G --> H["Wait for agent to finish\n(or timeout)"]
+    H --> I["Run checks against\ncurrent project state"]
+    I --> J["Store check failures\nfor next iteration"]
+    J --> K{"More\niterations?"}
+    K -- Yes --> L{"Delay\nset?"}
+    K -- No --> M(["Print summary and exit"])
+    L -- Yes --> N["⏳ Wait --delay seconds"]
+    L -- No --> A
+    N --> A
+
+    style A fill:#7c4dff,color:#fff
+    style B fill:#7c4dff,color:#fff
+    style C fill:#7c4dff,color:#fff
+    style D fill:#7c4dff,color:#fff
+    style E fill:#7c4dff,color:#fff
+    style F fill:#7c4dff,color:#fff
+    style G fill:#00897b,color:#fff
+    style H fill:#00897b,color:#fff
+    style I fill:#1565c0,color:#fff
+    style J fill:#1565c0,color:#fff
 ```
 
-Steps 2-4 are the **prompt assembly** phase. Steps 5-6 are the **execution** phase. Steps 7-8 are the **validation** phase. The combination of validation and injection creates a self-healing feedback loop.
+The lifecycle has three phases:
+
+- :material-file-edit:{ .lg } **Prompt assembly** (purple) — read the prompt, resolve contexts and instructions, append check failures
+- :material-play:{ .lg } **Execution** (green) — pipe the assembled prompt to the agent and wait
+- :material-check-circle:{ .lg } **Validation** (blue) — run checks and store failures for the next iteration
+
+The combination of validation and injection creates a self-healing feedback loop.
 
 ### What's fresh and what's fixed
 
@@ -43,6 +68,21 @@ This means:
 ## Prompt assembly
 
 Ralphify builds the final prompt in three layers, applied in this order:
+
+``` mermaid
+flowchart LR
+    A["PROMPT.md"] --> B["1. Context\nresolution"]
+    B --> C["2. Instruction\nresolution"]
+    C --> D["3. Check failure\ninjection"]
+    D --> E["Assembled\nprompt"]
+    F[(".ralph/contexts/")] --> B
+    G[(".ralph/instructions/")] --> C
+    H["Previous iteration\nfailures"] --> D
+    E --> I["stdin → agent"]
+
+    style E fill:#00897b,color:#fff
+    style I fill:#00897b,color:#fff
+```
 
 ### 1. Context resolution
 
@@ -235,17 +275,35 @@ If a check fails, its output is stored and injected into the **next** iteration'
 
 This is the core mechanism that makes autonomous loops productive:
 
-```
-Iteration N:
-  Agent makes a change → check fails (tests broken)
+``` mermaid
+sequenceDiagram
+    participant P as Prompt
+    participant A as Agent
+    participant C as Checks
 
-Iteration N+1:
-  Agent sees check failure output in prompt →
-  fixes the broken tests → checks pass
+    rect rgb(200, 230, 255)
+    note over P,C: Iteration N
+    P->>A: Assembled prompt (no failures)
+    A->>A: Makes a change
+    A->>C: Done — run checks
+    C-->>P: ✗ tests failed (output stored)
+    end
 
-Iteration N+2:
-  No failures from previous iteration →
-  agent moves on to the next task
+    rect rgb(255, 245, 200)
+    note over P,C: Iteration N+1
+    P->>A: Prompt + check failure output
+    A->>A: Fixes the broken tests
+    A->>C: Done — run checks
+    C-->>P: ✓ All checks pass
+    end
+
+    rect rgb(200, 255, 200)
+    note over P,C: Iteration N+2
+    P->>A: Prompt (no failures)
+    A->>A: Moves on to the next task
+    A->>C: Done — run checks
+    C-->>P: ✓ All checks pass
+    end
 ```
 
 The agent doesn't need to "remember" that it broke something. The check failure output tells it exactly what went wrong, and the failure instruction tells it how you want it handled.
