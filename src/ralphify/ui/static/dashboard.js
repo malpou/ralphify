@@ -237,20 +237,18 @@ function RunCard({ run }) {
   const isActive = activeRunId.value === run.run_id;
   const total = run.completed + run.failed;
   const passRate = total > 0 ? (run.completed / total) * 100 : 0;
-  const shortId = run.run_id.length > 12 ? run.run_id.slice(0, 12) : run.run_id;
+  const shortId = run.run_id.length > 8 ? run.run_id.slice(0, 8) : run.run_id;
+  const displayTitle = run.prompt_name || shortId;
 
   return html`
     <div class="run-card ${isActive ? 'active' : ''}" onClick=${() => activeRunId.value = run.run_id}>
       <div class="run-badge ${run.status}"></div>
       <div class="run-card-info">
-        <div class="run-card-title">${shortId}</div>
+        <div class="run-card-title">${displayTitle}</div>
         <div class="run-card-meta">
-          iter ${run.iteration || 0}${total > 0 ? ` · ${Math.round(passRate)}% pass` : ` · ${run.status}`}
+          ${run.prompt_name ? shortId + ' · ' : ''}iter ${run.iteration || 0}${total > 0 ? ` · ${Math.round(passRate)}%` : ''}
         </div>
       </div>
-      ${run.prompt_name && html`
-        <span class="run-card-tag">${run.prompt_name}</span>
-      `}
       ${total > 0 && html`
         <div class="run-card-bar">
           <div class="run-card-bar-fill ${passRate >= 50 ? 'pass' : 'fail'}" style="width: ${passRate}%"></div>
@@ -500,29 +498,71 @@ function IterationPanel({ iteration: it }) {
                       it.status === 'failure' ? 'failure' :
                       it.status === 'timeout' ? 'timeout' : '';
 
+  const statusLabel = it.status === 'success' ? 'Passed' :
+                      it.status === 'failure' ? 'Failed' :
+                      it.status === 'timeout' ? 'Timed out' :
+                      it.status === 'running' ? 'Running' : it.status;
+
+  const statusIcon = it.status === 'success' ? '\u2713' :
+                     it.status === 'failure' ? '\u2717' :
+                     it.status === 'timeout' ? '\u23f1' : '\u2022';
+
+  const passedCount = it.checks ? it.checks.filter(c => c.passed).length : 0;
+  const totalChecks = it.checks ? it.checks.length : 0;
+
   return html`
     <div class="iteration-panel">
       <div class="iteration-header">
-        <span class="iteration-title">Iteration ${it.iteration}</span>
+        <div class="iteration-header-left">
+          <span class="iteration-title">Iteration ${it.iteration}</span>
+          <div class="iteration-meta">
+            ${it.duration && html`
+              <span class="iteration-meta-tag">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                </svg>
+                ${it.duration}
+              </span>
+            `}
+            ${it.returncode !== undefined && it.returncode !== null && html`
+              <span class="iteration-meta-tag">exit ${it.returncode}</span>
+            `}
+            ${totalChecks > 0 && html`
+              <span class="iteration-meta-tag">${passedCount}/${totalChecks} checks</span>
+            `}
+          </div>
+        </div>
         <span class="iteration-status ${statusClass}">
-          ${it.detail || it.status}
+          ${statusIcon} ${statusLabel}
         </span>
       </div>
       <div class="iteration-body">
+        ${it.detail && it.detail !== it.status && html`
+          <div class="iteration-detail">${it.detail}</div>
+        `}
         ${it.checks && it.checks.length > 0 && html`
           <div class="check-results">
-            <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">Checks</div>
-            ${it.checks.map(c => html`
-              <div class="check-result" key=${c.name}>
-                <span class="check-icon ${c.passed ? 'pass' : c.timed_out ? 'timeout' : 'fail'}">
-                  ${c.passed ? '\u2713' : c.timed_out ? '\u23f1' : '\u2717'}
-                </span>
-                <span class="check-name">${c.name}</span>
-                ${!c.passed && html`
-                  <span class="check-detail">exit ${c.exit_code}</span>
-                `}
-              </div>
-            `)}
+            <div class="checks-section-title">Check Results</div>
+            ${it.checks.map(c => {
+              const checkStatus = c.passed ? 'pass' : c.timed_out ? 'timeout' : 'fail';
+              return html`
+                <div class="check-result ${checkStatus}" key=${c.name}>
+                  <span class="check-icon ${checkStatus}">
+                    ${c.passed ? '\u2713' : c.timed_out ? '\u23f1' : '\u2717'}
+                  </span>
+                  <span class="check-name">${c.name}</span>
+                  ${!c.passed && html`
+                    <span class="check-detail">exit ${c.exit_code}</span>
+                  `}
+                </div>
+              `;
+            })}
+          </div>
+        `}
+        ${it.status === 'running' && html`
+          <div style="color: var(--text-secondary); font-size: 13px; display: flex; align-items: center; gap: 8px">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: pulse 1.5s infinite"></div>
+            Running...
           </div>
         `}
       </div>
@@ -720,7 +760,7 @@ function NewRunModal() {
         <div class="modal-title">New Run</div>
         <div class="form-group">
           <label class="form-label">Command</label>
-          <input class="form-input" value=${config.command} onInput=${updateField('command')} />
+          <input class="form-input mono" value=${config.command} onInput=${updateField('command')} />
         </div>
         <div class="form-group">
           <label class="form-label">Prompt</label>
@@ -738,7 +778,7 @@ function NewRunModal() {
             </div>
           `}
           ${!config.prompt_name && html`
-            <input class="form-input" value=${config.prompt_file}
+            <input class="form-input mono" value=${config.prompt_file}
                    onInput=${updateField('prompt_file')}
                    placeholder="PROMPT.md" />
           `}
@@ -750,7 +790,7 @@ function NewRunModal() {
         </div>
         <div class="form-group">
           <label class="form-label">Project Directory</label>
-          <input class="form-input" value=${config.project_dir} onInput=${updateField('project_dir')} />
+          <input class="form-input mono" value=${config.project_dir} onInput=${updateField('project_dir')} />
         </div>
         <div class="form-row">
           <div class="form-group">

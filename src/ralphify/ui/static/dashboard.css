@@ -633,18 +633,51 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.iteration-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .iteration-title {
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
 }
 
+.iteration-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iteration-meta-tag {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.iteration-meta-tag svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
 .iteration-status {
   font-size: 12px;
   font-family: var(--font-sans);
-  font-weight: 500;
-  padding: 4px 10px;
+  font-weight: 600;
+  padding: 4px 12px;
   border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .iteration-status.success { background: var(--green-bg); color: #16a34a; }
@@ -653,6 +686,17 @@ body {
 
 .iteration-body {
   padding: 20px;
+}
+
+.iteration-detail {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 /* ── Agent output ────────────────────────────────────────────────── */
@@ -675,25 +719,57 @@ body {
 /* ── Check results ───────────────────────────────────────────────── */
 
 .check-results {
-  margin-top: 8px;
+  margin-top: 0;
+}
+
+.checks-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
 }
 
 .check-result {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+  background: var(--bg);
+  transition: all 0.15s ease;
+  border-left: 3px solid var(--border);
 }
 
 .check-result:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.check-result:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.check-result.pass {
+  border-left-color: var(--green);
+}
+
+.check-result.fail {
+  border-left-color: var(--red);
+}
+
+.check-result.timeout {
+  border-left-color: var(--yellow);
 }
 
 .check-icon {
   font-size: 14px;
   width: 20px;
   text-align: center;
+  flex-shrink: 0;
 }
 .check-icon.pass { color: #16a34a; }
 .check-icon.fail { color: #dc2626; }
@@ -703,12 +779,16 @@ body {
   font-weight: 500;
   font-size: 13px;
   color: var(--text);
+  flex: 1;
 }
 
 .check-detail {
   font-size: 11px;
   color: var(--text-secondary);
   font-family: var(--font-mono);
+  background: var(--surface);
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 /* ── Check health sparklines ─────────────────────────────────────── */
@@ -1097,8 +1177,12 @@ body {
   border-radius: var(--radius);
   color: var(--text);
   font-size: 13px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   transition: all 0.15s ease;
+}
+
+.form-input.mono {
+  font-family: var(--font-mono);
 }
 
 .form-input:focus {
