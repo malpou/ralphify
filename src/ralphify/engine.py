@@ -24,7 +24,13 @@ from ralphify.checks import (
     format_check_failures,
     run_all_checks,
 )
-from ralphify.contexts import Context, discover_contexts, resolve_contexts, run_all_contexts
+from ralphify.contexts import (
+    Context,
+    ContextResult,
+    discover_contexts,
+    resolve_contexts,
+    run_all_contexts,
+)
 from ralphify._frontmatter import parse_frontmatter
 from ralphify.instructions import Instruction, discover_instructions, resolve_instructions
 
@@ -215,33 +221,48 @@ def _handle_loop_transitions(
     return True, primitives
 
 
+def _run_contexts_phase(
+    contexts: list[Context],
+    project_root: Path,
+    state: RunState,
+    emitter: EventEmitter,
+) -> list[ContextResult]:
+    """Execute all contexts and emit the resolved event.
+
+    Mirrors :func:`_run_checks_phase` — the loop has a clear context-running
+    phase separate from the text-only prompt assembly step.
+    """
+    results = run_all_contexts(contexts, project_root)
+    emitter.emit(Event(
+        type=EventType.CONTEXTS_RESOLVED,
+        run_id=state.run_id,
+        data={"iteration": state.iteration, "count": len(contexts)},
+    ))
+    return results
+
+
 def _assemble_prompt(
     config: RunConfig,
     primitives: EnabledPrimitives,
+    context_results: list[ContextResult],
     check_failures_text: str,
     state: RunState,
     emitter: EventEmitter,
 ) -> str:
-    """Build the full prompt for one iteration.
+    """Build the full prompt for one iteration (text assembly only).
 
-    Reads the prompt source, resolves contexts and instructions, and
-    appends any check-failure feedback from the previous iteration.
+    Reads the prompt source, resolves pre-computed context results and
+    instructions, and appends any check-failure feedback from the previous
+    iteration.  All subprocess I/O happens in the caller before this
+    function is reached.
     """
-    iteration = state.iteration
-
     if config.prompt_text:
         prompt = config.prompt_text
     else:
         raw = Path(config.prompt_file).read_text()
         _, prompt = parse_frontmatter(raw)
-    if primitives.contexts:
-        context_results = run_all_contexts(primitives.contexts, config.project_root)
+    if context_results:
         prompt = resolve_contexts(prompt, context_results)
-        emitter.emit(Event(
-            type=EventType.CONTEXTS_RESOLVED,
-            run_id=state.run_id,
-            data={"iteration": iteration, "count": len(primitives.contexts)},
-        ))
     if primitives.instructions:
         prompt = resolve_instructions(prompt, primitives.instructions)
     if check_failures_text:
@@ -250,7 +271,7 @@ def _assemble_prompt(
     emitter.emit(Event(
         type=EventType.PROMPT_ASSEMBLED,
         run_id=state.run_id,
-        data={"iteration": iteration, "prompt_length": len(prompt)},
+        data={"iteration": state.iteration, "prompt_length": len(prompt)},
     ))
     return prompt
 
@@ -439,8 +460,17 @@ def run_loop(
                 data={"iteration": iteration},
             ))
 
+            # Run contexts phase (subprocess I/O)
+            context_results: list[ContextResult] = []
+            if primitives.contexts:
+                context_results = _run_contexts_phase(
+                    primitives.contexts, config.project_root, state, emitter,
+                )
+
+            # Assemble prompt (text resolution only)
             prompt = _assemble_prompt(
-                config, primitives, check_failures_text, state, emitter,
+                config, primitives, context_results, check_failures_text,
+                state, emitter,
             )
 
             returncode = _execute_agent(
