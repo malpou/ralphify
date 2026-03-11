@@ -50,6 +50,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Getting Started: getting-started.md
   - Writing Your Prompt: prompts.md
   - Primitives: primitives.md
   - CLI Reference: cli.md
