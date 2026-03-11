@@ -50,6 +50,11 @@ class RunState:
     :meth:`request_resume`) use :class:`threading.Event` so the run loop
     can react at iteration boundaries without busy-waiting.
 
+    **Counter invariant**: ``timed_out`` is a *subset* of ``failed``, not
+    an independent category.  A timed-out iteration increments both
+    ``timed_out`` and ``failed``.  Therefore
+    ``completed + failed == total iterations`` (use :attr:`total`).
+
     **Threading model**: counters (``iteration``, ``completed``, etc.) are
     written only by the engine thread and read by API threads.  Under
     CPython's GIL this is safe — readers may see a briefly stale value,
@@ -61,12 +66,21 @@ class RunState:
     iteration: int = 0
     completed: int = 0
     failed: int = 0
-    timed_out: int = 0
+    timed_out: int = 0  # subset of ``failed``; see class docstring
     started_at: datetime | None = None
 
     _stop_requested: bool = False
     _pause_event: threading.Event = field(default_factory=threading.Event)
     _reload_requested: bool = False
+
+    @property
+    def total(self) -> int:
+        """Total iterations run (``completed + failed``).
+
+        Because ``timed_out`` is already counted in ``failed``, the total
+        is simply ``completed + failed`` — do **not** add ``timed_out``.
+        """
+        return self.completed + self.failed
 
     def __post_init__(self) -> None:
         # Start un-paused

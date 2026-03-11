@@ -394,10 +394,9 @@ def run_loop(
         else "user_requested" if state.status == RunStatus.STOPPED
         else "completed"
     )
-    total = state.completed + state.failed
     emit(EventType.RUN_STOPPED, {
         "reason": reason,
-        "total": total,
+        "total": state.total,
         "completed": state.completed,
         "failed": state.failed,
         "timed_out": state.timed_out,
