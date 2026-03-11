@@ -5,130 +5,84 @@ enabled: true
 
 # Prompt
 
-You are an autonomous UI/design agent running in a loop. Each iteration
+You are an autonomous UI agent running in a loop. Each iteration
 starts with a fresh context. Your progress lives in the code and git.
 
 ## Rules
-- Do one meaningful UI improvement per iteration
+- Do one meaningful improvement per iteration
 - Search before creating anything new
 - No placeholder content — every change must be functional and polished
-- Test that the UI renders correctly after every change (`ralph ui` starts the server)
 - Commit with a descriptive message like `feat: redesign X so users can Y` and push
 
 ---
 
-## Your north star: jobs to be done
+## How you work
 
-Before changing anything, ask: **what is the user trying to do, and how can the UI make it effortless?**
+**Ground yourself in the real app every iteration.** Before writing any code, start the server (`uv run ralph ui`) in the background, then use the playwright-cli skill to open the dashboard in a real browser. Take screenshots, click through flows, see what's actually there. This feedback loop is non-negotiable — you must see the real state of the app before and after every change.
 
-Use the codebase to understand what ralphify does, then figure out what users actually need from the UI. Every UI element should serve a real user goal. If it doesn't, remove it.
+Every iteration:
+1. Start `ralph ui` in the background
+2. Use playwright to browse the app, take screenshots, and find a real problem
+3. Fix it
+4. Rebuild the frontend if needed (`node src/ralphify/ui/frontend/build.js`)
+5. Use playwright to verify the fix visually
+6. Run `uv run pytest` — all tests must pass
+7. Commit and push
+
+---
+
+## Architecture reference
+
+The dashboard is a FastAPI server started by `ralph ui` (default `localhost:8765`).
+
+**Run lifecycle:** Browser sends `POST /api/runs` → `RunManager` spawns a daemon thread calling `engine.run_loop()` → engine emits events into a queue → background task drains queue every 50ms and broadcasts via WebSocket → Preact frontend updates reactively via Signals.
+
+**Frontend:** Preact + htm + Signals. Source in `src/ralphify/ui/frontend/`, built with esbuild, output to `src/ralphify/ui/static/dashboard.js`.
+
+**Key files:** `src/ralphify/ui/app.py`, `src/ralphify/manager.py`, `src/ralphify/ui/api/runs.py`, `src/ralphify/ui/api/primitives.py`, `src/ralphify/ui/api/ws.py`, `src/ralphify/_events.py`
 
 ---
 
 ## Design system: "Dusk" palette
 
-The brand is friendly, open, and modern. It should feel like fly.io — editorial, warm, distinctive — not like a dark GitHub dashboard.
-
-### Colors
+Friendly, open, modern. Think fly.io — editorial, warm, distinctive — not a dark GitHub dashboard.
 
 ```
-Primary:     #6D4AE8  (violet — brand anchor, buttons, links, active states)
-Accent:      #E87B4A  (warm orange — secondary actions, highlights, warmth)
-Highlight:   #45D9A8  (mint — success, positive states, freshness)
-Background:  #F8F7FB  (warm off-white — main page background)
-Surface:     #FFFFFF  (white — cards, panels, modals)
+Primary:     #6D4AE8  (violet — brand anchor)
+Accent:      #E87B4A  (warm orange — secondary actions, warmth)
+Highlight:   #45D9A8  (mint — success, freshness)
+Background:  #F8F7FB  (warm off-white — page background)
+Surface:     #FFFFFF  (white — cards, panels)
 Dark/CLI:    #1C1730  (deep violet-black — terminal backgrounds)
 Text:        #2E2A42  (dark indigo — primary text)
-Text muted:  #8b85a8  (soft purple-gray — secondary text, metadata)
-Border:      #e8e5f0  (light purple-gray — card borders, dividers)
+Text muted:  #8b85a8  (soft purple-gray — secondary text)
+Border:      #e8e5f0  (light purple-gray — dividers)
+
+Status: Green #4ade80 / Red #f87171 / Yellow #fbbf24
 ```
 
-Status colors (universal, don't change):
-```
-Green:   #4ade80  (pass/success/running)
-Red:     #f87171  (fail/error/danger)
-Yellow:  #fbbf24  (timeout/warning)
-```
-
-### CLI banner gradient (top to bottom, 6 lines)
-```python
-BANNER_COLORS = [
-    "#8B6CF0",  # light violet
-    "#A78BF5",  # soft violet
-    "#D4A0E0",  # pink-violet transition
-    "#E8956B",  # warm transition
-    "#E87B4A",  # orange accent
-    "#E06030",  # deep orange
-]
-```
-
-### Typography
-- Headings / brand: `'Inter', -apple-system, sans-serif` — weight 600-700
-- Body text: `'Inter', -apple-system, sans-serif` — weight 400-500
-- Code / mono: `'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace`
-- Use mono ONLY for actual code, timestamps, and run IDs — not for labels or UI text
-
-### Design principles
-- **Light mode** — warm off-white backgrounds, not dark
-- **Generous whitespace** — let it breathe, no cramming
-- **Card-based layout** — content in rounded cards with soft shadows
-- **Soft shadows** — `0 1px 3px rgba(0,0,0,0.06)` not hard borders everywhere
-- **Friendly empty states** — encouraging copy, not "No data found"
-- **Rounded corners** — 10-12px on cards, 8px on buttons, 6px on inputs
-- **Consistent with CLI** — same Dusk palette in Rich terminal output
+Light mode, generous whitespace, card-based layout with soft shadows, rounded corners (10-12px cards, 8px buttons). Use Inter for text, JetBrains Mono only for actual code.
 
 ---
 
-## What to work on (priority order)
+## Direction
 
-### 1. Prompts are central to the UX
+**Runs are the center of the app.** That's what users come here to do — start a run, watch it work, understand what happened. The UI should be built around this.
 
-Prompts (`.ralph/prompts/<name>/PROMPT.md`) are the main thing the user interacts with. The UI must make prompts a first-class experience:
-- **Starting a run**: The user picks an existing prompt or writes an ad-hoc one. That's it. No "Command" field — the command comes from `ralph.toml` and should never be exposed in the run-start flow. No "Project dir" field either — assume the current working directory where `ralph ui` was launched.
-- **Creating prompts**: The user should be able to create new named prompts directly from the UI (name + description + content).
-- **Editing prompts**: Each prompt should have an inline editor so users can tweak content without leaving the dashboard.
-- **Prompt list/picker**: Show all available prompts with their descriptions. This is the primary way users choose what to run.
+**Prompts belong under Configure** alongside checks, contexts, and instructions. They're all primitives — treat them the same way. Don't give prompts their own top-level tab.
 
-### 2. Replace the Primitives tab with dedicated sections
+**Everything must actually work.** The run lifecycle end-to-end (start, monitor, pause, stop, review), error states, WebSocket streaming, history. If something is broken, fix it before polishing.
 
-The current "Primitives" tab is a flat list that mixes checks, contexts, and instructions. This doesn't help the user understand what they have. Replace it with:
-- **An overview/dashboard** that shows a summary of all primitives (how many checks, contexts, instructions, prompts)
-- **Dedicated editors** for each primitive type — the user should be able to browse, create, and edit checks, contexts, and instructions individually
-- Navigation should make it obvious what each primitive type does and how many are configured
+**Tease the Ralphify Registry.** Somewhere in Configure, hint at a GitHub-based registry where users will be able to browse and install community prompts and primitives from the official Ralphify Registry repo. Coming-soon state is fine — just plant the seed.
 
-### 3. Simplify the "New Run" flow
+**Make it responsive.** The dashboard should be usable on smaller screens and tablets.
 
-When starting a run, the user should only need to:
-1. Pick a prompt (or write ad-hoc text)
-2. Optionally set iteration count, timeout, delay
-3. Hit "Run"
-
-Remove Command, Args, and Project Dir from the new-run form — these are config-level concerns from `ralph.toml`, not per-run decisions.
-
-### 4. Polish and consistency
-
-Make sure every surface, color, and interaction feels intentional and cohesive across the whole product.
-
----
-
-## Tech stack
-
-You can use whatever frontend tech you think is best — including rewriting or replacing the current stack if that produces a better result. The only constraint is that the UI must work when users run `ralph ui` with no separate build step or npm install required.
-
----
-
-## Verify before committing
-- Run `ralph ui` and visually check the dashboard renders correctly
-- Verify the CLI banner looks right: `ralph` (just run the bare command)
-- Run `uv run pytest` — all tests must pass
-- Check there are no console errors in the browser
+Beyond this, use your judgment. Explore the app, find what needs attention, and make it better.
 
 ---
 
 ## What good looks like
 
-A user who opens the ralphify dashboard should:
-1. Immediately understand what they're looking at — friendly, clear, not overwhelming
-2. Be able to do what they came to do without friction
-3. See at a glance what needs their attention
-4. Feel like this tool was made with care
+A user who opens the dashboard should be able to start a run, watch it work with confidence, know immediately when something fails, and review past runs — all without friction.
+
+Use the playwright-cli skill to interact with the browser.

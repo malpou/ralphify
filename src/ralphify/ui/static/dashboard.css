@@ -635,6 +635,19 @@ body {
   flex-shrink: 0;
 }
 
+.run-overview-actions {
+  display: flex;
+  justify-content: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.run-overview-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ── Timeline ────────────────────────────────────────────────────── */
 
 .timeline {
@@ -1629,6 +1642,25 @@ body {
   opacity: 1;
 }
 
+.history-run-again-btn {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  border: 1px solid var(--primary-border) !important;
+  color: var(--primary) !important;
+  background: var(--primary-light) !important;
+  padding: 4px 8px !important;
+}
+
+.history-run-again-btn:hover {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+.history-card:hover .history-run-again-btn {
+  opacity: 1;
+}
+
 .history-empty {
   display: flex;
   flex-direction: column;
@@ -1769,6 +1801,16 @@ body {
 .step-card:hover {
   box-shadow: var(--shadow);
   border-color: var(--border-hover);
+}
+
+.step-card-clickable {
+  cursor: pointer;
+}
+
+.step-card-clickable:hover {
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .step-number {
@@ -2333,6 +2375,11 @@ body {
   color: #fff;
 }
 
+.toast-success {
+  background: #16a34a;
+  color: #fff;
+}
+
 @keyframes toast-in {
   from { opacity: 0; transform: translateX(-50%) translateY(12px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -2639,6 +2686,14 @@ body {
   .run-overview-hint {
     font-size: 12px;
     padding: 10px 16px;
+  }
+
+  .run-overview-actions {
+    padding: 12px 16px;
+  }
+
+  .history-run-again-btn {
+    opacity: 1;
   }
 
   /* Timeline */

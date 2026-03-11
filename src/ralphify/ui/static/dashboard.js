@@ -298,6 +298,11 @@ function Toast({ text, type }) {
           <circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>
         </svg>
       `}
+      ${type === 'success' && html`
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      `}
       ${text}
     </div>
   `;
@@ -452,12 +457,12 @@ function EmptyState() {
         + New Run
       </button>
       <div class="empty-state-steps">
-        <div class="step-card">
+        <div class="step-card step-card-clickable" onClick=${() => activeTab.value = 'configure'}>
           <div class="step-number">1</div>
           <div class="step-title">Configure</div>
           <div class="step-desc">Set up checks and a prompt in your project</div>
         </div>
-        <div class="step-card">
+        <div class="step-card step-card-clickable" onClick=${() => showNewRunModal.value = true}>
           <div class="step-number">2</div>
           <div class="step-title">Launch</div>
           <div class="step-desc">Start a new run from the dashboard</div>
@@ -502,6 +507,7 @@ function RunControls({ run }) {
   const isRunning = run.status === 'running';
   const isPaused = run.status === 'paused';
   const isActive = isRunning || isPaused;
+  const isFinished = ['completed', 'stopped', 'failed'].includes(run.status);
   const displayTitle = run.prompt_name || 'Ad-hoc run';
 
   return html`
@@ -526,6 +532,20 @@ function RunControls({ run }) {
     `}
     ${isActive && html`
       <button class="btn btn-sm btn-danger" onClick=${() => stopRun(run.run_id)}>Stop</button>
+    `}
+    ${isFinished && html`
+      <button class="btn btn-sm btn-primary" onClick=${() => {
+        if (run.prompt_name) {
+          startRunWithPrompt(run.prompt_name);
+        } else {
+          showNewRunModal.value = true;
+        }
+      }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </svg>
+        Run Again
+      </button>
     `}
     <div class="controls-separator"></div>
     <div class="controls-stats">
@@ -621,6 +641,22 @@ function RunOverview({ run }) {
         </svg>
         ${hint}
       </div>
+      ${['completed', 'stopped', 'failed'].includes(run.status) && html`
+        <div class="run-overview-actions">
+          <button class="btn btn-primary" onClick=${() => {
+            if (run.prompt_name) {
+              startRunWithPrompt(run.prompt_name);
+            } else {
+              showNewRunModal.value = true;
+            }
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+            </svg>
+            Run Again
+          </button>
+        </div>
+      `}
     </div>
   `;
 }
@@ -1024,9 +1060,10 @@ function PrimEditForm({ primitive, kind, meta, onBack, onSaved }) {
       await api('PUT', `/projects/${btoa('.')}/primitives/${kind}/${primitive.name}`, {
         content, frontmatter: fm,
       });
+      showToast('Changes saved', 'success');
       onSaved();
     } catch (e) {
-      console.error('Save failed:', e);
+      showToast(e.message || 'Failed to save changes');
     }
     setSaving(false);
   }
@@ -1036,9 +1073,10 @@ function PrimEditForm({ primitive, kind, meta, onBack, onSaved }) {
     setDeleting(true);
     try {
       await api('DELETE', `/projects/${btoa('.')}/primitives/${kind}/${primitive.name}`);
+      showToast(`Deleted "${primitive.name}"`, 'info');
       onSaved();
     } catch (e) {
-      console.error('Delete failed:', e);
+      showToast(e.message || 'Failed to delete');
     }
     setDeleting(false);
   }
@@ -1144,9 +1182,11 @@ function PrimCreateForm({ kind, meta, onBack, onCreated }) {
       await api('POST', `/projects/${btoa('.')}/primitives/${kind}`, {
         content, frontmatter: fm,
       });
+      showToast(`Created "${name.trim()}"`, 'success');
       onCreated();
     } catch (e) {
-      setError(e.message.includes('409') ? 'A primitive with that name already exists.' : 'Failed to create primitive.');
+      const msg = e.message.includes('409') ? 'A primitive with that name already exists.' : (e.message || 'Failed to create primitive.');
+      setError(msg);
     }
     setCreating(false);
   }
@@ -1308,6 +1348,18 @@ function HistoryView() {
                 </div>
                 <span class="history-rate-label">Pass rate</span>
               </div>
+              <button class="btn btn-sm history-run-again-btn" onClick=${(e) => {
+                e.stopPropagation();
+                if (r.prompt_name) {
+                  startRunWithPrompt(r.prompt_name);
+                } else {
+                  showNewRunModal.value = true;
+                }
+              }} title="Run again with the same prompt">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                </svg>
+              </button>
               <svg class="history-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
