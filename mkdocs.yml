@@ -41,6 +41,7 @@ theme:
     - search.highlight
     - toc.follow
   icon:
+    logo: material/infinity
     repo: fontawesome/brands/github
 
 markdown_extensions:
