@@ -126,9 +126,18 @@ Changes are written directly to the `.ralph/` directory on disk.
 
 ### History
 
-Shows all past runs — completed, stopped, and failed. Each run displays its
-pass rate and iteration count. Click any run to review its full iteration
-details.
+The History tab shows all past runs — completed, stopped, and failed. Each run
+displays its pass rate, iteration count, and status badge. Click any run to
+review its full iteration details, including individual check results and agent
+output for every iteration.
+
+When no runs have completed yet, the tab shows an onboarding prompt with a
+button to start your first run.
+
+<figure markdown="span">
+  ![History tab](assets/dashboard/history-tab.png){ loading=lazy }
+  <figcaption>The History tab lists all past runs with pass rates and status badges. Click any run to drill into its iterations.</figcaption>
+</figure>
 
 ## Starting a run
 

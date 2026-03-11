@@ -12,8 +12,8 @@ All notable changes to ralphify are documented here.
 
 - **Named prompts** — save reusable, task-focused prompts in `.ralph/prompts/<name>/PROMPT.md` and switch between them with `ralph run <name>`. Create with `ralph new prompt <name>`, list with `ralph prompts list`. The `prompt` field in `ralph.toml` also accepts a prompt name.
 - **`--prompt-file` / `-f` flag** — point `ralph run` at any prompt file by path, overriding `ralph.toml`.
-- **Prompts tab** — the web dashboard now opens to a dedicated Prompts tab showing all named prompts as interactive cards with descriptions, content previews, edit buttons, and one-click run.
-- **Redesigned dashboard tabs** — the History tab shows rich run cards with visual pass rates and status badges. The Primitives tab has an overview dashboard with drill-down views and inline editors for creating, editing, and deleting checks, contexts, and instructions.
+- **Prompts in Configure** — browse, create, edit, and delete named prompts alongside other primitives in the Configure tab. Each prompt shows as an interactive card with description, content preview, and edit button.
+- **Redesigned dashboard to three tabs** — the dashboard now uses three tabs (Runs, Configure, History). The History tab shows rich run cards with visual pass rates and status badges. The Configure tab has an overview dashboard with drill-down views and inline editors for creating, editing, and deleting prompts, checks, contexts, and instructions.
 - **Dashboard reads `ralph.toml`** — the UI reads `command` and `args` from your project's `ralph.toml` so it no longer hardcodes agent configuration.
 - **Responsive dashboard** — the dashboard adapts to tablets (≤ 900px) and phones (≤ 600px) with a collapsible slide-out sidebar, tighter spacing, and adjusted modal widths.
 - **Prompt preview in New Run modal** — expand a preview panel to see the full prompt content before launching a run.
