@@ -1043,8 +1043,11 @@ function PrimEditForm({ primitive, kind, meta, onBack, onSaved }) {
   );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   const hasCommand = kind === 'checks' || kind === 'contexts';
+  const isCheck = kind === 'checks';
 
   const hasChanges = content !== primitive.content ||
     description !== (primitive.frontmatter?.description || '') ||
@@ -1086,6 +1089,18 @@ function PrimEditForm({ primitive, kind, meta, onBack, onSaved }) {
     setDeleting(false);
   }
 
+  async function handleTest() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await api('POST', `/projects/${btoa('.')}/primitives/checks/${primitive.name}/test`);
+      setTestResult(result);
+    } catch (e) {
+      setTestResult({ passed: false, exit_code: -1, output: e.message || 'Test failed', timed_out: false, duration: 0 });
+    }
+    setTesting(false);
+  }
+
   return html`
     <div class="prim-editor">
       <div class="prim-editor-header">
@@ -1100,6 +1115,20 @@ function PrimEditForm({ primitive, kind, meta, onBack, onSaved }) {
             <${KindIcon} kind=${kind} size=${18} />
           </div>
           <h2>${primitive.name}</h2>
+          ${isCheck && html`
+            <div style="flex: 1"></div>
+            <button class="btn btn-sm check-test-btn ${testing ? 'testing' : ''}" onClick=${handleTest} disabled=${testing || !command.trim()}>
+              ${testing ? html`
+                <div class="btn-spinner"></div>
+                Running...
+              ` : html`
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Test
+              `}
+            </button>
+          `}
         </div>
       </div>
       <div class="prim-editor-body">
@@ -1149,6 +1178,41 @@ function PrimEditForm({ primitive, kind, meta, onBack, onSaved }) {
                     rows=${hasCommand ? '8' : '14'}
                     placeholder="Write the content here..."></textarea>
         </div>
+        ${testResult && html`
+          <div class="check-test-result ${testResult.passed ? 'passed' : 'failed'}">
+            <div class="check-test-result-header">
+              <div class="check-test-result-status">
+                ${testResult.passed ? html`
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Passed
+                ` : testResult.timed_out ? html`
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  Timed out
+                ` : html`
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M18 6L6 18"/><path d="M6 6l12 12"/>
+                  </svg>
+                  Failed (exit ${testResult.exit_code})
+                `}
+              </div>
+              <div class="check-test-result-meta">
+                ${testResult.duration > 0 ? `${testResult.duration}s` : ''}
+              </div>
+              <button class="check-test-dismiss" onClick=${() => setTestResult(null)} title="Dismiss">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M18 6L6 18"/><path d="M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            ${testResult.output && testResult.output.trim() && html`
+              <pre class="check-test-output">${testResult.output.trim()}</pre>
+            `}
+          </div>
+        `}
       </div>
       <div class="prim-editor-actions">
         <button class="btn btn-danger-outline" onClick=${handleDelete} disabled=${deleting}>

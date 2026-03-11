@@ -1462,6 +1462,106 @@ body {
   color: #dc2626;
 }
 
+/* ── Check test ───────────────────────────────────────────────── */
+
+.check-test-btn {
+  gap: 6px;
+  font-weight: 500;
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+.check-test-btn:hover:not(:disabled) {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+.check-test-btn.testing {
+  color: var(--text-secondary);
+  cursor: wait;
+}
+
+.check-test-result {
+  margin-top: 16px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  overflow: hidden;
+  animation: fade-in 0.2s ease;
+}
+
+.check-test-result.passed {
+  border-color: rgba(74, 222, 128, 0.3);
+  background: rgba(74, 222, 128, 0.04);
+}
+
+.check-test-result.failed {
+  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(248, 113, 113, 0.04);
+}
+
+.check-test-result-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.check-test-result-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.check-test-result.passed .check-test-result-status {
+  color: #16a34a;
+}
+
+.check-test-result.failed .check-test-result-status {
+  color: #dc2626;
+}
+
+.check-test-result-meta {
+  flex: 1;
+  text-align: right;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.check-test-dismiss {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.check-test-dismiss:hover {
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.check-test-output {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.03);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* ── History panel ───────────────────────────────────────────────── */
 
 .history-view-header {

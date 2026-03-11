@@ -45,3 +45,11 @@ class PrimitiveResponse(BaseModel):
 class PrimitiveUpdate(BaseModel):
     content: str
     frontmatter: dict | None = None
+
+
+class CheckTestResponse(BaseModel):
+    passed: bool
+    exit_code: int
+    output: str
+    timed_out: bool
+    duration: float

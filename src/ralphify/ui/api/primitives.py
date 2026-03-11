@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import shutil
+import time
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -15,11 +16,11 @@ from ralphify._frontmatter import (
     parse_frontmatter,
     serialize_frontmatter,
 )
-from ralphify.checks import discover_checks
+from ralphify.checks import discover_checks, run_check
 from ralphify.contexts import discover_contexts
 from ralphify.instructions import discover_instructions
 from ralphify.prompts import discover_prompts
-from ralphify.ui.models import PrimitiveResponse, PrimitiveUpdate
+from ralphify.ui.models import CheckTestResponse, PrimitiveResponse, PrimitiveUpdate
 
 router = APIRouter()
 
@@ -51,22 +52,33 @@ def _resolve_kind(kind: str) -> tuple:
         raise HTTPException(status_code=400, detail=f"Unknown kind: {kind}")
 
 
+def _response_from_marker(marker_file: Path, kind: str, name: str) -> PrimitiveResponse:
+    """Read a marker file, parse its frontmatter, and build a response.
+
+    Centralises the read-parse-respond pattern used by list/get (via
+    ``_primitive_to_response``), update, and create endpoints so the
+    response construction logic lives in one place.
+    """
+    fm, body = parse_frontmatter(marker_file.read_text())
+    return PrimitiveResponse(
+        kind=kind,
+        name=name,
+        enabled=fm.get("enabled", True),
+        content=body,
+        frontmatter=fm,
+    )
+
+
 def _primitive_to_response(prim, kind: str) -> PrimitiveResponse:
     """Convert a discovered primitive to a response model."""
     marker = _KIND_MAP[kind][1]
     marker_file = prim.path / marker
-    if marker_file.exists():
-        text = marker_file.read_text()
-        fm, body = parse_frontmatter(text)
-    else:
-        fm, body = {}, ""
-    return PrimitiveResponse(
-        kind=kind,
-        name=prim.name,
-        enabled=prim.enabled,
-        content=body,
-        frontmatter=fm,
-    )
+    if not marker_file.exists():
+        return PrimitiveResponse(
+            kind=kind, name=prim.name, enabled=prim.enabled,
+            content="", frontmatter={},
+        )
+    return _response_from_marker(marker_file, kind, prim.name)
 
 
 @router.get(
@@ -112,17 +124,7 @@ async def update_primitive(
         raise HTTPException(status_code=404, detail="Primitive not found")
 
     marker_file.write_text(serialize_frontmatter(body.frontmatter or {}, body.content))
-
-    # Re-read to return updated state
-    text = marker_file.read_text()
-    fm, content = parse_frontmatter(text)
-    return PrimitiveResponse(
-        kind=kind,
-        name=name,
-        enabled=fm.get("enabled", True),
-        content=content,
-        frontmatter=fm,
-    )
+    return _response_from_marker(marker_file, kind, name)
 
 
 @router.post(
@@ -154,15 +156,7 @@ async def create_primitive(
     marker_file = prim_dir / marker
 
     marker_file.write_text(serialize_frontmatter(body.frontmatter or {}, body.content))
-
-    fm, content = parse_frontmatter(marker_file.read_text())
-    return PrimitiveResponse(
-        kind=kind,
-        name=name,
-        enabled=fm.get("enabled", True),
-        content=content,
-        frontmatter=fm,
-    )
+    return _response_from_marker(marker_file, kind, name)
 
 
 @router.delete("/projects/{project_dir}/primitives/{kind}/{name}", status_code=204)
@@ -174,3 +168,25 @@ async def delete_primitive(project_dir: str, kind: str, name: str) -> None:
     if not prim_dir.exists():
         raise HTTPException(status_code=404, detail="Primitive not found")
     shutil.rmtree(prim_dir)
+
+
+@router.post(
+    "/projects/{project_dir}/primitives/checks/{name}/test",
+    response_model=CheckTestResponse,
+)
+async def test_check(project_dir: str, name: str) -> CheckTestResponse:
+    """Run a single check and return the result."""
+    root = _decode_project_dir(project_dir)
+    for check in discover_checks(root):
+        if check.name == name:
+            start = time.monotonic()
+            result = run_check(check, root)
+            duration = time.monotonic() - start
+            return CheckTestResponse(
+                passed=result.passed,
+                exit_code=result.exit_code,
+                output=result.output,
+                timed_out=result.timed_out,
+                duration=round(duration, 2),
+            )
+    raise HTTPException(status_code=404, detail="Check not found")
