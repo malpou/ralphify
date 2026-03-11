@@ -1,8 +1,18 @@
+---
+hide:
+  - toc
+---
+
 # Ralphify
 
-Put your AI coding agent in a `while True` loop and let it ship.
+**Put your AI coding agent in a `while True` loop and let it ship.**
 
-Ralphify is a minimal harness for running autonomous AI coding loops, inspired by the [Ralph Wiggum technique](https://ghuntley.com/ralph/). It pipes a prompt to an AI coding agent, lets it do one thing, commits, and repeats — each iteration starts with a fresh context window.
+Ralphify is a minimal CLI harness for autonomous AI coding loops, inspired by the [Ralph Wiggum technique](https://ghuntley.com/ralph/). It pipes a prompt to an AI coding agent, validates the work with checks, and repeats — each iteration starts with a fresh context window.
+
+[Get Started](getting-started.md){ .md-button .md-button--primary }
+[View Cookbook](cookbook.md){ .md-button }
+
+---
 
 ## Install
 
@@ -10,66 +20,135 @@ Ralphify is a minimal harness for running autonomous AI coding loops, inspired b
 uv tool install ralphify
 ```
 
-This gives you the `ralph` command.
-
-## Quickstart
+## Two commands to start
 
 ```bash
 ralph init      # Creates ralph.toml + PROMPT.md
 ralph run       # Starts the loop (Ctrl+C to stop)
 ```
 
-### What `ralph init` creates
+`ralph init` creates a config file and a starter prompt. `ralph run` reads the prompt, pipes it to the agent, waits for it to finish, and does it again. Edit `PROMPT.md` while the loop is running — changes take effect on the next iteration.
 
-**`ralph.toml`** — tells ralphify which agent to call:
+---
 
-```toml
-[agent]
-command = "claude"
-args = ["-p", "--dangerously-skip-permissions"]
-prompt = "PROMPT.md"
+## Why it works
+
+<div class="grid cards" markdown>
+
+-   :material-repeat:{ .lg .middle } **One thing per loop**
+
+    ---
+
+    The agent picks a task, implements it, tests it, and commits. Then the next iteration starts fresh — no accumulated state, no context window bloat.
+
+-   :material-refresh:{ .lg .middle } **Fresh context every time**
+
+    ---
+
+    Each iteration re-reads `PROMPT.md` and the codebase from scratch. The agent always works from the current state, not stale assumptions.
+
+-   :material-source-branch:{ .lg .middle } **Progress lives in git**
+
+    ---
+
+    Code and commits are the only state that persists. If something goes wrong, `git reset --hard` and run more loops. No hidden state to debug.
+
+-   :material-sign-direction:{ .lg .middle } **The prompt is a tuning knob**
+
+    ---
+
+    When the agent does something dumb, add a sign to the prompt. "SLIDE DOWN, DON'T JUMP." The next iteration follows the new rules.
+
+</div>
+
+---
+
+## Three primitives
+
+Ralphify extends the basic loop with three building blocks that live in the `.ralph/` directory:
+
+<div class="grid cards" markdown>
+
+-   :material-check-circle-outline:{ .lg .middle } **Checks**
+
+    ---
+
+    Run after each iteration to validate the agent's work — tests, linters, type checks. Failed check output feeds into the next iteration so the agent can fix its own mistakes.
+
+    [:octicons-arrow-right-24: Learn more](primitives.md#checks)
+
+-   :material-database-outline:{ .lg .middle } **Contexts**
+
+    ---
+
+    Inject dynamic data into the prompt before each iteration — recent git history, current test status, API responses. The agent always sees fresh information.
+
+    [:octicons-arrow-right-24: Learn more](primitives.md#contexts)
+
+-   :material-file-document-edit-outline:{ .lg .middle } **Instructions**
+
+    ---
+
+    Reusable rules and coding standards injected into the prompt. Toggle them on and off without editing `PROMPT.md` — useful for style guides, commit conventions, or safety constraints.
+
+    [:octicons-arrow-right-24: Learn more](primitives.md#instructions)
+
+</div>
+
+---
+
+## The self-healing loop
+
+Checks create a feedback loop that makes the agent self-correcting:
+
+```
+Iteration N    Agent makes a change
+               Check runs → test fails
+
+Iteration N+1  Agent sees failure output in prompt
+               Fixes the broken test → checks pass
+
+Iteration N+2  No failures from previous iteration
+               Agent moves on to the next task
 ```
 
-**`PROMPT.md`** — a starter prompt template. This file is the prompt. It gets piped directly to your agent each iteration. Edit it to fit your project.
+You define what "valid" means. Ralphify feeds failures back into the prompt automatically. The agent doesn't need to remember anything — check output tells it exactly what went wrong.
 
-### What `ralph run` does
-
-Each iteration:
-
-1. Reads `PROMPT.md`
-2. Resolves any [contexts and instructions](primitives.md) into the prompt
-3. Pipes the assembled prompt to your agent command
-4. Waits for the agent to finish
-5. Runs any configured [checks](primitives.md#checks) and feeds failures into the next iteration
-6. Repeats
-
-```bash
-ralph run          # Run forever
-ralph run -n 10    # Run 10 iterations then stop
-```
-
-## The technique
-
-The Ralph Wiggum technique works because:
-
-- **One thing per loop.** The agent picks the most important task, implements it, tests it, and commits. Then the next iteration starts fresh.
-- **Fresh context every time.** No context window bloat. Each loop starts clean and reads the current state of the codebase.
-- **Progress lives in git.** Code and commits are the only state that persists between iterations. If something goes wrong, `git reset --hard` and run more loops.
-- **The prompt is a tuning knob.** When the agent does something dumb, you add a sign. Like telling Ralph not to jump off the slide — add "SLIDE DOWN, DON'T JUMP" to the prompt.
-
-Read the full writeup: [Ralph Wiggum as a "software engineer"](https://ghuntley.com/ralph/)
+---
 
 ## Requirements
 
 - Python 3.11+
 - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) (or any agent CLI that accepts piped input)
 
+---
+
 ## Next steps
 
-- [Getting Started](getting-started.md) — step-by-step tutorial from install to a running loop with checks and contexts
-- [How It Works](how-it-works.md) — the iteration lifecycle, prompt assembly, and feedback loop explained
-- [Writing Your Prompt](prompts.md) — how to write prompts that produce useful work
-- [Cookbook](cookbook.md) — complete, copy-pasteable setups for Python, TypeScript, bug fixing, and docs
-- [Primitives](primitives.md) — add checks, contexts, and instructions to your loop
-- [Configuration & CLI](cli.md) — `ralph.toml` format, all commands, and options
-- [Troubleshooting](troubleshooting.md) — common issues and how to fix them
+<div class="grid cards" markdown>
+
+-   **[Getting Started](getting-started.md)**
+
+    ---
+
+    Step-by-step tutorial from install to a running loop with checks and contexts.
+
+-   **[Writing Your Prompt](prompts.md)**
+
+    ---
+
+    How to write prompts that produce useful work — anatomy, patterns, and tips.
+
+-   **[Cookbook](cookbook.md)**
+
+    ---
+
+    Complete, copy-pasteable setups for Python, TypeScript, bug fixing, and docs.
+
+-   **[How It Works](how-it-works.md)**
+
+    ---
+
+    The iteration lifecycle, prompt assembly, and feedback loop explained.
+
+</div>
