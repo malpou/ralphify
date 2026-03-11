@@ -206,6 +206,7 @@ async def get_iterations(run_id: str, store: Store = Depends(_get_store)) -> lis
             "status": _ITERATION_STATUS_LABELS.get(it["status"], it["status"]),
             "returncode": it["returncode"],
             "duration": f"{it['duration']:.1f}s" if it["duration"] is not None else None,
+            "detail": it.get("detail") or None,
             "checks": checks_by_iter.get(it["iteration"]) or None,
         }
         for it in iters

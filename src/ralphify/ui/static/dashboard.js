@@ -700,15 +700,18 @@ function RunOverview({ run }) {
   // Hint text based on run state
   const isRunning = run.status === 'running';
   const isHealthy = run.failed === 0 || passRate >= 80;
+  const iterWord = (n) => n === 1 ? 'iteration' : 'iterations';
   const hint = isRunning
     ? (isHealthy
         ? 'All looking good — your agent is making progress.'
         : `Pass rate is ${passRate}%. Check the health sparklines below for stuck checks.`)
     : run.status === 'failed'
-        ? (run.lastError || (total > 0 ? `Run failed after ${total} iterations.` : 'Run failed.'))
+        ? (run.lastError || (total > 0 ? `Run failed after ${total} ${iterWord(total)}.` : 'Run failed.'))
     : run.status === 'completed'
-        ? `Run completed with ${passRate}% pass rate across ${total} iterations.`
-        : `Run ${run.status}. ${run.iteration || total} iteration${(run.iteration || total) !== 1 ? 's' : ''} ran.`;
+        ? (passRate === 0 && total > 0
+            ? `Run completed but all ${total} ${iterWord(total)} failed. Check iteration details below.`
+            : `Run completed with ${passRate}% pass rate across ${total} ${iterWord(total)}.`)
+        : `Run ${run.status}. ${run.iteration || total} ${iterWord(run.iteration || total)} ran.`;
 
   const isActive = ['running', 'paused', 'pending'].includes(run.status);
 
@@ -1223,6 +1226,15 @@ function IterationPanel({ iteration: it }) {
 
   const passedCount = it.checks ? it.checks.filter(c => c.passed).length : 0;
   const totalChecks = it.checks ? it.checks.length : 0;
+  const allChecksPassed = totalChecks > 0 && passedCount === totalChecks;
+  const failedButChecksPassed = (it.status === 'failure' || it.status === 'timeout') && allChecksPassed;
+
+  // Build a smart detail message — use persisted detail if available, else derive from returncode
+  const detailMsg = it.detail && it.detail !== it.status
+    ? it.detail
+    : (it.returncode != null && it.returncode !== 0)
+      ? `Agent exited with code ${it.returncode}`
+      : null;
 
   return html`
     <div class="iteration-panel">
@@ -1251,8 +1263,20 @@ function IterationPanel({ iteration: it }) {
         </span>
       </div>
       <div class="iteration-body">
-        ${it.detail && it.detail !== it.status && html`
-          <div class="iteration-detail">${it.detail}</div>
+        ${failedButChecksPassed && html`
+          <div class="iteration-agent-failed">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div>
+              <strong>${detailMsg || 'Agent failed'}</strong> — all ${totalChecks} check${totalChecks !== 1 ? 's' : ''} passed.
+              The agent command returned an error but your validation checks are green.
+            </div>
+          </div>
+        `}
+        ${!failedButChecksPassed && detailMsg && html`
+          <div class="iteration-detail">${detailMsg}</div>
         `}
         ${it.checks && it.checks.length > 0 && html`
           <div class="check-results">

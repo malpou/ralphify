@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS iterations (
     status       TEXT NOT NULL DEFAULT 'started',
     returncode   INTEGER,
     duration     REAL,
+    detail       TEXT NOT NULL DEFAULT '',
     started_at   TEXT,
     finished_at  TEXT,
     FOREIGN KEY (run_id) REFERENCES runs(run_id)
@@ -110,6 +111,13 @@ class Store:
         if "output" not in cols:
             await db.execute(
                 "ALTER TABLE check_results ADD COLUMN output TEXT NOT NULL DEFAULT ''"
+            )
+
+        cursor = await db.execute("PRAGMA table_info(iterations)")
+        iter_cols = {row[1] for row in await cursor.fetchall()}
+        if "detail" not in iter_cols:
+            await db.execute(
+                "ALTER TABLE iterations ADD COLUMN detail TEXT NOT NULL DEFAULT ''"
             )
 
     @property
@@ -216,12 +224,13 @@ class Store:
         status = _ITERATION_STATUS[event_type]
         await db.execute(
             "UPDATE iterations SET status = ?, returncode = ?, "
-            "duration = ?, finished_at = ? "
+            "duration = ?, detail = ?, finished_at = ? "
             "WHERE run_id = ? AND iteration = ?",
             (
                 status,
                 data.get("returncode"),
                 data.get("duration"),
+                data.get("detail", ""),
                 timestamp,
                 run_id,
                 iteration,
