@@ -20,12 +20,24 @@ Each time the loop runs an iteration, ralphify follows these steps in order:
 
 Steps 2-4 are the **prompt assembly** phase. Steps 5-6 are the **execution** phase. Steps 7-8 are the **validation** phase. The combination of validation and injection creates a self-healing feedback loop.
 
-### Fresh context every time
+### What's fresh and what's fixed
 
-The prompt file is re-read from disk at the start of **every** iteration. This means:
+The prompt file is re-read from disk at the start of **every** iteration, and context commands re-run each time. But primitive *configurations* are loaded once when the loop starts.
 
-- You can edit `PROMPT.md` while the loop is running, and changes take effect on the next iteration
+| What | When it's loaded | Can you change it while running? |
+|---|---|---|
+| `PROMPT.md` | Re-read every iteration | Yes — edits take effect next iteration |
+| Context command output | Re-run every iteration | Yes — commands always produce fresh data |
+| Context static content | Loaded at startup | No — restart the loop to pick up changes |
+| Instruction content | Loaded at startup | No — restart the loop to pick up changes |
+| Check commands/config | Loaded at startup | No — restart the loop to pick up changes |
+| New/removed primitives | Discovered at startup | No — restart the loop to pick up changes |
+
+This means:
+
+- You can edit `PROMPT.md` while the loop is running, and changes take effect on the next iteration — this is the primary way to steer the agent in real time
 - Context commands run fresh each iteration, so the agent always sees current data (latest git log, current test status, etc.)
+- But if you add a new check, modify a check's command, change an instruction's content, or toggle a primitive's `enabled` flag, you need to stop the loop (`Ctrl+C`) and restart it
 - The agent has no memory of previous iterations — all continuity comes from the codebase, git history, and any plan files the agent reads
 
 ## Prompt assembly

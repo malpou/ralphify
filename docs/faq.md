@@ -57,6 +57,14 @@ Make sure the agent CLI is installed and authenticated in your CI environment. U
 
 Yes — this is a core feature. `PROMPT.md` is re-read from disk at the start of every iteration. Edit it, save, and the next iteration uses the updated version. This is the main way to steer the agent in real time.
 
+### Can I add or change checks/contexts/instructions while running?
+
+No. Primitives (checks, contexts, instructions) are discovered and loaded once when `ralph run` starts. If you add a new check, modify a check's command, change an instruction's text, or toggle a primitive's `enabled` flag, you need to stop the loop (`Ctrl+C`) and restart it.
+
+The exception is **context commands** — their output is always fresh because the command re-runs each iteration. But the command itself, timeout, and static content are fixed at startup.
+
+See [What's fresh and what's fixed](how-it-works.md#whats-fresh-and-whats-fixed) for the full breakdown.
+
 ### What happens if the agent doesn't commit?
 
 Nothing breaks — ralphify doesn't require or enforce commits. But uncommitted changes accumulate and may confuse the agent in later iterations (it might redo work or create conflicts). Best practice is to include explicit commit instructions in your prompt.

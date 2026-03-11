@@ -95,6 +95,17 @@ Common causes:
 - There's no concrete task source (no TODO.md, PLAN.md, or failing tests to fix)
 - The agent can't find what it's supposed to work on
 
+### New check/context/instruction not being picked up
+
+Primitives are discovered once when `ralph run` starts. If you add, remove, or modify a primitive while the loop is running, the change won't take effect until you restart:
+
+1. Press `Ctrl+C` to stop the loop
+2. Make your changes (add checks, edit instructions, etc.)
+3. Run `ralph status` to verify the changes are detected
+4. Run `ralph run` again
+
+This is different from `PROMPT.md`, which **is** re-read every iteration. See [What's fresh and what's fixed](how-it-works.md#whats-fresh-and-whats-fixed) for details.
+
 ## Check issues
 
 ### Checks always failing
