@@ -24,6 +24,10 @@ from ralphify.contexts import discover_contexts, run_all_contexts, resolve_conte
 from ralphify.instructions import discover_instructions, resolve_instructions
 from ralphify.detector import detect_project
 
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 _console = Console(highlight=False)
 rprint = _console.print
 
