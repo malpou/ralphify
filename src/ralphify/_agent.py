@@ -92,10 +92,10 @@ def run_agent_streaming(
         text=True,
     )
     try:
-        # Guaranteed non-None because we passed PIPE for all three streams.
-        assert proc.stdin is not None
-        assert proc.stdout is not None
-        assert proc.stderr is not None
+        # Popen with PIPE guarantees non-None streams; guard explicitly
+        # so the type checker narrows and -O mode cannot skip the check.
+        if proc.stdin is None or proc.stdout is None or proc.stderr is None:
+            raise RuntimeError("subprocess.Popen failed to create PIPE streams")
 
         # Send prompt and close stdin so the agent can start.
         proc.stdin.write(prompt)

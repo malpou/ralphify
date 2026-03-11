@@ -20,7 +20,6 @@ class RunStatus(Enum):
     PENDING = "pending"
     RUNNING = "running"
     PAUSED = "paused"
-    STOPPING = "stopping"
     STOPPED = "stopped"
     COMPLETED = "completed"
     FAILED = "failed"

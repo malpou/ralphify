@@ -92,8 +92,6 @@ class EventType(Enum):
     # ── Other ───────────────────────────────────────────────────
     # Data: checks, contexts, instructions (int counts)
     PRIMITIVES_RELOADED = "primitives_reloaded"
-    # Reserved for future use
-    SETTINGS_CHANGED = "settings_changed"
     # Data: message, level ("info" | "error"), traceback (optional)
     LOG_MESSAGE = "log_message"
 
