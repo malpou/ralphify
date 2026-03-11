@@ -167,21 +167,30 @@ def _assemble_prompt(
     return prompt
 
 
-def _execute_agent(
+class _AgentResult(NamedTuple):
+    """Result of running the agent subprocess."""
+
+    returncode: int | None  # None means timed out
+    elapsed: float
+    log_file: Path | None
+
+
+def _run_agent_process(
+    cmd: list[str],
     prompt: str,
-    config: RunConfig,
-    state: RunState,
+    timeout: float | None,
     log_path_dir: Path | None,
-    emit: _BoundEmitter,
-) -> int | None:
-    """Run the agent subprocess and emit the result event.
+    iteration: int,
+) -> _AgentResult:
+    """Run the agent subprocess, optionally write logs, and return the result.
 
-    Updates ``state`` counters (completed / failed / timed_out) and returns
-    the process return code, or ``None`` if the process timed out.
+    When *log_path_dir* is set, output is captured, written to a log file,
+    then echoed to stdout/stderr so the user still sees it live.  When unset,
+    output streams directly to the terminal (no capture overhead).
+
+    Returns ``returncode=None`` when the process times out.
+    Raises ``FileNotFoundError`` if the command binary does not exist.
     """
-    iteration = state.iteration
-    cmd = [config.command] + config.args
-
     start = time.monotonic()
     log_file: Path | None = None
     returncode: int | None = None
@@ -191,7 +200,7 @@ def _execute_agent(
             cmd,
             input=prompt,
             text=True,
-            timeout=config.timeout,
+            timeout=timeout,
             capture_output=bool(log_path_dir),
         )
         if log_path_dir:
@@ -204,39 +213,64 @@ def _execute_agent(
     except subprocess.TimeoutExpired as e:
         if log_path_dir:
             log_file = _write_log(log_path_dir, iteration, e.stdout, e.stderr)
+
+    return _AgentResult(
+        returncode=returncode,
+        elapsed=time.monotonic() - start,
+        log_file=log_file,
+    )
+
+
+def _execute_agent(
+    prompt: str,
+    config: RunConfig,
+    state: RunState,
+    log_path_dir: Path | None,
+    emit: _BoundEmitter,
+) -> int | None:
+    """Run the agent subprocess and emit the result event.
+
+    Updates ``state`` counters (completed / failed / timed_out) and returns
+    the process return code, or ``None`` if the process timed out.
+    """
+    cmd = [config.command] + config.args
+
+    try:
+        agent = _run_agent_process(
+            cmd, prompt, config.timeout, log_path_dir, state.iteration,
+        )
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Agent command not found: {config.command!r}. "
             f"Check the [agent] command in ralph.toml."
         )
 
-    elapsed = time.monotonic() - start
-    duration = format_duration(elapsed)
+    duration = format_duration(agent.elapsed)
 
     # All state counter updates in one place for easy auditing.
-    if returncode is None:
+    if agent.returncode is None:
         state.timed_out += 1
         state.failed += 1
         event_type = EventType.ITERATION_TIMED_OUT
         state_detail = f"timed out after {duration}"
-    elif returncode == 0:
+    elif agent.returncode == 0:
         state.completed += 1
         event_type = EventType.ITERATION_COMPLETED
         state_detail = f"completed ({duration})"
     else:
         state.failed += 1
         event_type = EventType.ITERATION_FAILED
-        state_detail = f"failed with exit code {returncode} ({duration})"
+        state_detail = f"failed with exit code {agent.returncode} ({duration})"
 
     emit(event_type, {
-        "iteration": iteration,
-        "returncode": returncode,
-        "duration": elapsed,
+        "iteration": state.iteration,
+        "returncode": agent.returncode,
+        "duration": agent.elapsed,
         "duration_formatted": duration,
         "detail": state_detail,
-        "log_file": str(log_file) if log_file else None,
+        "log_file": str(agent.log_file) if agent.log_file else None,
     })
-    return returncode
+    return agent.returncode
 
 
 def _run_checks_phase(
