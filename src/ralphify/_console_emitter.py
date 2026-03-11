@@ -13,7 +13,7 @@ from collections.abc import Callable
 from rich.console import Console
 
 from ralphify._events import Event, EventType
-from ralphify.engine import format_duration
+from ralphify._output import format_duration
 
 
 class ConsoleEmitter:

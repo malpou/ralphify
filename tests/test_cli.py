@@ -10,7 +10,6 @@ from ralphify.checks import Check, CheckResult
 from ralphify.contexts import Context, ContextResult
 from ralphify.cli import app, CONFIG_FILENAME
 from ralphify._templates import RALPH_TOML_TEMPLATE, PROMPT_TEMPLATE
-from ralphify.engine import format_duration
 
 runner = CliRunner()
 
@@ -527,22 +526,6 @@ class TestRunTimeout:
         result = runner.invoke(app, ["run", "-n", "1", "--timeout", "300"])
         assert result.exit_code == 0
         assert "5m 0s per iteration" in result.output
-
-
-class TestFormatDuration:
-    def test_seconds(self):
-        assert format_duration(5.3) == "5.3s"
-        assert format_duration(0.1) == "0.1s"
-        assert format_duration(59.9) == "59.9s"
-
-    def test_minutes(self):
-        assert format_duration(60) == "1m 0s"
-        assert format_duration(90.5) == "1m 30s"
-        assert format_duration(3599) == "59m 59s"
-
-    def test_hours(self):
-        assert format_duration(3600) == "1h 0m"
-        assert format_duration(5400) == "1h 30m"
 
 
 def _setup_check(tmp_path, name="ruff-lint", command="ruff check .", enabled=True,

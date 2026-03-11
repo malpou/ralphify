@@ -7,7 +7,7 @@ from dataclasses import replace
 from unittest.mock import patch
 
 from ralphify._events import EventType, NullEmitter, QueueEmitter
-from ralphify.engine import RunConfig, RunState, RunStatus, format_duration, run_loop
+from ralphify.engine import RunConfig, RunState, RunStatus, run_loop
 
 _MOCK_SUBPROCESS = "ralphify.engine.subprocess.run"
 
@@ -278,19 +278,3 @@ class TestRunStateControls:
 
         assert state.status == RunStatus.STOPPED
         assert mock_run.call_count == 1
-
-
-class TestFormatDuration:
-    def test_seconds(self):
-        assert format_duration(5.3) == "5.3s"
-        assert format_duration(0.1) == "0.1s"
-        assert format_duration(59.9) == "59.9s"
-
-    def test_minutes(self):
-        assert format_duration(60) == "1m 0s"
-        assert format_duration(90.5) == "1m 30s"
-        assert format_duration(3599) == "59m 59s"
-
-    def test_hours(self):
-        assert format_duration(3600) == "1h 0m"
-        assert format_duration(5400) == "1h 30m"

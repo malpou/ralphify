@@ -1,4 +1,4 @@
-"""Combine and truncate subprocess output for prompt injection.
+"""Combine, truncate, and format subprocess output.
 
 Output from checks and contexts is capped at :data:`MAX_OUTPUT_LEN`
 characters (5 000) to avoid blowing up the agent's context window.
@@ -30,3 +30,16 @@ def truncate_output(text: str, max_len: int = MAX_OUTPUT_LEN) -> str:
     if len(text) > max_len:
         return text[:max_len] + "\n... (truncated)"
     return text
+
+
+def format_duration(seconds: float) -> str:
+    """Format duration in human-readable form."""
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    minutes = int(seconds // 60)
+    secs = seconds % 60
+    if minutes < 60:
+        return f"{minutes}m {secs:.0f}s"
+    hours = minutes // 60
+    mins = minutes % 60
+    return f"{hours}h {mins}m"

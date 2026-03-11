@@ -17,7 +17,7 @@ from enum import Enum
 from pathlib import Path
 from typing import NamedTuple
 from ralphify._events import Event, EventEmitter, EventType, NullEmitter
-from ralphify._output import collect_output
+from ralphify._output import collect_output, format_duration
 from ralphify.checks import (
     Check,
     discover_checks,
@@ -121,19 +121,6 @@ class RunState:
             self._reload_requested = False
             return True
         return False
-
-
-def format_duration(seconds: float) -> str:
-    """Format duration in human-readable form."""
-    if seconds < 60:
-        return f"{seconds:.1f}s"
-    minutes = int(seconds // 60)
-    secs = seconds % 60
-    if minutes < 60:
-        return f"{minutes}m {secs:.0f}s"
-    hours = minutes // 60
-    mins = minutes % 60
-    return f"{hours}h {mins}m"
 
 
 def _write_log(
