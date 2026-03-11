@@ -91,6 +91,7 @@ The Configure tab lists all checks, contexts, and instructions in your project.
 You can:
 
 - View the frontmatter and body of each primitive
+- Edit the **command** and **timeout** fields for checks and contexts directly in the form
 - Toggle primitives on and off with enable/disable badges
 - Create new primitives
 - Edit existing ones
@@ -109,6 +110,7 @@ Timeline view and see its full iteration details.
 Click **New Run** in the sidebar to open the run modal. It lets you:
 
 - **Pick a named prompt** — cards show every prompt discovered in `.ralph/prompts/`
+- **Preview the prompt** — after selecting a prompt, expand the preview panel to see its full content before launching
 - **Enter an ad-hoc prompt** — toggle to ad-hoc mode and type a one-off task
 - **Configure settings** — expand the settings panel to set max iterations, delay between iterations, timeout, and stop-on-error
 
@@ -151,6 +153,13 @@ FastAPI (uvicorn)
 - **Events**: The run loop emits structured events (iteration started, check
   passed, check failed, etc.) into a queue. An async task drains the queue and
   broadcasts events to all connected WebSocket clients.
+
+## Responsive layout
+
+The dashboard adapts to smaller screens. On tablets and phones (below 900px
+wide), the sidebar collapses into a slide-out drawer — tap the hamburger menu to
+open it and the overlay to close it. Controls and spacing tighten further below
+600px so the dashboard remains usable on a phone.
 
 ## REST API
 

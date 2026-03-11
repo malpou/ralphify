@@ -15,13 +15,21 @@ All notable changes to ralphify are documented here.
 - **Prompts tab** — the web dashboard now opens to a dedicated Prompts tab showing all named prompts as interactive cards with descriptions, content previews, edit buttons, and one-click run.
 - **Redesigned dashboard tabs** — the History tab shows rich run cards with visual pass rates and status badges. The Primitives tab has an overview dashboard with drill-down views and inline editors for creating, editing, and deleting checks, contexts, and instructions.
 - **Dashboard reads `ralph.toml`** — the UI reads `command` and `args` from your project's `ralph.toml` so it no longer hardcodes agent configuration.
+- **Responsive dashboard** — the dashboard adapts to tablets (≤ 900px) and phones (≤ 600px) with a collapsible slide-out sidebar, tighter spacing, and adjusted modal widths.
+- **Prompt preview in New Run modal** — expand a preview panel to see the full prompt content before launching a run.
+- **Command and timeout in Configure** — the Configure tab now shows editable command and timeout fields for checks and contexts, so you can see and change what each primitive runs without leaving the browser.
 - **WebSocket event type reference** — dashboard docs now include a complete table of all event types and their data fields.
 - **Codebase migration cookbook recipe** — step-by-step guide for automating JavaScript-to-TypeScript migrations, with adaptation tips for Python 2→3, CommonJS→ESM, and more.
+- **Contributor docs** — new `docs/contributing/` section with a codebase map, replacing the old `agent_docs/` directory.
 
 ### Fixed
 
 - `RUN_STOPPED` event now emits exactly once with the correct stop reason (`completed` vs `user_requested`) for user-requested stops.
 - Windows compatibility fix for Unicode characters in terminal output (contributed by [@mikkel-kaj](https://github.com/mikkel-kaj)).
+- New Run modal closes on Escape key press.
+- Running runs show a pulse animation on their status badge.
+- First run is auto-selected on page load.
+- Crashed iteration details and history labels display correctly.
 
 ### Improved
 
@@ -34,6 +42,11 @@ All notable changes to ralphify are documented here.
 - Extracted scaffold templates from `cli.py` into `_templates.py`.
 - Centralized primitive marker filenames into constants in `_frontmatter.py`.
 - Major engine refactoring: extracted helper functions, reduced parameter counts, replaced untyped tuples with `NamedTuple`, and encapsulated `RunState` threading internals.
+- Event types use `EventType` enums instead of raw strings.
+- `FanoutEmitter` moved to `_events` module alongside other emitter implementations.
+- Event handler dispatch uses bound methods in `ConsoleEmitter` and `Store`.
+- FastAPI dependency injection replaces module-level `_manager` global.
+- Event serialization moved into `Event.to_dict()` method.
 
 ---
 
