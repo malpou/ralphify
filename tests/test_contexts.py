@@ -7,6 +7,7 @@ from ralphify.contexts import (
     Context,
     ContextResult,
     discover_contexts,
+    discover_contexts_local,
     resolve_contexts,
     run_context,
     run_all_contexts,
@@ -135,6 +136,43 @@ class TestDiscoverContexts:
 
         result = discover_contexts(tmp_path)
         assert result[0].static_content == "Keep this."
+
+
+class TestDiscoverContextsLocal:
+    def test_finds_contexts_in_prompt_dir(self, tmp_path):
+        ctx_dir = tmp_path / "contexts" / "tasks"
+        ctx_dir.mkdir(parents=True)
+        (ctx_dir / "CONTEXT.md").write_text("---\ncommand: cat tasks.md\n---\nCurrent tasks:")
+
+        result = discover_contexts_local(tmp_path)
+        assert len(result) == 1
+        assert result[0].name == "tasks"
+        assert result[0].command == "cat tasks.md"
+        assert result[0].static_content == "Current tasks:"
+
+    def test_empty_prompt_dir(self, tmp_path):
+        result = discover_contexts_local(tmp_path)
+        assert result == []
+
+    def test_static_only_context(self, tmp_path):
+        ctx_dir = tmp_path / "contexts" / "info"
+        ctx_dir.mkdir(parents=True)
+        (ctx_dir / "CONTEXT.md").write_text("---\n---\nStatic info.")
+
+        result = discover_contexts_local(tmp_path)
+        assert len(result) == 1
+        assert result[0].command is None
+        assert result[0].static_content == "Static info."
+
+    def test_alphabetical_ordering(self, tmp_path):
+        contexts_dir = tmp_path / "contexts"
+        for name in ["zebra", "alpha"]:
+            d = contexts_dir / name
+            d.mkdir(parents=True)
+            (d / "CONTEXT.md").write_text(f"---\ncommand: echo {name}\n---\n")
+
+        result = discover_contexts_local(tmp_path)
+        assert [c.name for c in result] == ["alpha", "zebra"]
 
 
 class TestRunContext:

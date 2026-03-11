@@ -60,3 +60,29 @@ def discover_primitives(
         text = marker_file.read_text()
         frontmatter, body = parse_frontmatter(text)
         yield PrimitiveEntry(entry, frontmatter, body)
+
+
+def discover_local_primitives(
+    base_dir: Path, kind: str, marker: str
+) -> Iterator[PrimitiveEntry]:
+    """Yield prompt-scoped primitives from ``base_dir/{kind}/``.
+
+    Like :func:`discover_primitives` but scans a prompt directory
+    directly (e.g. ``.ralph/prompts/ui/checks/``) instead of the
+    global ``.ralph/{kind}/`` path.  Results are in alphabetical order.
+    """
+    primitives_dir = base_dir / kind
+    if not primitives_dir.is_dir():
+        return
+
+    for entry in sorted(primitives_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+
+        marker_file = entry / marker
+        if not marker_file.exists():
+            continue
+
+        text = marker_file.read_text()
+        frontmatter, body = parse_frontmatter(text)
+        yield PrimitiveEntry(entry, frontmatter, body)

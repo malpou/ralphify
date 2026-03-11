@@ -9,7 +9,7 @@ the body text of the INSTRUCTION.md file.
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._discovery import discover_primitives
+from ralphify._discovery import discover_local_primitives, discover_primitives
 from ralphify._frontmatter import INSTRUCTION_MARKER
 from ralphify.resolver import resolve_placeholders
 
@@ -28,21 +28,32 @@ class Instruction:
     content: str = ""
 
 
+def _instruction_from_entry(prim) -> Instruction:
+    """Convert a :class:`PrimitiveEntry` to an :class:`Instruction`."""
+    return Instruction(
+        name=prim.path.name,
+        path=prim.path,
+        enabled=prim.frontmatter.get("enabled", True),
+        content=prim.body,
+    )
+
+
 def discover_instructions(root: Path = Path(".")) -> list[Instruction]:
     """Scan ``.ralph/instructions/`` for subdirectories containing ``INSTRUCTION.md``.
 
     Unlike checks and contexts, instructions have no command or script —
     just static content.  Default: ``enabled=True``.
     """
-    return [
-        Instruction(
-            name=prim.path.name,
-            path=prim.path,
-            enabled=prim.frontmatter.get("enabled", True),
-            content=prim.body,
-        )
-        for prim in discover_primitives(root, "instructions", INSTRUCTION_MARKER)
-    ]
+    return [_instruction_from_entry(prim) for prim in discover_primitives(root, "instructions", INSTRUCTION_MARKER)]
+
+
+def discover_instructions_local(prompt_dir: Path) -> list[Instruction]:
+    """Scan ``prompt_dir/instructions/`` for prompt-scoped instructions.
+
+    Same construction logic as :func:`discover_instructions` but reads from
+    a prompt directory instead of the global ``.ralph/instructions/``.
+    """
+    return [_instruction_from_entry(prim) for prim in discover_local_primitives(prompt_dir, "instructions", INSTRUCTION_MARKER)]
 
 
 def resolve_instructions(prompt: str, instructions: list[Instruction]) -> str:

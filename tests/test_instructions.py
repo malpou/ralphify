@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ralphify.instructions import Instruction, discover_instructions, resolve_instructions
+from ralphify.instructions import Instruction, discover_instructions, discover_instructions_local, resolve_instructions
 
 
 class TestDiscoverInstructions:
@@ -86,6 +86,40 @@ class TestDiscoverInstructions:
 
         result = discover_instructions(tmp_path)
         assert result[0].content == "Keep this."
+
+
+class TestDiscoverInstructionsLocal:
+    def test_finds_instructions_in_prompt_dir(self, tmp_path):
+        inst_dir = tmp_path / "instructions" / "focus"
+        inst_dir.mkdir(parents=True)
+        (inst_dir / "INSTRUCTION.md").write_text("---\n---\nFocus on UI components.")
+
+        result = discover_instructions_local(tmp_path)
+        assert len(result) == 1
+        assert result[0].name == "focus"
+        assert result[0].content == "Focus on UI components."
+
+    def test_empty_prompt_dir(self, tmp_path):
+        result = discover_instructions_local(tmp_path)
+        assert result == []
+
+    def test_disabled_instruction(self, tmp_path):
+        inst_dir = tmp_path / "instructions" / "off"
+        inst_dir.mkdir(parents=True)
+        (inst_dir / "INSTRUCTION.md").write_text("---\nenabled: false\n---\nDisabled.")
+
+        result = discover_instructions_local(tmp_path)
+        assert result[0].enabled is False
+
+    def test_alphabetical_ordering(self, tmp_path):
+        instructions_dir = tmp_path / "instructions"
+        for name in ["zebra", "alpha"]:
+            d = instructions_dir / name
+            d.mkdir(parents=True)
+            (d / "INSTRUCTION.md").write_text(f"---\n---\n{name} content")
+
+        result = discover_instructions_local(tmp_path)
+        assert [i.name for i in result] == ["alpha", "zebra"]
 
 
 class TestResolveInstructions:

@@ -187,9 +187,20 @@ def init(
     rprint("Edit PROMPT.md to customize your agent's behavior.")
 
 
-def _scaffold_primitive(kind: str, name: str, filename: str, template: str) -> None:
-    """Create a new ralph primitive directory and template file."""
-    prim_dir = Path(".ralph") / kind / name
+def _scaffold_primitive(
+    kind: str, name: str, filename: str, template: str,
+    prompt: str | None = None,
+) -> None:
+    """Create a new ralph primitive directory and template file.
+
+    When *prompt* is set, the primitive is created under
+    ``.ralph/prompts/{prompt}/{kind}/{name}/`` instead of the global
+    ``.ralph/{kind}/{name}/``.
+    """
+    if prompt:
+        prim_dir = Path(".ralph") / "prompts" / prompt / kind / name
+    else:
+        prim_dir = Path(".ralph") / kind / name
     prim_file = prim_dir / filename
     label = filename.split(".")[0].capitalize()
     if prim_file.exists():
@@ -203,25 +214,28 @@ def _scaffold_primitive(kind: str, name: str, filename: str, template: str) -> N
 @new_app.command()
 def check(
     name: str = typer.Argument(help="Name of the new check."),
+    prompt: str | None = typer.Option(None, "--prompt", help="Scope check to a named prompt."),
 ) -> None:
     """Create a new check. Checks are scripts that run after each iteration to validate the agent's work (e.g. tests, linters)."""
-    _scaffold_primitive("checks", name, CHECK_MARKER, CHECK_MD_TEMPLATE)
+    _scaffold_primitive("checks", name, CHECK_MARKER, CHECK_MD_TEMPLATE, prompt=prompt)
 
 
 @new_app.command()
 def instruction(
     name: str = typer.Argument(help="Name of the new instruction."),
+    prompt: str | None = typer.Option(None, "--prompt", help="Scope instruction to a named prompt."),
 ) -> None:
     """Create a new instruction. Instructions are template-based prompts injected into the agent's context each iteration."""
-    _scaffold_primitive("instructions", name, INSTRUCTION_MARKER, INSTRUCTION_MD_TEMPLATE)
+    _scaffold_primitive("instructions", name, INSTRUCTION_MARKER, INSTRUCTION_MD_TEMPLATE, prompt=prompt)
 
 
 @new_app.command()
 def context(
     name: str = typer.Argument(help="Name of the new context."),
+    prompt: str | None = typer.Option(None, "--prompt", help="Scope context to a named prompt."),
 ) -> None:
     """Create a new context. Contexts are dynamic data sources (scripts or static text) injected before each iteration."""
-    _scaffold_primitive("contexts", name, CONTEXT_MARKER, CONTEXT_MD_TEMPLATE)
+    _scaffold_primitive("contexts", name, CONTEXT_MARKER, CONTEXT_MD_TEMPLATE, prompt=prompt)
 
 
 @new_app.command()

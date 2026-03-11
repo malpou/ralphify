@@ -8,6 +8,7 @@ from ralphify.checks import (
     Check,
     CheckResult,
     discover_checks,
+    discover_checks_local,
     format_check_failures,
     run_check,
     run_all_checks,
@@ -224,6 +225,41 @@ class TestDiscoverChecks:
 
         result = discover_checks(tmp_path)
         assert result == []
+
+
+class TestDiscoverChecksLocal:
+    def test_finds_checks_in_prompt_dir(self, tmp_path):
+        check_dir = tmp_path / "checks" / "lint"
+        check_dir.mkdir(parents=True)
+        (check_dir / "CHECK.md").write_text("---\ncommand: ruff check .\n---\nFix lint.")
+
+        result = discover_checks_local(tmp_path)
+        assert len(result) == 1
+        assert result[0].name == "lint"
+        assert result[0].command == "ruff check ."
+
+    def test_empty_prompt_dir(self, tmp_path):
+        result = discover_checks_local(tmp_path)
+        assert result == []
+
+    def test_skips_check_without_command_or_script(self, tmp_path):
+        check_dir = tmp_path / "checks" / "broken"
+        check_dir.mkdir(parents=True)
+        (check_dir / "CHECK.md").write_text("---\ndescription: no command\n---\nBody.")
+
+        with patch("ralphify.checks.warnings.warn"):
+            result = discover_checks_local(tmp_path)
+        assert result == []
+
+    def test_alphabetical_ordering(self, tmp_path):
+        checks_dir = tmp_path / "checks"
+        for name in ["zcheck", "acheck"]:
+            d = checks_dir / name
+            d.mkdir(parents=True)
+            (d / "CHECK.md").write_text(f"---\ncommand: echo {name}\n---\n")
+
+        result = discover_checks_local(tmp_path)
+        assert [c.name for c in result] == ["acheck", "zcheck"]
 
 
 class TestRunCheck:

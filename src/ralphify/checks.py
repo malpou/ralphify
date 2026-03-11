@@ -10,7 +10,7 @@ import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._discovery import discover_primitives, find_run_script
+from ralphify._discovery import discover_local_primitives, discover_primitives, find_run_script
 from ralphify._frontmatter import CHECK_MARKER
 from ralphify._output import truncate_output
 from ralphify._runner import run_command
@@ -51,6 +51,26 @@ class CheckResult:
     timed_out: bool = False
 
 
+def _check_from_entry(prim) -> Check | None:
+    """Convert a :class:`PrimitiveEntry` to a :class:`Check`, or ``None`` if invalid."""
+    script = find_run_script(prim.path)
+    command = prim.frontmatter.get("command")
+
+    if not script and not command:
+        warnings.warn(f"Check '{prim.path.name}' has neither a run.* script nor a command — skipping")
+        return None
+
+    return Check(
+        name=prim.path.name,
+        path=prim.path,
+        command=command,
+        script=script,
+        timeout=prim.frontmatter.get("timeout", _DEFAULT_TIMEOUT),
+        enabled=prim.frontmatter.get("enabled", True),
+        failure_instruction=prim.body,
+    )
+
+
 def discover_checks(root: Path = Path(".")) -> list[Check]:
     """Scan ``.ralph/checks/`` for subdirectories containing a ``CHECK.md``.
 
@@ -59,25 +79,23 @@ def discover_checks(root: Path = Path(".")) -> list[Check]:
     """
     checks = []
     for prim in discover_primitives(root, "checks", CHECK_MARKER):
-        script = find_run_script(prim.path)
-        command = prim.frontmatter.get("command")
+        check = _check_from_entry(prim)
+        if check is not None:
+            checks.append(check)
+    return checks
 
-        if not script and not command:
-            warnings.warn(f"Check '{prim.path.name}' has neither a run.* script nor a command — skipping")
-            continue
 
-        checks.append(
-            Check(
-                name=prim.path.name,
-                path=prim.path,
-                command=command,
-                script=script,
-                timeout=prim.frontmatter.get("timeout", _DEFAULT_TIMEOUT),
-                enabled=prim.frontmatter.get("enabled", True),
-                failure_instruction=prim.body,
-            )
-        )
+def discover_checks_local(prompt_dir: Path) -> list[Check]:
+    """Scan ``prompt_dir/checks/`` for prompt-scoped checks.
 
+    Same construction logic as :func:`discover_checks` but reads from
+    a prompt directory instead of the global ``.ralph/checks/``.
+    """
+    checks = []
+    for prim in discover_local_primitives(prompt_dir, "checks", CHECK_MARKER):
+        check = _check_from_entry(prim)
+        if check is not None:
+            checks.append(check)
     return checks
 
 

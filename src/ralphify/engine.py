@@ -25,6 +25,7 @@ from ralphify._run_types import RunConfig, RunState, RunStatus
 from ralphify.checks import (
     Check,
     discover_checks,
+    discover_checks_local,
     format_check_failures,
     run_all_checks,
 )
@@ -32,11 +33,17 @@ from ralphify.contexts import (
     Context,
     ContextResult,
     discover_contexts,
+    discover_contexts_local,
     resolve_contexts,
     run_all_contexts,
 )
 from ralphify._frontmatter import parse_frontmatter
-from ralphify.instructions import Instruction, discover_instructions, resolve_instructions
+from ralphify.instructions import (
+    Instruction,
+    discover_instructions,
+    discover_instructions_local,
+    resolve_instructions,
+)
 
 
 class EnabledPrimitives(NamedTuple):
@@ -47,18 +54,53 @@ class EnabledPrimitives(NamedTuple):
     instructions: list[Instruction]
 
 
-def _discover_enabled_primitives(root: Path) -> EnabledPrimitives:
+def _resolve_prompt_dir(config: RunConfig) -> Path | None:
+    """Return the prompt directory when running a named prompt.
+
+    Returns ``None`` for ad-hoc prompt text (``-p``), which has no
+    directory to scan for local primitives.
+    """
+    if config.prompt_name and not config.prompt_text:
+        return Path(config.prompt_file).parent
+    return None
+
+
+def _merge_primitives(global_list, local_list):
+    """Merge global and prompt-local primitives; local wins on name conflict."""
+    by_name = {p.name: p for p in global_list}
+    for p in local_list:
+        by_name[p.name] = p  # local wins
+    return sorted(by_name.values(), key=lambda p: p.name)
+
+
+def _discover_enabled_primitives(
+    root: Path, prompt_dir: Path | None = None,
+) -> EnabledPrimitives:
     """Discover all primitives and return only the enabled ones.
+
+    When *prompt_dir* is set, prompt-scoped primitives are merged with
+    globals (local wins on name collisions).  Enabled filtering happens
+    **after** the merge so a disabled local primitive can suppress a
+    global one with the same name.
 
     This is the **single layer** responsible for enabled filtering.
     Downstream functions (``resolve_contexts``, ``resolve_instructions``,
     ``run_all_contexts``, ``run_all_checks``) trust that they receive
     only enabled primitives and do not re-filter.
     """
+    checks = discover_checks(root)
+    contexts = discover_contexts(root)
+    instructions = discover_instructions(root)
+
+    if prompt_dir is not None:
+        checks = _merge_primitives(checks, discover_checks_local(prompt_dir))
+        contexts = _merge_primitives(contexts, discover_contexts_local(prompt_dir))
+        instructions = _merge_primitives(instructions, discover_instructions_local(prompt_dir))
+
     return EnabledPrimitives(
-        checks=[c for c in discover_checks(root) if c.enabled],
-        contexts=[c for c in discover_contexts(root) if c.enabled],
-        instructions=[i for i in discover_instructions(root) if i.enabled],
+        checks=[c for c in checks if c.enabled],
+        contexts=[c for c in contexts if c.enabled],
+        instructions=[i for i in instructions if i.enabled],
     )
 
 
@@ -103,6 +145,7 @@ def _handle_loop_transitions(
     config: RunConfig,
     primitives: EnabledPrimitives,
     emit: _BoundEmitter,
+    prompt_dir: Path | None = None,
 ) -> tuple[bool, EnabledPrimitives]:
     """Handle stop, pause, and reload transitions at the top of each iteration.
 
@@ -119,7 +162,7 @@ def _handle_loop_transitions(
             return False, primitives
 
     if state.consume_reload_request():
-        primitives = _discover_enabled_primitives(config.project_root)
+        primitives = _discover_enabled_primitives(config.project_root, prompt_dir)
         emit(EventType.PRIMITIVES_RELOADED, {
             "checks": len(primitives.checks),
             "contexts": len(primitives.contexts),
@@ -338,7 +381,8 @@ def run_loop(
         log_path_dir.mkdir(parents=True, exist_ok=True)
 
     check_failures_text = ""
-    primitives = _discover_enabled_primitives(config.project_root)
+    prompt_dir = _resolve_prompt_dir(config)
+    primitives = _discover_enabled_primitives(config.project_root, prompt_dir)
 
     emit(EventType.RUN_STARTED, {
         "checks": len(primitives.checks),
@@ -353,7 +397,7 @@ def run_loop(
     try:
         while True:
             should_continue, primitives = _handle_loop_transitions(
-                state, config, primitives, emit,
+                state, config, primitives, emit, prompt_dir,
             )
             if not should_continue:
                 break

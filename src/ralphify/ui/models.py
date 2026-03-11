@@ -45,6 +45,7 @@ class PrimitiveResponse(BaseModel):
     enabled: bool
     content: str
     frontmatter: dict
+    scope: str = "global"
 
 
 class PrimitiveUpdate(BaseModel):

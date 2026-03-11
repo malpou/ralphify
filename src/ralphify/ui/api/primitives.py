@@ -5,8 +5,9 @@ import base64
 import shutil
 import time
 from pathlib import Path
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from ralphify._frontmatter import (
     CHECK_MARKER,
@@ -16,20 +17,20 @@ from ralphify._frontmatter import (
     parse_frontmatter,
     serialize_frontmatter,
 )
-from ralphify.checks import discover_checks, run_check
-from ralphify.contexts import discover_contexts
-from ralphify.instructions import discover_instructions
+from ralphify.checks import discover_checks, discover_checks_local, run_check
+from ralphify.contexts import discover_contexts, discover_contexts_local
+from ralphify.instructions import discover_instructions, discover_instructions_local
 from ralphify.prompts import discover_prompts
 from ralphify.ui.models import CheckTestResponse, PrimitiveResponse, PrimitiveUpdate
 
 router = APIRouter()
 
-# Mapping from kind to (discover function, marker filename)
+# Mapping from kind to (discover function, local discover function, marker filename)
 _KIND_MAP = {
-    "checks": (discover_checks, CHECK_MARKER),
-    "contexts": (discover_contexts, CONTEXT_MARKER),
-    "instructions": (discover_instructions, INSTRUCTION_MARKER),
-    "prompts": (discover_prompts, PROMPT_MARKER),
+    "checks": (discover_checks, discover_checks_local, CHECK_MARKER),
+    "contexts": (discover_contexts, discover_contexts_local, CONTEXT_MARKER),
+    "instructions": (discover_instructions, discover_instructions_local, INSTRUCTION_MARKER),
+    "prompts": (discover_prompts, None, PROMPT_MARKER),
 }
 
 
@@ -44,7 +45,7 @@ def _decode_project_dir(encoded: str) -> Path:
 def _resolve_kind(kind: str) -> tuple:
     """Look up *kind* in the registry, raising 400 if unknown.
 
-    Returns ``(discover_fn, marker_filename)``.
+    Returns ``(discover_fn, local_discover_fn, marker_filename)``.
     """
     try:
         return _KIND_MAP[kind]
@@ -52,7 +53,20 @@ def _resolve_kind(kind: str) -> tuple:
         raise HTTPException(status_code=400, detail=f"Unknown kind: {kind}")
 
 
-def _response_from_marker(marker_file: Path, kind: str, name: str) -> PrimitiveResponse:
+def _primitive_base_dir(root: Path, kind: str, prompt_name: str | None = None) -> Path:
+    """Return the base directory for a primitive kind.
+
+    When *prompt_name* is set, returns ``root/.ralph/prompts/{prompt_name}/{kind}/``.
+    Otherwise returns ``root/.ralph/{kind}/``.
+    """
+    if prompt_name:
+        return root / ".ralph" / "prompts" / prompt_name / kind
+    return root / ".ralph" / kind
+
+
+def _response_from_marker(
+    marker_file: Path, kind: str, name: str, scope: str = "global",
+) -> PrimitiveResponse:
     """Read a marker file, parse its frontmatter, and build a response.
 
     Centralises the read-parse-respond pattern used by list/get (via
@@ -66,32 +80,44 @@ def _response_from_marker(marker_file: Path, kind: str, name: str) -> PrimitiveR
         enabled=fm.get("enabled", True),
         content=body,
         frontmatter=fm,
+        scope=scope,
     )
 
 
-def _primitive_to_response(prim, kind: str) -> PrimitiveResponse:
+def _primitive_to_response(prim, kind: str, scope: str = "global") -> PrimitiveResponse:
     """Convert a discovered primitive to a response model."""
-    marker = _KIND_MAP[kind][1]
+    marker = _KIND_MAP[kind][2]
     marker_file = prim.path / marker
     if not marker_file.exists():
         return PrimitiveResponse(
             kind=kind, name=prim.name, enabled=prim.enabled,
-            content="", frontmatter={},
+            content="", frontmatter={}, scope=scope,
         )
-    return _response_from_marker(marker_file, kind, prim.name)
+    return _response_from_marker(marker_file, kind, prim.name, scope)
 
 
 @router.get(
     "/projects/{project_dir}/primitives",
     response_model=list[PrimitiveResponse],
 )
-async def list_primitives(project_dir: str) -> list[PrimitiveResponse]:
-    """List all primitives for a project."""
+async def list_primitives(
+    project_dir: str,
+    prompt_name: Optional[str] = Query(None, description="Include prompt-scoped primitives"),
+) -> list[PrimitiveResponse]:
+    """List all primitives for a project.
+
+    When *prompt_name* is set, returns both global and prompt-scoped
+    primitives with their ``scope`` field set accordingly.
+    """
     root = _decode_project_dir(project_dir)
     results: list[PrimitiveResponse] = []
-    for kind, (discover_fn, _marker) in _KIND_MAP.items():
+    for kind, (discover_fn, local_discover_fn, _marker) in _KIND_MAP.items():
         for prim in discover_fn(root):
-            results.append(_primitive_to_response(prim, kind))
+            results.append(_primitive_to_response(prim, kind, scope="global"))
+        if prompt_name and local_discover_fn is not None:
+            prompt_dir = root / ".ralph" / "prompts" / prompt_name
+            for prim in local_discover_fn(prompt_dir):
+                results.append(_primitive_to_response(prim, kind, scope=prompt_name))
     return results
 
 
@@ -99,13 +125,24 @@ async def list_primitives(project_dir: str) -> list[PrimitiveResponse]:
     "/projects/{project_dir}/primitives/{kind}/{name}",
     response_model=PrimitiveResponse,
 )
-async def get_primitive(project_dir: str, kind: str, name: str) -> PrimitiveResponse:
+async def get_primitive(
+    project_dir: str, kind: str, name: str,
+    prompt_name: Optional[str] = Query(None, description="Look up prompt-scoped primitive"),
+) -> PrimitiveResponse:
     """Read a specific primitive."""
-    discover_fn, _marker = _resolve_kind(kind)
+    discover_fn, local_discover_fn, _marker = _resolve_kind(kind)
     root = _decode_project_dir(project_dir)
+
+    # Check prompt-scoped first when prompt_name is set
+    if prompt_name and local_discover_fn is not None:
+        prompt_dir = root / ".ralph" / "prompts" / prompt_name
+        for prim in local_discover_fn(prompt_dir):
+            if prim.name == name:
+                return _primitive_to_response(prim, kind, scope=prompt_name)
+
     for prim in discover_fn(root):
         if prim.name == name:
-            return _primitive_to_response(prim, kind)
+            return _primitive_to_response(prim, kind, scope="global")
     raise HTTPException(status_code=404, detail="Primitive not found")
 
 
@@ -114,17 +151,20 @@ async def get_primitive(project_dir: str, kind: str, name: str) -> PrimitiveResp
     response_model=PrimitiveResponse,
 )
 async def update_primitive(
-    project_dir: str, kind: str, name: str, body: PrimitiveUpdate
+    project_dir: str, kind: str, name: str, body: PrimitiveUpdate,
+    prompt_name: Optional[str] = Query(None, description="Update a prompt-scoped primitive"),
 ) -> PrimitiveResponse:
     """Update a primitive's content and/or frontmatter."""
-    _discover_fn, marker = _resolve_kind(kind)
+    _discover_fn, _local_discover_fn, marker = _resolve_kind(kind)
     root = _decode_project_dir(project_dir)
-    marker_file = root / ".ralph" / kind / name / marker
+    base = _primitive_base_dir(root, kind, prompt_name)
+    marker_file = base / name / marker
     if not marker_file.exists():
         raise HTTPException(status_code=404, detail="Primitive not found")
 
+    scope = prompt_name or "global"
     marker_file.write_text(serialize_frontmatter(body.frontmatter or {}, body.content))
-    return _response_from_marker(marker_file, kind, name)
+    return _response_from_marker(marker_file, kind, name, scope)
 
 
 @router.post(
@@ -133,14 +173,15 @@ async def update_primitive(
     status_code=201,
 )
 async def create_primitive(
-    project_dir: str, kind: str, body: PrimitiveUpdate
+    project_dir: str, kind: str, body: PrimitiveUpdate,
+    prompt_name: Optional[str] = Query(None, description="Create a prompt-scoped primitive"),
 ) -> PrimitiveResponse:
     """Scaffold a new primitive.
 
     The primitive name is derived from the frontmatter 'name' field,
     which must be present.
     """
-    _discover_fn, marker = _resolve_kind(kind)
+    _discover_fn, _local_discover_fn, marker = _resolve_kind(kind)
     if not body.frontmatter or "name" not in body.frontmatter:
         raise HTTPException(
             status_code=400,
@@ -148,23 +189,29 @@ async def create_primitive(
         )
     root = _decode_project_dir(project_dir)
     name = body.frontmatter["name"]
-    prim_dir = root / ".ralph" / kind / name
+    base = _primitive_base_dir(root, kind, prompt_name)
+    prim_dir = base / name
     if prim_dir.exists():
         raise HTTPException(status_code=409, detail="Primitive already exists")
 
     prim_dir.mkdir(parents=True)
     marker_file = prim_dir / marker
 
+    scope = prompt_name or "global"
     marker_file.write_text(serialize_frontmatter(body.frontmatter or {}, body.content))
-    return _response_from_marker(marker_file, kind, name)
+    return _response_from_marker(marker_file, kind, name, scope)
 
 
 @router.delete("/projects/{project_dir}/primitives/{kind}/{name}", status_code=204)
-async def delete_primitive(project_dir: str, kind: str, name: str) -> None:
+async def delete_primitive(
+    project_dir: str, kind: str, name: str,
+    prompt_name: Optional[str] = Query(None, description="Delete a prompt-scoped primitive"),
+) -> None:
     """Delete a primitive directory."""
     _resolve_kind(kind)
     root = _decode_project_dir(project_dir)
-    prim_dir = root / ".ralph" / kind / name
+    base = _primitive_base_dir(root, kind, prompt_name)
+    prim_dir = base / name
     if not prim_dir.exists():
         raise HTTPException(status_code=404, detail="Primitive not found")
     shutil.rmtree(prim_dir)

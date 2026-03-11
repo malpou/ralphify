@@ -8,7 +8,7 @@ A context can run a command/script, provide static text, or both.
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._discovery import discover_primitives, find_run_script
+from ralphify._discovery import discover_local_primitives, discover_primitives, find_run_script
 from ralphify._frontmatter import CONTEXT_MARKER
 from ralphify._output import truncate_output
 from ralphify._runner import run_command
@@ -50,6 +50,19 @@ class ContextResult:
     timed_out: bool = False
 
 
+def _context_from_entry(prim) -> Context:
+    """Convert a :class:`PrimitiveEntry` to a :class:`Context`."""
+    return Context(
+        name=prim.path.name,
+        path=prim.path,
+        command=prim.frontmatter.get("command"),
+        script=find_run_script(prim.path),
+        timeout=prim.frontmatter.get("timeout", _DEFAULT_TIMEOUT),
+        enabled=prim.frontmatter.get("enabled", True),
+        static_content=prim.body,
+    )
+
+
 def discover_contexts(root: Path = Path(".")) -> list[Context]:
     """Scan ``.ralph/contexts/`` for subdirectories containing a ``CONTEXT.md``.
 
@@ -57,18 +70,16 @@ def discover_contexts(root: Path = Path(".")) -> list[Context]:
     alphabetically by name.  The caller is responsible for filtering by
     ``enabled`` before execution.
     """
-    return [
-        Context(
-            name=prim.path.name,
-            path=prim.path,
-            command=prim.frontmatter.get("command"),
-            script=find_run_script(prim.path),
-            timeout=prim.frontmatter.get("timeout", _DEFAULT_TIMEOUT),
-            enabled=prim.frontmatter.get("enabled", True),
-            static_content=prim.body,
-        )
-        for prim in discover_primitives(root, "contexts", CONTEXT_MARKER)
-    ]
+    return [_context_from_entry(prim) for prim in discover_primitives(root, "contexts", CONTEXT_MARKER)]
+
+
+def discover_contexts_local(prompt_dir: Path) -> list[Context]:
+    """Scan ``prompt_dir/contexts/`` for prompt-scoped contexts.
+
+    Same construction logic as :func:`discover_contexts` but reads from
+    a prompt directory instead of the global ``.ralph/contexts/``.
+    """
+    return [_context_from_entry(prim) for prim in discover_local_primitives(prompt_dir, "contexts", CONTEXT_MARKER)]
 
 
 def run_context(context: Context, project_root: Path) -> ContextResult:
