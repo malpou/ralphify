@@ -240,11 +240,8 @@ def _handle_loop_transitions(
 
 def _assemble_prompt(
     config: RunConfig,
-    prompt_path: Path,
-    enabled_contexts: list[Context],
-    enabled_instructions: list[Instruction],
+    primitives: EnabledPrimitives,
     check_failures_text: str,
-    iteration: int,
     state: RunState,
     emitter: EventEmitter,
 ) -> str:
@@ -253,21 +250,23 @@ def _assemble_prompt(
     Reads the prompt source, resolves contexts and instructions, and
     appends any check-failure feedback from the previous iteration.
     """
+    iteration = state.iteration
+
     if config.prompt_text:
         prompt = config.prompt_text
     else:
-        raw = prompt_path.read_text()
+        raw = Path(config.prompt_file).read_text()
         _, prompt = parse_frontmatter(raw)
-    if enabled_contexts:
-        context_results = run_all_contexts(enabled_contexts, config.project_root)
+    if primitives.contexts:
+        context_results = run_all_contexts(primitives.contexts, config.project_root)
         prompt = resolve_contexts(prompt, context_results)
         emitter.emit(Event(
             type=EventType.CONTEXTS_RESOLVED,
             run_id=state.run_id,
-            data={"iteration": iteration, "count": len(enabled_contexts)},
+            data={"iteration": iteration, "count": len(primitives.contexts)},
         ))
-    if enabled_instructions:
-        prompt = resolve_instructions(prompt, enabled_instructions)
+    if primitives.instructions:
+        prompt = resolve_instructions(prompt, primitives.instructions)
     if check_failures_text:
         prompt = prompt + "\n\n" + check_failures_text
 
@@ -280,11 +279,9 @@ def _assemble_prompt(
 
 
 def _execute_agent(
-    cmd: list[str],
     prompt: str,
     config: RunConfig,
     state: RunState,
-    iteration: int,
     log_path_dir: Path | None,
     emitter: EventEmitter,
 ) -> int | None:
@@ -293,6 +290,9 @@ def _execute_agent(
     Updates ``state`` counters (completed / failed / timed_out) and returns
     the process return code, or ``None`` if the process timed out.
     """
+    iteration = state.iteration
+    cmd = [config.command] + config.args
+
     start = time.monotonic()
     log_file: Path | None = None
     returncode: int | None = None
@@ -352,7 +352,6 @@ def _run_checks_phase(
     enabled_checks: list[Check],
     project_root: Path,
     state: RunState,
-    iteration: int,
     emitter: EventEmitter,
 ) -> str:
     """Execute all checks, emit per-check and summary events.
@@ -360,6 +359,8 @@ def _run_checks_phase(
     Returns the formatted check-failure text to feed back into the next
     iteration's prompt (empty string when all checks pass).
     """
+    iteration = state.iteration
+
     emitter.emit(Event(
         type=EventType.CHECKS_STARTED,
         run_id=state.run_id,
@@ -418,13 +419,10 @@ def run_loop(
 
     state.status = RunStatus.RUNNING
 
-    prompt_path = Path(config.prompt_file)
     log_path_dir: Path | None = None
     if config.log_dir:
         log_path_dir = Path(config.log_dir)
         log_path_dir.mkdir(parents=True, exist_ok=True)
-
-    cmd = [config.command] + config.args
 
     check_failures_text = ""
     primitives = _discover_enabled_primitives(config.project_root)
@@ -464,12 +462,11 @@ def run_loop(
             ))
 
             prompt = _assemble_prompt(
-                config, prompt_path, primitives.contexts, primitives.instructions,
-                check_failures_text, iteration, state, emitter,
+                config, primitives, check_failures_text, state, emitter,
             )
 
             returncode = _execute_agent(
-                cmd, prompt, config, state, iteration, log_path_dir, emitter,
+                prompt, config, state, log_path_dir, emitter,
             )
 
             if returncode != 0 and config.stop_on_error:
@@ -482,7 +479,7 @@ def run_loop(
 
             if primitives.checks:
                 check_failures_text = _run_checks_phase(
-                    primitives.checks, config.project_root, state, iteration, emitter,
+                    primitives.checks, config.project_root, state, emitter,
                 )
 
             # Delay between iterations
