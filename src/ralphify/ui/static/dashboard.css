@@ -2099,6 +2099,71 @@ body {
   font-size: 12px;
 }
 
+.prompt-preview-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 0 4px;
+  font-family: var(--font-sans);
+  transition: color 0.15s ease;
+}
+
+.prompt-preview-toggle:hover {
+  color: var(--primary);
+}
+
+.prompt-preview-toggle svg {
+  flex-shrink: 0;
+}
+
+.prompt-preview-panel {
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--dark);
+  overflow: hidden;
+  animation: preview-expand 0.2s ease-out;
+}
+
+@keyframes preview-expand {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 300px; }
+}
+
+.prompt-preview-content {
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  max-height: 240px;
+  margin: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+.prompt-preview-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.prompt-preview-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.prompt-preview-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
 .modal-settings-toggle {
   display: flex;
   align-items: center;

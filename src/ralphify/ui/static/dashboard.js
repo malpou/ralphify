@@ -1257,6 +1257,7 @@ function NewRunModal() {
   const [prompts, setPrompts] = useState([]);
   const [promptsLoaded, setPromptsLoaded] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -1278,9 +1279,11 @@ function NewRunModal() {
   const selectPrompt = (name) => {
     if (selectedPrompt === name) {
       setSelectedPrompt(null);
+      setShowPreview(false);
     } else {
       setSelectedPrompt(name);
       setPromptMode('named');
+      setShowPreview(false);
     }
   };
 
@@ -1373,6 +1376,30 @@ function NewRunModal() {
               No saved prompts yet. Write an ad-hoc prompt below, or create prompts in <code>.ralph/prompts/</code>.
             </div>
           `}
+
+          ${selectedPrompt && (() => {
+            const selectedP = prompts.find(p => p.name === selectedPrompt);
+            const previewContent = selectedP?.content || '';
+            if (!previewContent) return null;
+            return html`
+              <button class="prompt-preview-toggle" onClick=${() => setShowPreview(!showPreview)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     style="transform: rotate(${showPreview ? '90deg' : '0deg'}); transition: transform 0.15s ease">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Preview prompt
+              </button>
+              ${showPreview && html`
+                <div class="prompt-preview-panel">
+                  <pre class="prompt-preview-content">${previewContent}</pre>
+                </div>
+              `}
+            `;
+          })()}
         </div>
 
         <div class="modal-divider">
