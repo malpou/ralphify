@@ -9,7 +9,7 @@ import shutil
 import tomllib
 import uuid
 from pathlib import Path
-from typing import Optional
+from collections.abc import Callable
 
 import typer
 from rich.console import Console
@@ -290,90 +290,96 @@ class ConsoleEmitter:
         self._rprint = console.print
 
     def emit(self, event: Event) -> None:
-        d = event.data
-        t = event.type
+        handler = self._handlers.get(event.type)
+        if handler:
+            handler(self, event.data)
 
-        if t == EventType.RUN_STARTED:
-            if d.get("timeout"):
-                self._rprint(f"[dim]Timeout: {_format_duration(d['timeout'])} per iteration[/dim]")
-            if d.get("checks"):
-                self._rprint(f"[dim]Checks: {d['checks']} enabled[/dim]")
-            if d.get("contexts"):
-                self._rprint(f"[dim]Contexts: {d['contexts']} enabled[/dim]")
-            if d.get("instructions"):
-                self._rprint(f"[dim]Instructions: {d['instructions']} enabled[/dim]")
+    def _on_run_started(self, d: dict) -> None:
+        if d.get("timeout"):
+            self._rprint(f"[dim]Timeout: {_format_duration(d['timeout'])} per iteration[/dim]")
+        if d.get("checks"):
+            self._rprint(f"[dim]Checks: {d['checks']} enabled[/dim]")
+        if d.get("contexts"):
+            self._rprint(f"[dim]Contexts: {d['contexts']} enabled[/dim]")
+        if d.get("instructions"):
+            self._rprint(f"[dim]Instructions: {d['instructions']} enabled[/dim]")
 
-        elif t == EventType.ITERATION_STARTED:
-            self._rprint(f"\n[bold blue]── Iteration {d['iteration']} ──[/bold blue]")
+    def _on_iteration_started(self, d: dict) -> None:
+        self._rprint(f"\n[bold blue]── Iteration {d['iteration']} ──[/bold blue]")
 
-        elif t in (EventType.ITERATION_COMPLETED, EventType.ITERATION_FAILED, EventType.ITERATION_TIMED_OUT):
-            iteration = d["iteration"]
-            returncode = d.get("returncode")
-            detail = d["detail"]
-            log_file = d.get("log_file")
+    def _on_iteration_ended(self, d: dict) -> None:
+        returncode = d.get("returncode")
+        if returncode is None:
+            color, icon = "yellow", "\u23f1"
+        elif returncode == 0:
+            color, icon = "green", "\u2713"
+        else:
+            color, icon = "red", "\u2717"
 
-            if returncode is None:
-                color, icon = "yellow", "\u23f1"
-            elif returncode == 0:
-                color, icon = "green", "\u2713"
+        status_msg = f"[{color}]{icon} Iteration {d['iteration']} {d['detail']}"
+        if d.get("log_file"):
+            status_msg += f" \u2192 {d['log_file']}"
+        status_msg += f"[/{color}]"
+        self._rprint(status_msg)
+
+    def _on_checks_completed(self, d: dict) -> None:
+        parts = []
+        if d["passed"]:
+            parts.append(f"{d['passed']} passed")
+        if d["failed"]:
+            parts.append(f"{d['failed']} failed")
+        self._rprint(f"  [bold]Checks:[/bold] {', '.join(parts)}")
+        for r in d["results"]:
+            if r["passed"]:
+                self._rprint(f"    [green]\u2713[/green] {r['name']}")
+            elif r["timed_out"]:
+                self._rprint(f"    [yellow]\u23f1[/yellow] {r['name']} (timed out)")
             else:
-                color, icon = "red", "\u2717"
+                self._rprint(f"    [red]\u2717[/red] {r['name']} (exit {r['exit_code']})")
 
-            status_msg = f"[{color}]{icon} Iteration {iteration} {detail}"
-            if log_file:
-                status_msg += f" \u2192 {log_file}"
-            status_msg += f"[/{color}]"
-            self._rprint(status_msg)
+    def _on_log_message(self, d: dict) -> None:
+        msg = d.get("message", "")
+        if "Stopping" in msg:
+            self._rprint(f"[red]{msg}[/red]")
+        elif "Waiting" in msg:
+            self._rprint(f"[dim]{msg}[/dim]")
 
-        elif t == EventType.CHECKS_COMPLETED:
-            passed = d["passed"]
-            failed = d["failed"]
-            parts = []
-            if passed:
-                parts.append(f"{passed} passed")
+    def _on_run_stopped(self, d: dict) -> None:
+        if d.get("reason") == "completed":
+            total = d.get("total", 0)
+            completed = d.get("completed", 0)
+            failed = d.get("failed", 0)
+            timed_out_count = d.get("timed_out", 0)
+            summary = f"\n[green]Done: {total} iteration(s) \u2014 {completed} succeeded"
             if failed:
-                parts.append(f"{failed} failed")
-            self._rprint(f"  [bold]Checks:[/bold] {', '.join(parts)}")
-            for r in d["results"]:
-                if r["passed"]:
-                    self._rprint(f"    [green]\u2713[/green] {r['name']}")
-                elif r["timed_out"]:
-                    self._rprint(f"    [yellow]\u23f1[/yellow] {r['name']} (timed out)")
-                else:
-                    self._rprint(f"    [red]\u2717[/red] {r['name']} (exit {r['exit_code']})")
+                summary += f", {failed} failed"
+            if timed_out_count:
+                summary += f" ({timed_out_count} timed out)"
+            summary += "[/green]"
+            self._rprint(summary)
 
-        elif t == EventType.LOG_MESSAGE:
-            msg = d.get("message", "")
-            if "Stopping" in msg:
-                self._rprint(f"[red]{msg}[/red]")
-            elif "Waiting" in msg:
-                self._rprint(f"[dim]{msg}[/dim]")
-
-        elif t == EventType.RUN_STOPPED:
-            if d.get("reason") == "completed":
-                total = d.get("total", 0)
-                completed = d.get("completed", 0)
-                failed = d.get("failed", 0)
-                timed_out_count = d.get("timed_out", 0)
-                summary = f"\n[green]Done: {total} iteration(s) \u2014 {completed} succeeded"
-                if failed:
-                    summary += f", {failed} failed"
-                if timed_out_count:
-                    summary += f" ({timed_out_count} timed out)"
-                summary += "[/green]"
-                self._rprint(summary)
+    _handlers: dict[EventType, "Callable[[ConsoleEmitter, dict], None]"] = {
+        EventType.RUN_STARTED: _on_run_started,
+        EventType.ITERATION_STARTED: _on_iteration_started,
+        EventType.ITERATION_COMPLETED: _on_iteration_ended,
+        EventType.ITERATION_FAILED: _on_iteration_ended,
+        EventType.ITERATION_TIMED_OUT: _on_iteration_ended,
+        EventType.CHECKS_COMPLETED: _on_checks_completed,
+        EventType.LOG_MESSAGE: _on_log_message,
+        EventType.RUN_STOPPED: _on_run_stopped,
+    }
 
 
 @app.command()
 def run(
-    prompt_name: Optional[str] = typer.Argument(None, help="Name of a prompt in .ralph/prompts/."),
-    n: Optional[int] = typer.Option(None, "-n", help="Max number of iterations. Infinite if not set."),
-    prompt_text: Optional[str] = typer.Option(None, "-p", "--prompt", help="Ad-hoc prompt text. Overrides the prompt file."),
-    prompt_file: Optional[str] = typer.Option(None, "--prompt-file", "-f", help="Path to prompt file. Overrides ralph.toml."),
+    prompt_name: str | None = typer.Argument(None, help="Name of a prompt in .ralph/prompts/."),
+    n: int | None = typer.Option(None, "-n", help="Max number of iterations. Infinite if not set."),
+    prompt_text: str | None = typer.Option(None, "-p", "--prompt", help="Ad-hoc prompt text. Overrides the prompt file."),
+    prompt_file: str | None = typer.Option(None, "--prompt-file", "-f", help="Path to prompt file. Overrides ralph.toml."),
     stop_on_error: bool = typer.Option(False, "--stop-on-error", "-s", help="Stop if the agent exits with non-zero."),
     delay: float = typer.Option(0, "--delay", "-d", help="Seconds to wait between iterations."),
-    log_dir: Optional[str] = typer.Option(None, "--log-dir", "-l", help="Save iteration output to log files in this directory."),
-    timeout: Optional[float] = typer.Option(None, "--timeout", "-t", help="Max seconds per iteration. Kill agent if exceeded."),
+    log_dir: str | None = typer.Option(None, "--log-dir", "-l", help="Save iteration output to log files in this directory."),
+    timeout: float | None = typer.Option(None, "--timeout", "-t", help="Max seconds per iteration. Kill agent if exceeded."),
 ) -> None:
     """Run the autonomous coding loop.
 
