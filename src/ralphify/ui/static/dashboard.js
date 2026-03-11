@@ -955,23 +955,37 @@ function ConfigureView() {
       `}
       ${items.length > 0 && html`
         <div class="prim-list">
-          ${items.map(p => html`
-            <div key=${p.name} class="prim-item" onClick=${() => setView({ page: 'edit', kind: view.kind, name: p.name })}>
-              <div class="prim-item-dot ${p.enabled ? 'enabled' : 'disabled'}"></div>
-              <div class="prim-item-info">
-                <div class="prim-item-name">${p.name}</div>
-                ${p.frontmatter?.description && html`
-                  <div class="prim-item-desc">${p.frontmatter.description}</div>
+          ${items.map(p => {
+            const desc = p.frontmatter?.description;
+            const cmd = p.frontmatter?.command;
+            return html`
+              <div key=${p.name} class="prim-item" onClick=${() => setView({ page: 'edit', kind: view.kind, name: p.name })}>
+                <div class="prim-item-dot ${p.enabled ? 'enabled' : 'disabled'}"></div>
+                <div class="prim-item-info">
+                  <div class="prim-item-name">${p.name}</div>
+                  ${desc && html`
+                    <div class="prim-item-desc">${desc}</div>
+                  `}
+                  ${!desc && cmd && html`
+                    <div class="prim-item-cmd"><code>${cmd}</code></div>
+                  `}
+                </div>
+                ${cmd && html`
+                  <div class="prim-item-cmd-badge" title="Command">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+                    </svg>
+                  </div>
                 `}
+                <div class="prim-item-badge ${p.enabled ? 'enabled' : 'disabled'}">
+                  ${p.enabled ? 'Enabled' : 'Disabled'}
+                </div>
+                <svg class="prim-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
               </div>
-              <div class="prim-item-badge ${p.enabled ? 'enabled' : 'disabled'}">
-                ${p.enabled ? 'Enabled' : 'Disabled'}
-              </div>
-              <svg class="prim-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </div>
-          `)}
+            `;
+          })}
         </div>
       `}
     </div>
@@ -982,17 +996,31 @@ function PrimEditForm({ primitive, kind, meta, onBack, onSaved }) {
   const [content, setContent] = useState(primitive.content);
   const [description, setDescription] = useState(primitive.frontmatter?.description || '');
   const [enabled, setEnabled] = useState(primitive.enabled);
+  const [command, setCommand] = useState(primitive.frontmatter?.command || '');
+  const [timeoutVal, setTimeoutVal] = useState(
+    primitive.frontmatter?.timeout != null ? String(primitive.frontmatter.timeout) : ''
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const hasCommand = kind === 'checks' || kind === 'contexts';
+
   const hasChanges = content !== primitive.content ||
     description !== (primitive.frontmatter?.description || '') ||
-    enabled !== primitive.enabled;
+    enabled !== primitive.enabled ||
+    (hasCommand && command !== (primitive.frontmatter?.command || '')) ||
+    (hasCommand && timeoutVal !== (primitive.frontmatter?.timeout != null ? String(primitive.frontmatter.timeout) : ''));
 
   async function handleSave() {
     setSaving(true);
     try {
       const fm = { ...primitive.frontmatter, description, enabled };
+      if (hasCommand) {
+        if (command.trim()) fm.command = command.trim();
+        else delete fm.command;
+        if (timeoutVal.trim()) fm.timeout = parseFloat(timeoutVal);
+        else delete fm.timeout;
+      }
       await api('PUT', `/projects/${btoa('.')}/primitives/${kind}/${primitive.name}`, {
         content, frontmatter: fm,
       });
@@ -1048,13 +1076,34 @@ function PrimEditForm({ primitive, kind, meta, onBack, onSaved }) {
               </button>
             </div>
           </div>
+          ${hasCommand && html`
+            <div class="prim-field-row" style="margin-top: 12px">
+              <div class="form-group" style="flex: 1; margin-bottom: 0">
+                <label class="form-label">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 4px">
+                    <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+                  </svg>
+                  Command
+                </label>
+                <input class="form-input mono" type="text" value=${command}
+                       onInput=${(e) => setCommand(e.target.value)}
+                       placeholder="e.g. uv run pytest" />
+              </div>
+              <div class="form-group" style="width: 120px; margin-bottom: 0">
+                <label class="form-label">Timeout (s)</label>
+                <input class="form-input" type="number" value=${timeoutVal}
+                       onInput=${(e) => setTimeoutVal(e.target.value)}
+                       placeholder="none" />
+              </div>
+            </div>
+          `}
         </div>
         <div class="form-group" style="margin-bottom: 0">
           <label class="form-label">Content</label>
           <textarea class="prim-content-textarea"
                     value=${content}
                     onInput=${(e) => setContent(e.target.value)}
-                    rows="14"
+                    rows=${hasCommand ? '8' : '14'}
                     placeholder="Write the content here..."></textarea>
         </div>
       </div>
@@ -1076,10 +1125,13 @@ function PrimCreateForm({ kind, meta, onBack, onCreated }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
+  const [command, setCommand] = useState('');
+  const [timeoutVal, setTimeoutVal] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
 
-  const canCreate = name.trim().length > 0;
+  const hasCommand = kind === 'checks' || kind === 'contexts';
+  const canCreate = name.trim().length > 0 && (!hasCommand || command.trim().length > 0);
 
   async function handleCreate() {
     setCreating(true);
@@ -1087,6 +1139,8 @@ function PrimCreateForm({ kind, meta, onBack, onCreated }) {
     try {
       const fm = { name: name.trim() };
       if (description.trim()) fm.description = description.trim();
+      if (hasCommand && command.trim()) fm.command = command.trim();
+      if (hasCommand && timeoutVal.trim()) fm.timeout = parseFloat(timeoutVal);
       await api('POST', `/projects/${btoa('.')}/primitives/${kind}`, {
         content, frontmatter: fm,
       });
@@ -1127,13 +1181,34 @@ function PrimCreateForm({ kind, meta, onBack, onCreated }) {
                    onInput=${(e) => setDescription(e.target.value)}
                    placeholder="Brief description (optional)" />
           </div>
+          ${hasCommand && html`
+            <div class="prim-field-row">
+              <div class="form-group" style="flex: 1; margin-bottom: 0">
+                <label class="form-label">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 4px">
+                    <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+                  </svg>
+                  Command
+                </label>
+                <input class="form-input mono" type="text" value=${command}
+                       onInput=${(e) => setCommand(e.target.value)}
+                       placeholder="e.g. uv run pytest" />
+              </div>
+              <div class="form-group" style="width: 120px; margin-bottom: 0">
+                <label class="form-label">Timeout (s)</label>
+                <input class="form-input" type="number" value=${timeoutVal}
+                       onInput=${(e) => setTimeoutVal(e.target.value)}
+                       placeholder="60" />
+              </div>
+            </div>
+          `}
         </div>
         <div class="form-group" style="margin-bottom: 0">
           <label class="form-label">Content</label>
           <textarea class="prim-content-textarea"
                     value=${content}
                     onInput=${(e) => setContent(e.target.value)}
-                    rows="14"
+                    rows=${hasCommand ? '8' : '14'}
                     placeholder="Write the content here..."></textarea>
         </div>
         ${error && html`<div class="prim-error">${error}</div>`}
