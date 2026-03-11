@@ -97,7 +97,7 @@ ralph run --log-dir ralph_logs     # Save output to log files
 | Option | Short | Default | Description |
 |---|---|---|---|
 | `-n` | | unlimited | Max number of iterations |
-| `--stop-on-error` | `-s` | off | Stop loop if agent exits non-zero |
+| `--stop-on-error` | `-s` | off | Stop loop if agent exits non-zero or times out |
 | `--delay` | `-d` | `0` | Seconds to wait between iterations |
 | `--timeout` | `-t` | none | Max seconds per iteration |
 | `--log-dir` | `-l` | none | Directory for iteration log files |

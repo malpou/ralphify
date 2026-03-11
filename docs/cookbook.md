@@ -362,6 +362,222 @@ ralph new context git-log
 
 ---
 
+## Rust project
+
+Feature development in a Rust project with cargo tests and clippy linting.
+
+### Configuration
+
+**`ralph.toml`**
+
+```toml
+[agent]
+command = "claude"
+args = ["-p", "--dangerously-skip-permissions"]
+prompt = "PROMPT.md"
+```
+
+**`PROMPT.md`**
+
+```markdown
+# Prompt
+
+You are an autonomous coding agent running in a loop. Each iteration
+starts with a fresh context. Your progress lives in the code and git.
+
+{{ contexts.git-log }}
+
+Read PLAN.md for the current task list. Pick the top uncompleted task,
+implement it fully, then mark it done.
+
+## Rules
+
+- One task per iteration
+- No placeholder code — full, working implementations only
+- Run `cargo test` before committing
+- Run `cargo clippy` and fix all warnings before committing
+- Commit with a descriptive message
+
+{{ instructions }}
+```
+
+### Checks
+
+**`.ralph/checks/tests/CHECK.md`**
+
+```markdown
+---
+command: cargo test
+timeout: 180
+enabled: true
+---
+Fix all failing tests. Do not ignore or delete tests.
+Do not add `#[ignore]` attributes to skip tests.
+```
+
+**`.ralph/checks/clippy/CHECK.md`**
+
+```markdown
+---
+command: cargo clippy -- -D warnings
+timeout: 60
+enabled: true
+---
+Fix all clippy warnings. Do not suppress warnings with `#[allow(...)]`
+unless there is a genuine reason documented in a comment.
+```
+
+**`.ralph/checks/fmt/CHECK.md`**
+
+```markdown
+---
+command: cargo fmt --check
+timeout: 30
+enabled: true
+---
+Run `cargo fmt` to fix formatting. Do not manually adjust formatting.
+```
+
+### Context
+
+**`.ralph/contexts/git-log/CONTEXT.md`**
+
+```markdown
+---
+command: git log --oneline -10
+timeout: 10
+enabled: true
+---
+## Recent commits
+```
+
+### Setup commands
+
+```bash
+ralph init
+ralph new check tests
+ralph new check clippy
+ralph new check fmt
+ralph new context git-log
+```
+
+Edit each file to match the contents above, create a `PLAN.md` with your tasks, and run:
+
+```bash
+ralph run -n 3 --log-dir ralph_logs
+```
+
+---
+
+## Go project
+
+Feature development in a Go project with tests, vet, and staticcheck.
+
+### Configuration
+
+**`ralph.toml`**
+
+```toml
+[agent]
+command = "claude"
+args = ["-p", "--dangerously-skip-permissions"]
+prompt = "PROMPT.md"
+```
+
+**`PROMPT.md`**
+
+```markdown
+# Prompt
+
+You are an autonomous coding agent running in a loop. Each iteration
+starts with a fresh context. Your progress lives in the code and git.
+
+{{ contexts.git-log }}
+
+Read PLAN.md for the current task list. Pick the top uncompleted task,
+implement it fully, then mark it done.
+
+## Rules
+
+- One task per iteration
+- No placeholder code — full, working implementations only
+- Run `go test ./...` before committing
+- Run `go vet ./...` and fix all issues before committing
+- Commit with a descriptive message
+
+{{ instructions }}
+```
+
+### Checks
+
+**`.ralph/checks/tests/CHECK.md`**
+
+```markdown
+---
+command: go test ./...
+timeout: 180
+enabled: true
+---
+Fix all failing tests. Do not skip tests with `t.Skip()` or delete them.
+```
+
+**`.ralph/checks/vet/CHECK.md`**
+
+```markdown
+---
+command: go vet ./...
+timeout: 60
+enabled: true
+---
+Fix all issues reported by `go vet`. These are likely bugs, not style issues.
+```
+
+### Context
+
+**`.ralph/contexts/git-log/CONTEXT.md`**
+
+```markdown
+---
+command: git log --oneline -10
+timeout: 10
+enabled: true
+---
+## Recent commits
+```
+
+### Setup commands
+
+```bash
+ralph init
+ralph new check tests
+ralph new check vet
+ralph new context git-log
+```
+
+Edit each file to match, create a `PLAN.md` with your tasks, and run:
+
+```bash
+ralph run -n 3 --log-dir ralph_logs
+```
+
+!!! tip "Adding staticcheck"
+    If you use [staticcheck](https://staticcheck.dev/), add it as a third check:
+
+    ```bash
+    ralph new check staticcheck
+    ```
+
+    ```markdown
+    ---
+    command: staticcheck ./...
+    timeout: 60
+    enabled: true
+    ---
+    Fix all staticcheck findings. Do not suppress with `//nolint` comments.
+    ```
+
+---
+
 ## Adding instructions for coding standards
 
 Instructions are reusable rules you can toggle on and off without editing the prompt. They're useful for enforcing coding standards across different prompts.
