@@ -163,6 +163,17 @@ ralph run refactor -n 5  # Use "refactor" for 5 iterations
 
 List available prompts with `ralph prompts list`.
 
+## Web dashboard
+
+Manage runs from your browser with `ralph ui`:
+
+```bash
+uv tool install "ralphify[ui]"   # one-time: add dashboard dependencies
+ralph ui                          # opens http://127.0.0.1:8765
+```
+
+The dashboard lets you start and stop runs, browse named prompts, watch iterations stream in live, and edit checks/contexts/instructions — all without touching the terminal. See the [dashboard docs](https://computerlovetech.github.io/ralphify/dashboard/) for the full walkthrough.
+
 ## Customizing your prompt
 
 The generated `PROMPT.md` is a starting point. A good prompt for autonomous loops typically includes:

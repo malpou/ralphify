@@ -4,11 +4,11 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException  # ty: ignore[unresolved-import]
+from fastapi import APIRouter, HTTPException
 
 from ralphify._frontmatter import PROMPT_MARKER
 from ralphify.engine import RunConfig
-from ralphify.manager import RunManager
+from ralphify.manager import ManagedRun, RunManager
 from ralphify.prompts import resolve_prompt_name
 from ralphify.ui.models import RunCreate, RunResponse, RunSettingsUpdate
 
@@ -41,7 +41,14 @@ def _get_manager() -> RunManager:
     return _manager
 
 
-def _run_response(managed) -> RunResponse:
+def _get_run_or_404(run_id: str) -> ManagedRun:
+    managed = _get_manager().get_run(run_id)
+    if managed is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return managed
+
+
+def _run_response(managed: ManagedRun) -> RunResponse:
     return RunResponse(
         run_id=managed.state.run_id,
         status=managed.state.status.value,
@@ -104,53 +111,37 @@ async def list_runs() -> list[RunResponse]:
 @router.get("/runs/{run_id}", response_model=RunResponse)
 async def get_run(run_id: str) -> RunResponse:
     """Get details for a single run."""
-    mgr = _get_manager()
-    managed = mgr.get_run(run_id)
-    if managed is None:
-        raise HTTPException(status_code=404, detail="Run not found")
-    return _run_response(managed)
+    return _run_response(_get_run_or_404(run_id))
 
 
 @router.post("/runs/{run_id}/pause", response_model=RunResponse)
 async def pause_run(run_id: str) -> RunResponse:
     """Pause a running run."""
-    mgr = _get_manager()
-    managed = mgr.get_run(run_id)
-    if managed is None:
-        raise HTTPException(status_code=404, detail="Run not found")
-    mgr.pause_run(run_id)
+    managed = _get_run_or_404(run_id)
+    _get_manager().pause_run(run_id)
     return _run_response(managed)
 
 
 @router.post("/runs/{run_id}/resume", response_model=RunResponse)
 async def resume_run(run_id: str) -> RunResponse:
     """Resume a paused run."""
-    mgr = _get_manager()
-    managed = mgr.get_run(run_id)
-    if managed is None:
-        raise HTTPException(status_code=404, detail="Run not found")
-    mgr.resume_run(run_id)
+    managed = _get_run_or_404(run_id)
+    _get_manager().resume_run(run_id)
     return _run_response(managed)
 
 
 @router.post("/runs/{run_id}/stop", response_model=RunResponse)
 async def stop_run(run_id: str) -> RunResponse:
     """Stop a run."""
-    mgr = _get_manager()
-    managed = mgr.get_run(run_id)
-    if managed is None:
-        raise HTTPException(status_code=404, detail="Run not found")
-    mgr.stop_run(run_id)
+    managed = _get_run_or_404(run_id)
+    _get_manager().stop_run(run_id)
     return _run_response(managed)
 
 
 @router.patch("/runs/{run_id}/settings", response_model=RunResponse)
 async def update_settings(run_id: str, body: RunSettingsUpdate) -> RunResponse:
     """Update run configuration mid-run."""
-    mgr = _get_manager()
-    managed = mgr.get_run(run_id)
-    if managed is None:
-        raise HTTPException(status_code=404, detail="Run not found")
+    managed = _get_run_or_404(run_id)
 
     if body.max_iterations is not None:
         managed.config.max_iterations = body.max_iterations

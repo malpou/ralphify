@@ -152,7 +152,7 @@ ralph run
 
 ### Things to know before making changes
 
-**Primitive marker filenames** (`CHECK.md`, `CONTEXT.md`, `INSTRUCTION.md`, `PROMPT.md`) are hardcoded in each module's `discover_*()` function AND in the scaffold templates in `cli.py`. If you change one, update both.
+**Primitive marker filenames** (`CHECK.md`, `CONTEXT.md`, `INSTRUCTION.md`, `PROMPT.md`) are defined as constants in `_frontmatter.py` (`CHECK_MARKER`, `CONTEXT_MARKER`, `INSTRUCTION_MARKER`, `PROMPT_MARKER`). All modules import from there — change the constant to rename everywhere.
 
 **Frontmatter field types** — the `timeout` and `enabled` fields get special type coercion in `_frontmatter.py:parse_frontmatter()`. Adding a new typed field requires updating the coercion logic there.
 
