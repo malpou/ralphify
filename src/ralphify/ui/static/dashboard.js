@@ -189,11 +189,9 @@ function App() {
   }, []);
 
   return html`
-    <div id="app">
-      <${Sidebar} />
-      <${Main} />
-      ${showNewRunModal.value && html`<${NewRunModal} />`}
-    </div>
+    <${Sidebar} />
+    <${Main} />
+    ${showNewRunModal.value && html`<${NewRunModal} />`}
   `;
 }
 
@@ -391,6 +389,9 @@ function RunOverview({ run }) {
         <div class="run-overview-title">
           <h2>${run.run_id}</h2>
           <span class="run-status-badge ${run.status}">${run.status}</span>
+          ${run.prompt_name && html`
+            <span class="run-prompt-tag">${run.prompt_name}</span>
+          `}
         </div>
       </div>
       <div class="run-overview-body">
@@ -650,22 +651,46 @@ function NewRunModal() {
     args: ['-p', '--dangerously-skip-permissions'],
     prompt_file: 'PROMPT.md',
     prompt_text: '',
+    prompt_name: null,
     max_iterations: '',
     delay: '0',
     timeout: '',
     stop_on_error: false,
     project_dir: '.',
   });
+  const [prompts, setPrompts] = useState([]);
+  const [promptsLoaded, setPromptsLoaded] = useState(false);
+
+  useEffect(() => {
+    const projectDir = btoa(config.project_dir);
+    api('GET', `/projects/${projectDir}/primitives`)
+      .then(data => {
+        const found = (data || []).filter(p => p.kind === 'prompts' && p.enabled);
+        setPrompts(found);
+        setPromptsLoaded(true);
+      })
+      .catch(() => setPromptsLoaded(true));
+  }, []);
 
   const updateField = (field) => (e) => {
     setConfig({ ...config, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
+  };
+
+  const selectPrompt = (name) => {
+    if (config.prompt_name === name) {
+      // Deselect — go back to default prompt file
+      setConfig({ ...config, prompt_name: null, prompt_file: 'PROMPT.md' });
+    } else {
+      setConfig({ ...config, prompt_name: name, prompt_file: '' });
+    }
   };
 
   const handleSubmit = () => {
     const body = {
       command: config.command,
       args: config.args,
-      prompt_file: config.prompt_file,
+      prompt_file: config.prompt_name ? '' : config.prompt_file,
+      prompt_name: config.prompt_name || null,
       prompt_text: config.prompt_text || null,
       max_iterations: config.max_iterations ? parseInt(config.max_iterations) : null,
       delay: parseFloat(config.delay) || 0,
@@ -685,8 +710,30 @@ function NewRunModal() {
           <input class="form-input" value=${config.command} onInput=${updateField('command')} />
         </div>
         <div class="form-group">
-          <label class="form-label">Prompt File</label>
-          <input class="form-input" value=${config.prompt_file} onInput=${updateField('prompt_file')} />
+          <label class="form-label">Prompt</label>
+          ${promptsLoaded && prompts.length > 0 && html`
+            <div class="prompt-picker">
+              ${prompts.map(p => html`
+                <button key=${p.name}
+                        class="prompt-chip ${config.prompt_name === p.name ? 'selected' : ''}"
+                        onClick=${() => selectPrompt(p.name)}
+                        title=${p.description || p.name}>
+                  <span class="prompt-chip-name">${p.name}</span>
+                  ${p.description && html`<span class="prompt-chip-desc">${p.description}</span>`}
+                </button>
+              `)}
+            </div>
+          `}
+          ${!config.prompt_name && html`
+            <input class="form-input" value=${config.prompt_file}
+                   onInput=${updateField('prompt_file')}
+                   placeholder="PROMPT.md" />
+          `}
+          ${config.prompt_name && html`
+            <div class="prompt-selected-note">
+              Using prompt: <strong>${config.prompt_name}</strong>
+            </div>
+          `}
         </div>
         <div class="form-group">
           <label class="form-label">Project Directory</label>
