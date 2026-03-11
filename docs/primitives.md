@@ -61,7 +61,24 @@ Instead of a `command` in frontmatter, you can place an executable script named 
 └── run.sh
 ```
 
-If both a `command` and a `run.*` script exist, the script takes precedence.
+If both a `command` and a `run.*` script exist, the script takes precedence. Scripts and commands always run with the **project root** as the working directory, not the primitive's directory.
+
+### HTML comments are stripped
+
+You can use HTML comments in any primitive file for internal notes — they're stripped before the content is injected into the prompt:
+
+```markdown
+---
+command: pytest -x
+timeout: 120
+enabled: true
+---
+<!-- TODO: consider adding --tb=short flag -->
+<!-- Agreed on this policy in sprint retro 2025-01-10 -->
+Fix all failing tests. Do not skip or delete tests.
+```
+
+The agent never sees the comments. This is useful for documenting why a check exists or what you've tried.
 
 ### How check failures appear in the prompt
 
@@ -139,7 +156,7 @@ Just like checks, you can place an executable script named `run.*` (e.g. `run.sh
 └── run.sh
 ```
 
-If both a `command` and a `run.*` script exist, the script takes precedence.
+If both a `command` and a `run.*` script exist, the script takes precedence. Scripts and commands always run with the **project root** as the working directory.
 
 This is useful for contexts that need more complex logic than a single shell command — for example, querying an API, combining multiple data sources, or running a Python script that formats output.
 

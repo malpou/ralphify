@@ -90,6 +90,97 @@ Fix all failing tests. Do not skip or delete tests.
 
 On the **first** iteration, no check failures are injected (there's no previous iteration to have failed).
 
+## Full example: what the agent receives
+
+Here's a concrete example showing how all three layers combine into the final prompt. Given these files:
+
+**`PROMPT.md`**
+
+```markdown
+# Prompt
+
+{{ contexts.git-log }}
+
+You are an autonomous coding agent. Each iteration starts fresh.
+
+Read PLAN.md and implement the next task.
+
+## Rules
+{{ instructions.code-style }}
+
+- One task per iteration
+- Commit with a descriptive message
+```
+
+**`.ralph/contexts/git-log/CONTEXT.md`**
+
+```markdown
+---
+command: git log --oneline -5
+timeout: 10
+enabled: true
+---
+## Recent commits
+```
+
+**`.ralph/instructions/code-style/INSTRUCTION.md`**
+
+```markdown
+---
+enabled: true
+---
+<!-- Internal note: agreed on these rules in sprint retro -->
+- Use type hints on all function signatures
+- Keep functions under 30 lines
+```
+
+And suppose the previous iteration's test check failed with exit code 1.
+
+The **assembled prompt** piped to the agent as stdin:
+
+````markdown
+# Prompt
+
+## Recent commits
+a1b2c3d feat: add user model
+e4f5g6h fix: database connection timeout
+i7j8k9l docs: update API reference
+m0n1o2p refactor: extract validation logic
+q3r4s5t test: add integration tests
+
+You are an autonomous coding agent. Each iteration starts fresh.
+
+Read PLAN.md and implement the next task.
+
+## Rules
+- Use type hints on all function signatures
+- Keep functions under 30 lines
+
+- One task per iteration
+- Commit with a descriptive message
+
+## Check Failures
+
+The following checks failed after the last iteration. Fix these issues:
+
+### tests
+**Exit code:** 1
+
+```
+FAILED tests/test_api.py::test_create_user - AssertionError: expected 201, got 400
+```
+
+Fix all failing tests.
+````
+
+Notice:
+
+- `{{ contexts.git-log }}` was replaced with the static content ("## Recent commits") plus the live `git log` output
+- `{{ instructions.code-style }}` was replaced inline with the instruction body
+- The HTML comment in the instruction file was stripped — you can leave notes in your primitive files that won't appear in the agent's prompt
+- Check failures from the previous iteration were appended at the end automatically
+- On the first iteration, the "Check Failures" section would not be present
+
 ## Execution
 
 The assembled prompt is piped to the agent command as **stdin**. The agent command is configured in `ralph.toml`:
