@@ -122,6 +122,20 @@ def _write_log(
     return log_file
 
 
+def _discover_enabled_primitives(
+    root: Path,
+) -> tuple[list, list, list]:
+    """Discover all primitives and return only the enabled ones.
+
+    Centralises the discover-then-filter pattern so every call site uses
+    consistent filtering logic.
+    """
+    enabled_checks = [c for c in discover_checks(root) if c.enabled]
+    enabled_contexts = [c for c in discover_contexts(root) if c.enabled]
+    enabled_instructions = [i for i in discover_instructions(root) if i.enabled]
+    return enabled_checks, enabled_contexts, enabled_instructions
+
+
 def run_loop(
     config: RunConfig,
     state: RunState,
@@ -147,10 +161,9 @@ def run_loop(
     cmd = [config.command] + config.args
 
     check_failures_text = ""
-    enabled_checks = [c for c in discover_checks(config.project_root) if c.enabled]
-    contexts = discover_contexts(config.project_root)
-    enabled_contexts = [c for c in contexts if c.enabled] if contexts else []
-    instructions = discover_instructions(config.project_root)
+    enabled_checks, enabled_contexts, enabled_instructions = (
+        _discover_enabled_primitives(config.project_root)
+    )
 
     emitter.emit(Event(
         type=EventType.RUN_STARTED,
@@ -158,7 +171,7 @@ def run_loop(
         data={
             "checks": len(enabled_checks),
             "contexts": len(enabled_contexts),
-            "instructions": len([i for i in instructions if i.enabled]),
+            "instructions": len(enabled_instructions),
             "max_iterations": config.max_iterations,
             "timeout": config.timeout,
             "delay": config.delay,
@@ -203,17 +216,16 @@ def run_loop(
             # Check hot-reload
             if state._reload_requested:
                 state._reload_requested = False
-                enabled_checks = [c for c in discover_checks(config.project_root) if c.enabled]
-                contexts = discover_contexts(config.project_root)
-                enabled_contexts = [c for c in contexts if c.enabled] if contexts else []
-                instructions = discover_instructions(config.project_root)
+                enabled_checks, enabled_contexts, enabled_instructions = (
+                    _discover_enabled_primitives(config.project_root)
+                )
                 emitter.emit(Event(
                     type=EventType.PRIMITIVES_RELOADED,
                     run_id=state.run_id,
                     data={
                         "checks": len(enabled_checks),
                         "contexts": len(enabled_contexts),
-                        "instructions": len([i for i in instructions if i.enabled]),
+                        "instructions": len(enabled_instructions),
                     },
                 ))
 
@@ -243,8 +255,8 @@ def run_loop(
                     run_id=state.run_id,
                     data={"iteration": iteration, "count": len(enabled_contexts)},
                 ))
-            if instructions:
-                prompt = resolve_instructions(prompt, instructions)
+            if enabled_instructions:
+                prompt = resolve_instructions(prompt, enabled_instructions)
             if check_failures_text:
                 prompt = prompt + "\n\n" + check_failures_text
 

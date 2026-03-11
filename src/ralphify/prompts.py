@@ -44,10 +44,11 @@ def discover_prompts(root: Path = Path(".")) -> list[Prompt]:
 
 def resolve_prompt_name(name: str, root: Path = Path(".")) -> Prompt:
     """Look up a prompt by name.  Raises ``ValueError`` if not found."""
-    for prompt in discover_prompts(root):
+    prompts = discover_prompts(root)
+    for prompt in prompts:
         if prompt.name == name:
             return prompt
-    available = [p.name for p in discover_prompts(root)]
+    available = [p.name for p in prompts]
     msg = f"Prompt '{name}' not found."
     if available:
         msg += f" Available: {', '.join(available)}"
