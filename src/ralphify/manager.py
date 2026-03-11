@@ -9,7 +9,7 @@ import threading
 import uuid
 from dataclasses import dataclass, field
 
-from ralphify._events import Event, EventEmitter, QueueEmitter
+from ralphify._events import EventEmitter, FanoutEmitter, QueueEmitter
 from ralphify.engine import RunConfig, RunState, run_loop
 
 
@@ -26,17 +26,6 @@ class ManagedRun:
     def add_listener(self, emitter: EventEmitter) -> None:
         """Register an additional emitter to receive events from this run."""
         self._extra_emitters.append(emitter)
-
-
-class _FanoutEmitter:
-    """Emits to multiple emitters."""
-
-    def __init__(self, emitters: list[EventEmitter]) -> None:
-        self._emitters = emitters
-
-    def emit(self, event: Event) -> None:
-        for e in self._emitters:
-            e.emit(event)
 
 
 class RunManager:
@@ -73,7 +62,7 @@ class RunManager:
         """
         managed = self._get_run(run_id)
         all_emitters: list[EventEmitter] = [managed.emitter] + managed._extra_emitters
-        fanout = _FanoutEmitter(all_emitters)
+        fanout = FanoutEmitter(all_emitters)
         thread = threading.Thread(
             target=run_loop,
             args=(managed.config, managed.state, fanout),

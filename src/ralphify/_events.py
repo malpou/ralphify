@@ -77,3 +77,14 @@ class QueueEmitter:
 
     def emit(self, event: Event) -> None:
         self.queue.put(event)
+
+
+class FanoutEmitter:
+    """Broadcasts events to multiple emitters."""
+
+    def __init__(self, emitters: list[EventEmitter]) -> None:
+        self._emitters = emitters
+
+    def emit(self, event: Event) -> None:
+        for e in self._emitters:
+            e.emit(event)

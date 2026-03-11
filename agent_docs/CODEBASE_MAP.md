@@ -98,6 +98,7 @@ The run loop communicates via structured events (`_events.py`). Each event has a
 - **`EventEmitter`** — protocol that any listener implements (just an `emit(event)` method)
 - **`NullEmitter`** — discards events (used in tests)
 - **`QueueEmitter`** — pushes events into a `queue.Queue` for async consumption (used by the UI)
+- **`FanoutEmitter`** — broadcasts events to multiple emitters (used by the manager for fan-out to queue + persistence)
 
 The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders events to the terminal with Rich formatting.
 
@@ -107,7 +108,7 @@ The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders 
 - Creates runs with unique IDs and wraps them in `ManagedRun` (config + state + emitter + thread)
 - Starts each run in a daemon thread via `engine.run_loop()`
 - Supports pause/resume/stop per run via `RunState` thread-safe control methods
-- Uses `_FanoutEmitter` to broadcast events to multiple listeners (e.g., queue + persistence)
+- Uses `FanoutEmitter` to broadcast events to multiple listeners (e.g., queue + persistence)
 
 ## Key files to understand first
 
