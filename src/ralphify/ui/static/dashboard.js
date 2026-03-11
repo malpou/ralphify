@@ -151,9 +151,12 @@ function handleEvent(event) {
     updateRun(run_id, { status, ...data });
     // Mark any in-progress iterations as crashed/stopped
     if (status !== 'completed') {
+      const run = runs.value.find(r => r.run_id === run_id);
       const runIters = iterations.value[run_id] || [];
       const updated = runIters.map(it =>
-        it.status === 'running' ? { ...it, status: status === 'failed' ? 'failure' : 'stopped' } : it
+        it.status === 'running'
+          ? { ...it, status: status === 'failed' ? 'failure' : 'stopped', detail: run?.lastError }
+          : it
       );
       if (updated !== runIters) {
         iterations.value = { ...iterations.value, [run_id]: updated };
@@ -1166,7 +1169,7 @@ function HistoryView() {
     <div>
       <div class="history-view-header">
         <h2>Run History</h2>
-        <p>${completedRuns.length} completed run${completedRuns.length !== 1 ? 's' : ''}</p>
+        <p>${completedRuns.length} run${completedRuns.length !== 1 ? 's' : ''}</p>
       </div>
       <div class="history-grid">
         ${completedRuns.map(r => {
@@ -1192,7 +1195,7 @@ function HistoryView() {
                 <div class="history-card-meta">
                   <span class="history-card-meta-id">${shortId}</span>
                   <span>\u00b7</span>
-                  <span>${total} iteration${total !== 1 ? 's' : ''}</span>
+                  <span>${r.iteration || total} iteration${(r.iteration || total) !== 1 ? 's' : ''}</span>
                   <span class="history-status-badge ${r.status}">${r.status}</span>
                 </div>
               </div>
