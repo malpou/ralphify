@@ -17,15 +17,19 @@
     {% set page_url = config.site_url %}
   {% endif %}
 
+  {% set og_image = config.site_url ~ "assets/cli-banner.png" %}
+
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="{{ page_title }}">
   <meta property="og:description" content="{{ page_desc }}">
   <meta property="og:url" content="{{ page_url }}">
   <meta property="og:site_name" content="{{ config.site_name }}">
+  <meta property="og:image" content="{{ og_image }}">
 
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ page_title }}">
   <meta name="twitter:description" content="{{ page_desc }}">
+  <meta name="twitter:image" content="{{ og_image }}">
 {% endblock %}
