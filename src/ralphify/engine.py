@@ -15,12 +15,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
-
 from ralphify._events import Event, EventEmitter, EventType, NullEmitter
 from ralphify._output import collect_output
 from ralphify.checks import (
-    CheckResult,
     discover_checks,
     format_check_failures,
     run_all_checks,

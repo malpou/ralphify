@@ -3,11 +3,11 @@
 import subprocess
 import threading
 import time
-from pathlib import Path
+from dataclasses import replace
 from unittest.mock import patch
 
-from ralphify._events import Event, EventType, NullEmitter, QueueEmitter
-from ralphify.engine import RunConfig, RunState, RunStatus
+from ralphify._events import Event, EventType, QueueEmitter
+from ralphify.engine import RunConfig, RunStatus
 from ralphify.manager import ManagedRun, RunManager, _FanoutEmitter
 
 _MOCK_SUBPROCESS = "ralphify.engine.subprocess.run"
@@ -18,15 +18,14 @@ def _make_config(tmp_path, **overrides):
     prompt_path = tmp_path / "PROMPT.md"
     if not prompt_path.exists():
         prompt_path.write_text("test prompt")
-    defaults = dict(
+    config = RunConfig(
         command="echo",
         args=[],
         prompt_file=str(prompt_path),
         max_iterations=1,
         project_root=tmp_path,
     )
-    defaults.update(overrides)
-    return RunConfig(**defaults)
+    return replace(config, **overrides) if overrides else config
 
 
 def _ok(*args, **kwargs):
@@ -104,6 +103,7 @@ class TestRunManagerStartRun:
         run_id = managed.state.run_id
 
         manager.start_run(run_id)
+        assert managed.thread is not None
         managed.thread.join(timeout=5)
 
         events = []
@@ -128,6 +128,7 @@ class TestRunManagerStopRun:
         time.sleep(0.05)
 
         manager.stop_run(run_id)
+        assert managed.thread is not None
         managed.thread.join(timeout=5)
 
         assert managed.state.status == RunStatus.STOPPED
@@ -169,6 +170,7 @@ class TestRunManagerPauseResume:
         time.sleep(0.05)
         manager.resume_run(run_id)
 
+        assert managed.thread is not None
         managed.thread.join(timeout=5)
         assert managed.state.completed == 3
 
@@ -232,6 +234,7 @@ class TestFanoutEmitter:
         managed.add_listener(extra)
 
         manager.start_run(run_id)
+        assert managed.thread is not None
         managed.thread.join(timeout=5)
 
         # Both the primary emitter and the extra listener should have events

@@ -3,10 +3,10 @@
 import subprocess
 import threading
 import time
-from pathlib import Path
+from dataclasses import replace
 from unittest.mock import patch
 
-from ralphify._events import Event, EventType, NullEmitter, QueueEmitter
+from ralphify._events import EventType, NullEmitter, QueueEmitter
 from ralphify.engine import RunConfig, RunState, RunStatus, _format_duration, run_loop
 
 _MOCK_SUBPROCESS = "ralphify.engine.subprocess.run"
@@ -17,15 +17,14 @@ def _make_config(tmp_path, **overrides):
     prompt_path = tmp_path / "PROMPT.md"
     if not prompt_path.exists():
         prompt_path.write_text("test prompt")
-    defaults = dict(
+    config = RunConfig(
         command="echo",
         args=[],
         prompt_file=str(prompt_path),
         max_iterations=1,
         project_root=tmp_path,
     )
-    defaults.update(overrides)
-    return RunConfig(**defaults)
+    return replace(config, **overrides) if overrides else config
 
 
 def _make_state():

@@ -2,7 +2,6 @@
 
 import asyncio
 import json
-from pathlib import Path
 
 import pytest
 
@@ -56,8 +55,6 @@ class TestStoreInit:
         assert db_path.exists()
 
     def test_init_creates_tables(self, store, db_path):
-        import aiosqlite
-
         async def check_tables():
             await store.init()
             cursor = await store._db.execute(
