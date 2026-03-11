@@ -400,7 +400,7 @@ Every event has `type`, `run_id`, `timestamp`, and `data`. The table below lists
 | Event type | When | Data fields |
 |---|---|---|
 | `run_started` | Run begins | `checks`, `contexts`, `instructions` (int counts), `max_iterations`, `timeout`, `delay`, `prompt_name` |
-| `run_stopped` | Run ends for any reason | `reason` (`"completed"`, `"user_requested"`), `total`, `completed`, `failed`, `timed_out` |
+| `run_stopped` | Run ends for any reason | `reason` (`"completed"`, `"user_requested"`, `"error"`), `total`, `completed`, `failed`, `timed_out` |
 | `run_paused` | Run is paused | — |
 | `run_resumed` | Run is resumed | — |
 
@@ -418,8 +418,8 @@ Every event has `type`, `run_id`, `timestamp`, and `data`. The table below lists
 | Event type | When | Data fields |
 |---|---|---|
 | `checks_started` | Check phase begins | `iteration`, `count` |
-| `check_passed` | A single check passes | `iteration`, `check_name`, `exit_code`, `timed_out` |
-| `check_failed` | A single check fails | `iteration`, `check_name`, `exit_code`, `timed_out` |
+| `check_passed` | A single check passes | `iteration`, `name`, `passed`, `exit_code`, `timed_out` |
+| `check_failed` | A single check fails | `iteration`, `name`, `passed`, `exit_code`, `timed_out` |
 | `checks_completed` | All checks finish | `iteration`, `passed`, `failed`, `results` (array of `{name, passed, exit_code, timed_out}`) |
 
 **Prompt assembly**
@@ -435,4 +435,4 @@ Every event has `type`, `run_id`, `timestamp`, and `data`. The table below lists
 |---|---|---|
 | `primitives_reloaded` | Primitives re-discovered mid-run | `checks`, `contexts`, `instructions` (int counts) |
 | `settings_changed` | Reserved for future use | — |
-| `log_message` | General log from the engine | `message`, `level` (`"info"`, `"error"`) |
+| `log_message` | General log from the engine | `message`, `level` (`"info"`, `"error"`), `traceback` (optional, present on crashes) |
