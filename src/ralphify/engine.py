@@ -290,15 +290,16 @@ def _execute_agent(
                 sys.stderr.write(result.stderr)
         returncode = result.returncode
     except subprocess.TimeoutExpired as e:
-        state.timed_out += 1
-        state.failed += 1
         if log_path_dir:
             log_file = _write_log(log_path_dir, iteration, e.stdout, e.stderr)
 
     elapsed = time.monotonic() - start
     duration = format_duration(elapsed)
 
+    # All state counter updates in one place for easy auditing.
     if returncode is None:
+        state.timed_out += 1
+        state.failed += 1
         event_type = EventType.ITERATION_TIMED_OUT
         state_detail = f"timed out after {duration}"
     elif returncode == 0:
