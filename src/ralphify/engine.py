@@ -476,7 +476,7 @@ def run_loop(
                 emitter.emit(Event(
                     type=EventType.LOG_MESSAGE,
                     run_id=state.run_id,
-                    data={"message": "Stopping due to --stop-on-error."},
+                    data={"message": "Stopping due to --stop-on-error.", "level": "error"},
                 ))
                 break
 
@@ -492,7 +492,7 @@ def run_loop(
                 emitter.emit(Event(
                     type=EventType.LOG_MESSAGE,
                     run_id=state.run_id,
-                    data={"message": f"Waiting {config.delay}s..."},
+                    data={"message": f"Waiting {config.delay}s...", "level": "info"},
                 ))
                 time.sleep(config.delay)
 

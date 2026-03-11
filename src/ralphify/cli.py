@@ -344,9 +344,10 @@ class ConsoleEmitter:
 
     def _on_log_message(self, d: dict) -> None:
         msg = d.get("message", "")
-        if "Stopping" in msg:
+        level = d.get("level", "info")
+        if level == "error":
             self._rprint(f"[red]{msg}[/red]")
-        elif "Waiting" in msg:
+        else:
             self._rprint(f"[dim]{msg}[/dim]")
 
     def _on_run_stopped(self, d: dict) -> None:
