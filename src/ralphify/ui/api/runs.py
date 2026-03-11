@@ -4,7 +4,7 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from ralphify._frontmatter import PROMPT_MARKER
 from ralphify.engine import RunConfig
@@ -31,18 +31,17 @@ def _load_agent_config(project_dir: str) -> dict:
 
 router = APIRouter()
 
-# Set at app startup by create_app()
-_manager: RunManager | None = None
 
-
-def _get_manager() -> RunManager:
-    if _manager is None:
+def _get_manager(request: Request) -> RunManager:
+    """Extract the RunManager from app state (set during lifespan startup)."""
+    mgr: RunManager | None = getattr(request.app.state, "manager", None)
+    if mgr is None:
         raise RuntimeError("RunManager not initialised")
-    return _manager
+    return mgr
 
 
-def _get_run_or_404(run_id: str) -> ManagedRun:
-    managed = _get_manager().get_run(run_id)
+def _get_run_or_404(mgr: RunManager, run_id: str) -> ManagedRun:
+    managed = mgr.get_run(run_id)
     if managed is None:
         raise HTTPException(status_code=404, detail="Run not found")
     return managed
@@ -61,9 +60,8 @@ def _run_response(managed: ManagedRun) -> RunResponse:
 
 
 @router.post("/runs", response_model=RunResponse)
-async def create_run(body: RunCreate) -> RunResponse:
+async def create_run(body: RunCreate, mgr: RunManager = Depends(_get_manager)) -> RunResponse:
     """Create and start a new run."""
-    mgr = _get_manager()
 
     # Default command/args from ralph.toml when not provided by the client.
     command = body.command
@@ -103,46 +101,45 @@ async def create_run(body: RunCreate) -> RunResponse:
 
 
 @router.get("/runs", response_model=list[RunResponse])
-async def list_runs() -> list[RunResponse]:
+async def list_runs(mgr: RunManager = Depends(_get_manager)) -> list[RunResponse]:
     """List all runs."""
-    mgr = _get_manager()
     return [_run_response(m) for m in mgr.list_runs()]
 
 
 @router.get("/runs/{run_id}", response_model=RunResponse)
-async def get_run(run_id: str) -> RunResponse:
+async def get_run(run_id: str, mgr: RunManager = Depends(_get_manager)) -> RunResponse:
     """Get details for a single run."""
-    return _run_response(_get_run_or_404(run_id))
+    return _run_response(_get_run_or_404(mgr, run_id))
 
 
 @router.post("/runs/{run_id}/pause", response_model=RunResponse)
-async def pause_run(run_id: str) -> RunResponse:
+async def pause_run(run_id: str, mgr: RunManager = Depends(_get_manager)) -> RunResponse:
     """Pause a running run."""
-    managed = _get_run_or_404(run_id)
-    _get_manager().pause_run(run_id)
+    managed = _get_run_or_404(mgr, run_id)
+    mgr.pause_run(run_id)
     return _run_response(managed)
 
 
 @router.post("/runs/{run_id}/resume", response_model=RunResponse)
-async def resume_run(run_id: str) -> RunResponse:
+async def resume_run(run_id: str, mgr: RunManager = Depends(_get_manager)) -> RunResponse:
     """Resume a paused run."""
-    managed = _get_run_or_404(run_id)
-    _get_manager().resume_run(run_id)
+    managed = _get_run_or_404(mgr, run_id)
+    mgr.resume_run(run_id)
     return _run_response(managed)
 
 
 @router.post("/runs/{run_id}/stop", response_model=RunResponse)
-async def stop_run(run_id: str) -> RunResponse:
+async def stop_run(run_id: str, mgr: RunManager = Depends(_get_manager)) -> RunResponse:
     """Stop a run."""
-    managed = _get_run_or_404(run_id)
-    _get_manager().stop_run(run_id)
+    managed = _get_run_or_404(mgr, run_id)
+    mgr.stop_run(run_id)
     return _run_response(managed)
 
 
 @router.patch("/runs/{run_id}/settings", response_model=RunResponse)
-async def update_settings(run_id: str, body: RunSettingsUpdate) -> RunResponse:
+async def update_settings(run_id: str, body: RunSettingsUpdate, mgr: RunManager = Depends(_get_manager)) -> RunResponse:
     """Update run configuration mid-run."""
-    managed = _get_run_or_404(run_id)
+    managed = _get_run_or_404(mgr, run_id)
 
     if body.max_iterations is not None:
         managed.config.max_iterations = body.max_iterations

@@ -39,9 +39,10 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        # Initialise shared state
+        # Initialise shared state — stored on app.state so route handlers
+        # can access it via FastAPI dependency injection (Request.app.state).
         manager = RunManager()
-        runs_module._manager = manager
+        app.state.manager = manager
 
         # Start event drain task
         drain_task = asyncio.create_task(_drain_events(manager))
