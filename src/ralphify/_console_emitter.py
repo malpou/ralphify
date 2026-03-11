@@ -76,6 +76,9 @@ class ConsoleEmitter:
         level = d.get("level", "info")
         if level == "error":
             self._rprint(f"[red]{msg}[/red]")
+            tb = d.get("traceback")
+            if tb:
+                self._rprint(f"[dim]{tb}[/dim]")
         else:
             self._rprint(f"[dim]{msg}[/dim]")
 

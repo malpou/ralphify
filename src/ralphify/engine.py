@@ -10,6 +10,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import time
+import traceback
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -491,10 +492,15 @@ def run_loop(
         pass
     except Exception as exc:
         state.status = RunStatus.FAILED
+        tb = traceback.format_exc()
         emitter.emit(Event(
             type=EventType.LOG_MESSAGE,
             run_id=state.run_id,
-            data={"message": f"Run crashed: {exc}", "level": "error"},
+            data={
+                "message": f"Run crashed: {exc}",
+                "level": "error",
+                "traceback": tb,
+            },
         ))
 
     if state.status == RunStatus.RUNNING:

@@ -36,7 +36,7 @@ def _decode_project_dir(encoded: str) -> Path:
     """Decode a base64-encoded project directory path."""
     try:
         return Path(base64.urlsafe_b64decode(encoded).decode())
-    except Exception:
+    except (ValueError, UnicodeDecodeError):
         raise HTTPException(status_code=400, detail="Invalid base64 project_dir")
 
 
