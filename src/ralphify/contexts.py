@@ -8,7 +8,7 @@ A context can run a command/script, provide static text, or both.
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._discovery import PrimitiveEntry, discover_local_primitives, discover_primitives, find_run_script
+from ralphify._discovery import PrimitiveEntry, discover_enabled, discover_local_primitives, discover_primitives, find_run_script
 from ralphify._frontmatter import CONTEXT_MARKER
 from ralphify._output import truncate_output
 from ralphify._runner import run_command
@@ -80,6 +80,15 @@ def discover_contexts_local(prompt_dir: Path) -> list[Context]:
     a prompt directory instead of the global ``.ralphify/contexts/``.
     """
     return [_context_from_entry(prim) for prim in discover_local_primitives(prompt_dir, "contexts", CONTEXT_MARKER)]
+
+
+def discover_enabled_contexts(root: Path, prompt_dir: Path | None = None) -> list[Context]:
+    """Discover contexts, merge local overrides, and return only enabled ones.
+
+    Convenience wrapper over :func:`~ralphify._discovery.discover_enabled`
+    so callers don't need to wire up the discover/discover_local callables.
+    """
+    return discover_enabled(root, prompt_dir, discover_contexts, discover_contexts_local)
 
 
 def run_context(context: Context, project_root: Path) -> ContextResult:

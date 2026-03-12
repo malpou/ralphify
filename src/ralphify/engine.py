@@ -19,32 +19,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, NamedTuple
 from ralphify._agent import execute_agent
-from ralphify._discovery import discover_enabled
 from ralphify._events import Event, EventEmitter, EventType, NullEmitter
+from ralphify._frontmatter import parse_frontmatter
 from ralphify._output import format_duration
 from ralphify._run_types import RunConfig, RunState, RunStatus
-from ralphify.checks import (
-    Check,
-    discover_checks,
-    discover_checks_local,
-    format_check_failures,
-    run_all_checks,
-)
+from ralphify.checks import Check, discover_enabled_checks, format_check_failures, run_all_checks
 from ralphify.contexts import (
     Context,
     ContextResult,
-    discover_contexts,
-    discover_contexts_local,
+    discover_enabled_contexts,
     resolve_contexts,
     run_all_contexts,
 )
-from ralphify._frontmatter import parse_frontmatter
-from ralphify.instructions import (
-    Instruction,
-    discover_instructions,
-    discover_instructions_local,
-    resolve_instructions,
-)
+from ralphify.instructions import Instruction, discover_enabled_instructions, resolve_instructions
 
 
 class EnabledPrimitives(NamedTuple):
@@ -82,9 +69,9 @@ def _discover_enabled_primitives(
     only enabled primitives and do not re-filter.
     """
     return EnabledPrimitives(
-        checks=discover_enabled(root, prompt_dir, discover_checks, discover_checks_local),
-        contexts=discover_enabled(root, prompt_dir, discover_contexts, discover_contexts_local),
-        instructions=discover_enabled(root, prompt_dir, discover_instructions, discover_instructions_local),
+        checks=discover_enabled_checks(root, prompt_dir),
+        contexts=discover_enabled_contexts(root, prompt_dir),
+        instructions=discover_enabled_instructions(root, prompt_dir),
     )
 
 

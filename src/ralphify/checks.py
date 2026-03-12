@@ -11,7 +11,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._discovery import PrimitiveEntry, discover_local_primitives, discover_primitives, find_run_script
+from ralphify._discovery import PrimitiveEntry, discover_enabled, discover_local_primitives, discover_primitives, find_run_script
 from ralphify._frontmatter import CHECK_MARKER
 from ralphify._output import truncate_output
 from ralphify._runner import run_command
@@ -107,6 +107,15 @@ def discover_checks_local(prompt_dir: Path) -> list[Check]:
     a prompt directory instead of the global ``.ralphify/checks/``.
     """
     return _checks_from_entries(discover_local_primitives(prompt_dir, "checks", CHECK_MARKER))
+
+
+def discover_enabled_checks(root: Path, prompt_dir: Path | None = None) -> list[Check]:
+    """Discover checks, merge local overrides, and return only enabled ones.
+
+    Convenience wrapper over :func:`~ralphify._discovery.discover_enabled`
+    so callers don't need to wire up the discover/discover_local callables.
+    """
+    return discover_enabled(root, prompt_dir, discover_checks, discover_checks_local)
 
 
 def run_check(check: Check, project_root: Path) -> CheckResult:
