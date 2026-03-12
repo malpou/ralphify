@@ -342,7 +342,6 @@ your-project/
 ## Next steps
 
 - [How It Works](how-it-works.md) — understand the iteration lifecycle, prompt assembly, and feedback loop
-- [Writing Your Ralph](ralphs.md) — ralph anatomy, patterns, and tips for getting better results
 - [Cookbook](cookbook.md) — complete example setups for Python, TypeScript, bug fixing, and docs
 - [Primitives](primitives.md) — full reference for checks, contexts, instructions, and named ralphs
 - [Configuration & CLI](cli.md) — `ralph.toml` format, all commands, and options

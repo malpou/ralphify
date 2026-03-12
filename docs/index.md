@@ -194,12 +194,6 @@ You define what "valid" means. Ralphify feeds failures back into the prompt auto
 
     Step-by-step tutorial from install to a running loop with checks and contexts.
 
--   **[Writing Your Ralph](ralphs.md)**
-
-    ---
-
-    How to write ralphs that produce useful work — anatomy, patterns, and tips.
-
 -   **[Cookbook](cookbook.md)**
 
     ---

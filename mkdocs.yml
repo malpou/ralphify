@@ -90,7 +90,6 @@ nav:
   - Guide:
     - Getting Started: getting-started.md
     - How It Works: how-it-works.md
-    - Writing Your Ralph: ralphs.md
     - Using with Different Agents: agents.md
     - Cookbook: cookbook.md
   - Reference:
