@@ -87,7 +87,6 @@ docs/
 ├── getting-started.md    # Step-by-step tutorial
 ├── how-it-works.md       # Iteration lifecycle and prompt assembly
 ├── ralphs.md             # Ralph writing guide
-├── best-practices.md     # Habits and patterns for productive loops
 ├── agents.md             # Setup guides for different agents
 ├── cookbook.md            # Complete copy-pasteable setups
 ├── primitives.md         # Checks, contexts, instructions reference

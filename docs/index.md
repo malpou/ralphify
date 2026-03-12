@@ -212,12 +212,6 @@ You define what "valid" means. Ralphify feeds failures back into the prompt auto
 
     The iteration lifecycle, prompt assembly, and feedback loop explained.
 
--   **[Best Practices](best-practices.md)**
-
-    ---
-
-    Habits and patterns that separate productive loops from noisy ones.
-
 -   **[Python API](api.md)**
 
     ---
