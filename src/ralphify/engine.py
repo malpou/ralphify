@@ -257,6 +257,7 @@ def _execute_agent(
         "duration_formatted": duration,
         "detail": state_detail,
         "log_file": str(agent.log_file) if agent.log_file else None,
+        "result_text": agent.result_text,
     })
     return agent.returncode
 

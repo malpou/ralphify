@@ -33,6 +33,7 @@ class AgentResult(NamedTuple):
     returncode: int | None  # None means timed out
     elapsed: float
     log_file: Path | None
+    result_text: str | None = None
 
 
 def _write_log(
@@ -83,6 +84,7 @@ def run_agent_streaming(
     stdout_lines: list[str] = []
     stderr_data = ""
     returncode: int | None = None
+    result_text: str | None = None
 
     proc = subprocess.Popen(
         stream_cmd,
@@ -110,10 +112,13 @@ def run_agent_streaming(
                 break
             stdout_lines.append(line)
             stripped = line.strip()
-            if stripped and on_activity is not None:
+            if stripped:
                 try:
                     parsed = json.loads(stripped)
-                    on_activity(parsed)
+                    if parsed.get("type") == "result" and "result" in parsed:
+                        result_text = parsed["result"]
+                    if on_activity is not None:
+                        on_activity(parsed)
                 except json.JSONDecodeError:
                     pass
 
@@ -136,6 +141,7 @@ def run_agent_streaming(
         returncode=returncode,
         elapsed=time.monotonic() - start,
         log_file=log_file,
+        result_text=result_text,
     )
 
 

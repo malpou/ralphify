@@ -67,9 +67,11 @@ class ConsoleEmitter:
     def _on_iteration_ended(self, data: dict, color: str, icon: str) -> None:
         status_msg = f"[{color}]{icon} Iteration {data['iteration']} {data['detail']}"
         if data.get("log_file"):
-            status_msg += f" {_ICON_ARROW} {data['log_file']}"
+            status_msg += f" {_ICON_ARROW}\n{data['log_file']}"
         status_msg += f"[/{color}]"
         self._rprint(status_msg)
+        if data.get("result_text"):
+            self._rprint(f"  [dim]{data['result_text']}[/dim]")
 
     def _on_checks_completed(self, data: dict) -> None:
         parts = []
