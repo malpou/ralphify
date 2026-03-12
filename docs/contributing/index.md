@@ -90,7 +90,6 @@ docs/
 ├── best-practices.md     # Habits and patterns for productive loops
 ├── agents.md             # Setup guides for different agents
 ├── cookbook.md            # Complete copy-pasteable setups
-├── quick-reference.md    # Single-page lookup of all commands and syntax
 ├── primitives.md         # Checks, contexts, instructions reference
 ├── cli.md                # Configuration and CLI reference
 ├── faq.md                # Common questions
