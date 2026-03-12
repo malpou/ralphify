@@ -64,6 +64,19 @@ These jobs map to five user-facing workflows:
 - `.ralphify/instructions/<name>/INSTRUCTION.md` — instruction body
 - `.ralphify/ralphs/<name>/RALPH.md` — named ralph prompt
 
+### Extended Concept Load (hidden complexity)
+
+Beyond the 10 listed concepts, users must also internalize:
+
+11. **Directory convention** — `.ralphify/<kind>/<name>/<MARKER>.md>` pattern
+12. **Placeholder resolution order** — named > bulk > implicit append (three modes)
+13. **`run.*` scripts** — escape hatch from `shlex.split()` for complex commands
+14. **Ralph-scoped primitives** — `.ralphify/ralphs/<name>/checks/` nesting
+15. **Enabled/disabled filtering** — frontmatter flag that controls inclusion
+16. **HTML comment stripping** — comments in markdown bodies are stripped from prompts
+
+Effective concept count is **16**, not 10. Progressive disclosure should let users operate with 3–4 concepts for their first month (config file, prompt file, checks) and discover the rest as needed.
+
 ---
 
 ## Friction Log
@@ -97,6 +110,10 @@ These jobs map to five user-facing workflows:
 
 - **F18: No `.gitignore` guidance** (VALIDATED). After `ralph init`, there's no suggestion to add `ralph_logs/` or `.ralphify/` patterns to `.gitignore`. The `.ralphify/` directory should be committed (it's config), but log files shouldn't. New users may accidentally commit large log files or miss committing their primitive config. The init command could create/update `.gitignore` entries, or at minimum print guidance.
 
+- **F29: `ralph.toml` has no comments or inline documentation** (VALIDATED). The generated `ralph.toml` (`_templates.py:3-8`) is 4 bare lines: `[agent]`, `command`, `args`, `ralph`. A new user has no idea what other options exist. There's no mention of `timeout`, `delay`, `log_dir`, or the `ralph` field's dual nature (file path or named ralph). Compare: a generated `.eslintrc` or `pyproject.toml` typically includes commented-out examples of common options. The user must read docs to discover any configuration beyond the defaults.
+
+- **F36: `ralph init --force` overwrites both files without granularity** (VALIDATED). `cli.py:138-161`: `--force` overwrites both `ralph.toml` AND `RALPH.md`. A user who has carefully crafted their `RALPH.md` but wants to regenerate `ralph.toml` (e.g., to pick up a new default format) has no safe way to do this. They'd need to backup RALPH.md manually first.
+
 ### Job: Run (Launch the loop)
 
 **Steps walked through:**
@@ -121,6 +138,12 @@ These jobs map to five user-facing workflows:
 
 - **F21: `-p` inline prompt doesn't default to 1 iteration** (VALIDATED). When a user runs `ralph run -p "Fix the login bug"`, the inline prompt runs in an infinite loop, re-sending the same prompt every iteration. Inline prompts are almost always one-shot tasks. The engine at `cli.py:300-301` just uses the prompt_text with the default `n=None` (infinite). Users must remember to add `-n 1` for ad-hoc tasks or risk burning credits repeating the same prompt.
 
+- **F33: `--stop-on-error` stops on agent failure but not check failure** (VALIDATED). From `engine.py:339-341`: `stop_on_error` only triggers when the agent process exits non-zero. Check failures do NOT trigger it — the loop continues and feeds the failure back. A user who sets `--stop-on-error` expecting the loop to stop when tests fail will be surprised. The flag name doesn't distinguish between "agent error" and "check error". There's no `--stop-on-check-failure` option. This is counterintuitive because checks ARE the error signal in ralphify's model — a check failure is the primary way users know something went wrong.
+
+- **F38: No way to disable the banner via config or environment variable** (VALIDATED). Even users who know about the banner (F8) and find it annoying have no `RALPH_NO_BANNER=1` env var or `ralph.toml` option to suppress it. Power users running ralph in CI or scripts will be especially annoyed — the banner corrupts stdout parsing.
+
+- **F42: No way to override ralph.toml settings from CLI** (VALIDATED). Many `ralph.toml` settings (like `command`, `args`) can only be changed by editing the file. If a user wants to quickly test with a different agent — `ralph run --command aider` — that doesn't exist. They have to edit the toml, run, then edit it back. This makes experimentation with different agents friction-heavy and error-prone (forgetting to revert the toml).
+
 ### Job: Monitor (Understand what happened)
 
 **Steps walked through:**
@@ -137,9 +160,17 @@ These jobs map to five user-facing workflows:
 
 - **F12: Iteration output is minimal during run** (VALIDATED). The console emitter (`_console_emitter.py`) shows: iteration header, spinner, completion status, check pass/fail summary. It does NOT show: which prompt was used, how many contexts/instructions were resolved, prompt length, or any preview of what the agent was told. For J6 (feel in control), users would benefit from knowing what went into each iteration.
 
-- **F22: No indication of which check is currently running** (VALIDATED). During the checks phase, the console shows nothing until ALL checks complete. Checks run sequentially (`checks.py:130`: a simple list comprehension with no events between checks). If a user has 5 checks and the third one hangs, they see a blank screen with no indication of progress. The `CHECKS_STARTED` event fires before any checks run, and `CHECKS_COMPLETED` fires after all are done, but there's no `CHECK_RUNNING` event for individual checks. For long-running check suites (e.g., integration tests), this is a monitoring gap.
+- **F22: No indication of which check is currently running** (VALIDATED). During the checks phase, the console shows nothing until ALL checks complete. Checks run sequentially (`checks.py:125`: a list comprehension). If a user has 5 checks and the third one hangs, they see a blank screen with no indication of progress. The `CHECKS_STARTED` event fires before any checks run, and `CHECKS_COMPLETED` fires after all are done. The engine DOES emit `CHECK_PASSED`/`CHECK_FAILED` per check (`engine.py:286-289`), but `ConsoleEmitter` doesn't handle those events — only `CHECKS_COMPLETED`. The per-check event infrastructure exists but isn't rendered.
 
 - **F23: Run summary doesn't include check statistics** (VALIDATED). The `_on_run_stopped` handler at `_console_emitter.py:138-151` shows iteration count and success/failure counts, but not check statistics. After a 10-iteration run, the user sees "Done: 10 iteration(s) — 7 succeeded, 3 failed" but not how many total checks passed/failed across all iterations. For J6 (feel in control), an aggregate like "Checks: 45/50 passed across 10 iterations" would be informative. The data exists in per-iteration `CHECKS_COMPLETED` events but isn't aggregated.
+
+- **F31: No way to see what prompt was sent to the agent** (VALIDATED). The `PROMPT_ASSEMBLED` event at `engine.py:333` includes `prompt_length` but not the actual prompt text. `ConsoleEmitter._handlers` doesn't even include `PROMPT_ASSEMBLED` — the event is emitted but never rendered in CLI mode. Log files (`_agent.py:39-49`) only contain agent *output* (stdout/stderr), not the *input* prompt. If a user wants to debug "why did the agent do X?", they can't see what it was told. The only way is to read the source files manually and mentally resolve placeholders.
+
+- **F32: Streaming mode only for Claude Code, silent fallback for others** (VALIDATED). `_agent.py:52-57`: `_is_claude_command` hardcodes a check for binary name "claude". Only Claude gets streaming mode with `--output-format stream-json --verbose`. All other agents get `subprocess.run` — blocking with no output until completion. There's no CLI flag or config to opt into streaming for custom agents. The dashboard's live activity feed (`AGENT_ACTIVITY` events) only works with Claude Code. Users of Aider, Codex, or custom wrappers see nothing in the dashboard during execution and get no terminal output during iteration (when logging is enabled — `_agent.py:174` sets `capture_output=bool(log_path_dir)`).
+
+- **F41: The delay flag (`-d`) has no countdown or clear indication** (VALIDATED). When `ralph run -d 30` is used, the delay between iterations is printed as `[dim]Waiting 30s...[/dim]` (`engine.py:413`). This is a plain dim text message with no countdown, no progress bar, no indication of how long remains. For long delays (e.g., 60s to avoid rate limits), the user might think the tool has hung. The `time.sleep(config.delay)` at `engine.py:414` is a blocking call with no updates.
+
+- **F43: Non-Claude agents show no output during iteration when logging is enabled** (VALIDATED). From `_agent.py:169-180`: when `log_path_dir` is set (including with the proposed default O2), `subprocess.run` is called with `capture_output=True`. This means ALL stdout/stderr is buffered until the process exits. For a 5-minute agent session, the terminal shows nothing but the spinner. After completion, the full output is echoed at once (`sys.stdout.write(result.stdout)`), but by then the user has been staring at a blank screen. This is the worst monitoring experience: the user sees nothing, then a wall of text. Claude Code avoids this via `run_agent_streaming` which reads line-by-line, but other agents have no equivalent.
 
 ### Job: Steer (Adjust behavior while running)
 
@@ -151,11 +182,11 @@ These jobs map to five user-facing workflows:
 
 **Friction points identified:**
 
-- **F13: Primitive config is frozen at startup — not documented in CLI** (VALIDATED). The engine discovers primitives once at startup (`engine.py:386`). New checks, contexts, or instructions added while running are invisible until restart. The docs mention this, but the CLI gives zero indication. Users who add a check and expect it to run next iteration will be confused.
+- **F13: Primitive config is frozen at startup — not documented in CLI** (VALIDATED). The engine discovers primitives once at startup (`engine.py:379`). New checks, contexts, or instructions added while running are invisible until restart. The docs mention this, but the CLI gives zero indication. Users who add a check and expect it to run next iteration will be confused.
 
-- **F14: No signal when RALPH.md changes are picked up** (VALIDATED). RALPH.md is re-read each iteration (`engine.py:191`), which is great for steering. But the console shows no indication that the prompt changed. Users editing RALPH.md while running have no confirmation their edits took effect.
+- **F14: No signal when RALPH.md changes are picked up** (VALIDATED). RALPH.md is re-read each iteration (`engine.py:184`), which is great for steering. But the console shows no indication that the prompt changed. Users editing RALPH.md while running have no confirmation their edits took effect.
 
-- **F24: The reload mechanism exists but is invisible from CLI** (VALIDATED). The engine has `state.consume_reload_request()` at `engine.py:164-170` which triggers `_discover_enabled_primitives()` to re-scan all primitives. The `RunState` class has `request_reload()` (`_run_types.py`). But there's no CLI mechanism to trigger it — it's only accessible via the dashboard API. A user who adds a check and wants it picked up must restart the entire loop, losing their iteration count and any momentum. A signal handler (e.g., SIGUSR1) or a sentinel file could bridge this gap.
+- **F24: The reload mechanism exists but is invisible from CLI** (VALIDATED). The engine has `state.consume_reload_request()` at `engine.py:157` which triggers `_discover_enabled_primitives()` to re-scan all primitives. The `RunState` class has `request_reload()` (`_run_types.py:106`). But there's no CLI mechanism to trigger it — it's only accessible via the dashboard API. A user who adds a check and wants it picked up must restart the entire loop, losing their iteration count and any momentum. A signal handler (e.g., SIGUSR1) or a sentinel file could bridge this gap.
 
 ### Job: Trust (Know the output is good)
 
@@ -173,7 +204,15 @@ These jobs map to five user-facing workflows:
 
 - **F25: Check failure instructions are invisible until failure** (VALIDATED). The body text of CHECK.md (the failure instruction) is only ever shown to the agent, not the user. When a user creates a check, they write failure guidance in the markdown body, but there's no way to preview what the agent will actually see when the check fails. The `ralph status` command shows check names and commands but not failure instructions. For J2 (keep the agent from going off the rails), the quality of failure instructions is critical, yet users have no feedback loop on them.
 
-- **F26: Checks always run sequentially, no early termination** (VALIDATED). `run_all_checks` at `checks.py:130` runs every check regardless of prior failures. If a fast lint check fails, the user still waits for a slow integration test to complete before the next iteration starts. There's no `--fail-fast` option for checks. For users with ordered checks (lint → typecheck → test), failing lint makes typecheck and test runs wasteful.
+- **F26: Checks always run sequentially, no early termination** (VALIDATED). `run_all_checks` at `checks.py:119-125` runs every check regardless of prior failures. If a fast lint check fails, the user still waits for a slow integration test to complete before the next iteration starts. There's no `--fail-fast` option for checks. For users with ordered checks (lint → typecheck → test), failing lint makes typecheck and test runs wasteful.
+
+- **F30: Context command output injected regardless of exit code** (VALIDATED). From `contexts.py:85-107`: if a context command fails (non-zero exit code), the output is still injected into the prompt. This is documented as a feature ("useful for tests that fail but produce output") but is surprising. The `run_context` function returns `success=False` but `resolve_contexts` at `contexts.py:120-146` uses the output regardless of the `success` field. A user who adds `command: npm test` as a context and it fails will inject test failure output into every iteration's prompt — even though they might have intended it as a data source, not a test runner. There's no `required: true/false` frontmatter field to control whether a failed context should be injected.
+
+- **F34: `ralph status` doesn't validate check commands will actually work** (VALIDATED). `cli.py:224-272`: `ralph status` checks if the agent command is on PATH and if the ralph file exists, but doesn't validate check or context commands. A user could have `command: ruff check .` in their check and `ruff` isn't installed — `ralph status` says "Ready to run." and the loop starts, only to have the check fail every iteration with a cryptic "command not found" error. The `status` command could parse each check's frontmatter and validate the command's first token is on PATH.
+
+- **F37: Named placeholder for non-existent primitive silently produces empty string** (VALIDATED). From `resolver.py:35-41`: the `_replace_named` function checks `if name in available` — if the name isn't found, it returns `""`. A user who writes `{{ contexts.git-log }}` but named their context `gitlog` (no hyphen) gets an empty string with no warning. Combined with F16 (other contexts silently dropped when named placeholders are used), this can produce a prompt missing most of its intended context. The placeholder just vanishes.
+
+- **F39: Check failure instruction text has no length guidance or limit** (VALIDATED). A check's failure instruction (body of CHECK.md) can be arbitrarily long. If a user writes a 10,000-character essay in CHECK.md, that full text gets appended to the prompt every time the check fails (`checks.py:152-153`). The check output is truncated to 5,000 chars, but the failure instruction is not. A verbose failure instruction could consume more of the agent's context window than the actual error output. The best practices docs say "write failure instructions that guide, not just complain" but the tool doesn't enforce or warn about excessive length.
 
 ### Job: Scaffold (Create new primitives)
 
@@ -190,6 +229,56 @@ These jobs map to five user-facing workflows:
 - **F27: `ralph new` subcommand structure requires knowing primitive type names** (VALIDATED). A user who wants to "add something that runs tests after each iteration" must know that's called a "check". A user who wants to "inject the git log into the prompt" must know that's called a "context". The terminology is not self-evident from the domain. `ralph new` with no args shows help listing `check`, `context`, `instruction`, and (hidden) `ralph` — but the help descriptions are the only guide. There's no `ralph new --interactive` that asks "What do you want to add?" and guides them.
 
 - **F28: `--ralph` flag on `ralph new` is confusing** (VALIDATED). To scope a check to a specific named ralph: `ralph new check tests --ralph my-task`. The flag name `--ralph` collides with the product name again. The semantics are "scope this primitive to the named ralph called my-task" but a new user might read it as "create a ralph called tests" or "use ralph to create something". The directory structure it creates (`.ralphify/ralphs/my-task/checks/tests/CHECK.md`) is deeply nested and non-obvious.
+
+- **F40: `ralph new` doesn't open the created file in `$EDITOR`** (VALIDATED). After `ralph new check tests`, the user sees "Created .ralphify/checks/tests/CHECK.md" and then has to manually navigate to and open the file. Many CLI tools (e.g., `git commit`, `crontab -e`) open the file automatically. Given that every scaffolded file needs editing (the templates contain generic placeholder content), this adds one extra step per primitive creation. A `--edit` flag (or auto-detect `$EDITOR`) would save time.
+
+---
+
+## Cross-Cutting Analysis
+
+### The Invisible Infrastructure Problem
+
+Several friction points share a root cause: things happen invisibly and the user has no way to observe them. This is the single biggest trust issue in ralphify's UX.
+
+| What's invisible | Friction | Impact |
+|---|---|---|
+| Output truncation (5,000 chars) | F11 | User/agent don't know critical info was cut |
+| Primitive config frozen at startup | F13 | User adds check, expects it to run, nothing happens |
+| Prompt changes picked up silently | F14 | User edits RALPH.md, no confirmation it took effect |
+| Context/instruction silent exclusion | F16 | Named placeholders silently drop other primitives |
+| Per-check execution progress | F22 | User stares at blank screen during check phase |
+| Full assembled prompt | F31 | User can't see what agent was told |
+| Agent execution (non-Claude) | F43 | No output during iteration for non-Claude agents |
+| Named placeholder resolution failure | F37 | Typo in placeholder name → silent empty string |
+
+**Root principle: Observability is trust.** Users can't trust what they can't see. Every invisible operation should have at least a dim/debug-level signal in the CLI output. The cost of one extra line of output is far lower than the cost of a user spending 20 minutes debugging why their context isn't being injected.
+
+### The Two User Journeys
+
+The friction analysis reveals two distinct user journeys with fundamentally different needs:
+
+**Journey A: Quick Start** (Vibe Coder, Solo Founder)
+- Wants: `ralph init && ralph run` to just work
+- Blocked by: F1 (useless template), F2 (no checks), F3 (detection waste), F5 (12 steps), F9 (infinite default)
+- Needs: smart defaults, auto-scaffolding, safe guardrails
+
+**Journey B: Deep Customization** (Staff Engineer, Platform Engineer)
+- Wants: fine-grained control over every aspect of the loop
+- Blocked by: F31 (can't see prompt), F32 (Claude-only streaming), F42 (can't override config from CLI), F33 (stop-on-error semantics), F26 (no fail-fast)
+- Needs: preview command, per-check events, CLI overrides, pluggable streaming
+
+Current UX is stuck in the middle: too much ceremony for quick starters (12 steps), not enough power tools for power users. The simplification strategy should explicitly serve both — **reduce the floor** (fewer steps to first run) and **raise the ceiling** (more control for experts).
+
+### The "Ralph" Naming Overload
+
+The word "ralph" carries 5 meanings:
+1. The CLI tool name (`ralph run`)
+2. The root prompt file (`RALPH.md`)
+3. A named prompt variant ("a ralph")
+4. The `--ralph` scoping flag on `ralph new`
+5. The `.ralphify/ralphs/` directory
+
+This creates friction at F19, F22, F28 and any documentation that tries to distinguish between these uses. The `_DefaultRalphGroup` hidden routing (`cli.py:46-52`) is clever but adds a 6th layer of confusion: `ralph new docs` secretly becomes `ralph new ralph docs`, but this isn't shown in `--help`.
 
 ---
 
@@ -211,7 +300,7 @@ Ranked by: (impact on user's job) × (frequency of the job) / (effort + risk)
 **Why:** Removes F10. Every user running loops for real needs logs for J6 (feel in control). Requiring `--log-dir` every time is a footgun for new users.
 **Job:** Monitor, Trust (J6)
 **Effort:** S — one default value change in `cli.py:283`.
-**Risk:** Very low. Disk space is cheap. Users who don't want logs can opt out.
+**Risk:** Low. Disk space is cheap. Users who don't want logs can opt out. **But see F43** — enabling default logging for non-Claude agents means `capture_output=True`, which blocks all terminal output during iteration. O2 should be implemented together with a fix for F43 (e.g., use `tee`-style capture).
 
 #### O3: Default iteration limit (e.g., 5)
 **What:** Change `-n` default from unlimited to 5. Add `--no-limit` or `-n 0` for infinite mode.
@@ -240,6 +329,13 @@ Ranked by: (impact on user's job) × (frequency of the job) / (effort + risk)
 **Job:** Run (J1, J9)
 **Effort:** XS — one conditional in `cli.py:run()` before constructing `RunConfig`.
 **Risk:** Very low. Users who genuinely want to repeat an inline prompt can add `-n 5`.
+
+#### O24: Render per-check events in ConsoleEmitter
+**What:** Add `CHECK_PASSED` and `CHECK_FAILED` to `ConsoleEmitter._handlers`. Show `  ⋯ running: tests` before each check and the pass/fail result immediately after.
+**Why:** Addresses F22. The event infrastructure already exists (`engine.py:286-289` emits `CHECK_PASSED`/`CHECK_FAILED` per check). The `ConsoleEmitter` just doesn't handle them — it only renders `CHECKS_COMPLETED`. This is the lowest-effort monitoring improvement possible: the data is already flowing, it just needs a renderer.
+**Job:** Monitor (J6)
+**Effort:** XS — add two handlers to `_handlers` dict, ~10 lines of rendering code.
+**Risk:** None.
 
 ### Tier 2: High Impact, Medium Effort
 
@@ -286,11 +382,32 @@ Ranked by: (impact on user's job) × (frequency of the job) / (effort + risk)
 **Risk:** Low. Adding a comment costs nothing. Agent presets are more work but future-proof.
 
 #### O18: Emit per-check events during execution
-**What:** Add a `CHECK_STARTED` or `CHECK_RUNNING` event emitted before each individual check runs. Show `  ⋯ running: tests` in the console during each check.
+**What:** Show `  ⋯ running: tests` in the console during each check.
 **Why:** Addresses F22. Users with multiple checks (especially slow ones like integration tests) can see which check is currently running instead of staring at a blank screen.
 **Job:** Monitor (J6)
-**Effort:** S-M — change `run_all_checks` from a list comprehension to a loop with event emission, or emit events from `_run_checks_phase` in the engine.
+**Effort:** S-M — the events already exist (CHECK_PASSED/CHECK_FAILED are emitted per-check). The gap is in `ConsoleEmitter` rendering (see O24) and potentially adding a CHECK_STARTED event to show the name before it runs.
 **Risk:** Very low. More events = more information.
+
+#### O25: Warn on unresolved named placeholders
+**What:** When `{{ contexts.git-log }}` resolves to empty string because no context named "git-log" exists, emit a warning: `⚠ Placeholder {{ contexts.git-log }} not found — no context with that name exists. Available: gitlog, git-diff`.
+**Why:** Addresses F37. Typos in placeholder names are currently silent and devastating — the user's prompt is missing critical context with no indication. The `_replace_named` function at `resolver.py:35-41` already knows the name isn't in `available`; it just needs to warn instead of silently returning `""`.
+**Job:** Trust (J2, J6)
+**Effort:** S — add a `warnings.warn()` call in `_replace_named` when `name not in available`. List available names in the warning message.
+**Risk:** Very low. Warning only, no behavior change.
+
+#### O26: Validate check/context commands in `ralph status`
+**What:** Parse each check's and context's frontmatter `command` field, extract the first token (via `shlex.split`), and check if it's on PATH. Show a warning for each command that can't be found.
+**Why:** Addresses F34. Users who run `ralph status` and see "Ready to run." should be able to trust that claim. Currently, a missing `ruff` binary will only surface as repeated check failures during the loop.
+**Job:** Trust, Setup (J2, J5)
+**Effort:** S — iterate over discovered checks/contexts in the `status` command, call `shutil.which()` on each command's first token.
+**Risk:** Very low. Warnings only. Some commands might be scripts or PATH-dependent in ways that can't be validated statically, so frame as "warning" not "error".
+
+#### O27: Clarify `--stop-on-error` semantics or add `--stop-on-check-failure`
+**What:** Either: (a) rename `--stop-on-error` to `--stop-on-agent-error` to make the scope explicit, or (b) add a `--stop-on-check-failure` flag that stops the loop when any check fails, or (c) change `--stop-on-error` to also trigger on check failures (breaking change).
+**Why:** Addresses F33. Check failures are the primary signal in ralphify — they're what makes the loop self-healing. A user who sets `--stop-on-error` expecting it to cover checks will be surprised when the loop continues after test failures. The current behavior makes sense for ralphify's model (self-healing loops should continue), but the flag name is misleading.
+**Job:** Run, Trust (J2, J6)
+**Effort:** S-M — option (a) is a rename, (b) is a new flag + one conditional in engine.py.
+**Risk:** Low for (a) and (b). Higher for (c) since it changes default behavior.
 
 ### Tier 3: Medium Impact, Medium Effort
 
@@ -298,7 +415,7 @@ Ranked by: (impact on user's job) × (frequency of the job) / (effort + risk)
 **What:** Re-discover checks, contexts, and instructions at the start of each iteration (not just startup).
 **Why:** Addresses F13 and F24. Users can add/modify checks while the loop runs without restarting. Makes the steering experience consistent — if RALPH.md can change mid-run, why can't checks?
 **Job:** Steer (J3, J6)
-**Effort:** M — move `_discover_enabled_primitives()` call into the iteration loop. The `consume_reload_request()` mechanism exists in the engine (`engine.py:164-170`), so infrastructure is partially there. Could also use a lighter approach: compare file mtimes before rescanning.
+**Effort:** M — move `_discover_enabled_primitives()` call into the iteration loop. The `consume_reload_request()` mechanism exists in the engine (`engine.py:157`), so infrastructure is partially there. Could also use a lighter approach: compare file mtimes before rescanning.
 **Risk:** Medium. Discovery is filesystem I/O — adds latency per iteration. Also, adding a check mid-run that fails could surprise the agent if it wasn't prompted to address that check.
 
 #### O10: Merge "instructions" into RALPH.md / checks
@@ -329,6 +446,20 @@ Ranked by: (impact on user's job) × (frequency of the job) / (effort + risk)
 **Effort:** S-M — change `run_all_checks` to accept an `early_exit` flag and break on first failure.
 **Risk:** Low. Opt-in flag, no behavior change for existing users. Agent still sees the specific failure that triggered the stop.
 
+#### O28: Fix non-Claude agent output during logging
+**What:** For non-streaming agents (`run_agent` in `_agent.py`), use a `tee`-style approach: read output line-by-line and simultaneously display to terminal and buffer for log file, instead of the current all-or-nothing `capture_output`.
+**Why:** Addresses F43. Currently, enabling `--log-dir` for non-Claude agents means zero terminal output during the entire iteration. This is the worst possible monitoring experience and directly contradicts J6 (feel in control). With the proposed O2 (default logging), this would become the default experience for all non-Claude users — making O28 a prerequisite for O2.
+**Job:** Monitor (J6)
+**Effort:** M — change `subprocess.run` to `subprocess.Popen` with a line-by-line read loop similar to `run_agent_streaming`, but without JSON parsing.
+**Risk:** Low. The streaming version for Claude already proves this approach works.
+
+#### O29: Add inline comments to generated `ralph.toml`
+**What:** Expand the `RALPH_TOML_TEMPLATE` to include commented-out examples of common config options: `# timeout = 300`, `# delay = 5`, `# log_dir = "ralph_logs/"`. Add a comment explaining the `args` line for Claude Code users.
+**Why:** Addresses F29 and partially F17. The config file is the first thing a user reads after init. It should be self-documenting enough that the user doesn't need to open docs to understand what's configurable.
+**Job:** Setup (J1, J5)
+**Effort:** XS — just change the template string.
+**Risk:** None.
+
 ### Tier 4: Exploratory / Higher Risk
 
 #### O12: `ralph init --interactive` wizard
@@ -354,10 +485,17 @@ Ranked by: (impact on user's job) × (frequency of the job) / (effort + risk)
 
 #### O23: Preview the assembled prompt before sending to agent
 **What:** Add `ralph preview [name]` command that assembles the full prompt (resolving contexts, instructions, etc.) and prints it to stdout without running the agent. Useful for debugging prompt assembly and checking placeholder resolution.
-**Why:** Addresses F25 (partially) and aids debugging F16 (silent exclusion). Users can see exactly what the agent will receive. Contexts execute but the agent doesn't. Could also support `ralph preview --with-failures "check output here"` to simulate the failure feedback injection.
+**Why:** Addresses F31 and F25 (partially) and aids debugging F16 (silent exclusion) and F37 (silent empty placeholder). Users can see exactly what the agent will receive. Contexts execute but the agent doesn't. Could also support `ralph preview --with-failures "check output here"` to simulate the failure feedback injection.
 **Job:** Trust, Steer (J2, J6)
 **Effort:** M — extract `_assemble_prompt()` into a standalone command, add context execution.
 **Risk:** Low. New command, no behavior changes.
+
+#### O30: Save assembled prompt to log directory
+**What:** When `--log-dir` is set, write the assembled prompt to the log file alongside agent output. Format: `=== PROMPT ===\n{prompt}\n=== OUTPUT ===\n{output}`.
+**Why:** Addresses F31 without adding a new CLI command. Users debugging "why did the agent do X?" can check the log file to see both the input and the output. This is simpler than O23 (preview command) and covers the most common debugging scenario.
+**Job:** Monitor, Trust (J6)
+**Effort:** S — pass the assembled prompt to `_execute_agent`, include it in the log write.
+**Risk:** Very low. Log files get larger, but disk space is cheap and the prompt is the most important debugging artifact.
 
 ---
 
@@ -365,14 +503,52 @@ Ranked by: (impact on user's job) × (frequency of the job) / (effort + risk)
 
 | Principle | Where Applied |
 |---|---|
-| **Sensible defaults** | O1 (auto-create checks), O2 (default logs), O3 (default iteration limit), O15 (inline prompt → 1 iteration), O17 (explain scary flag) |
+| **Sensible defaults** | O1 (auto-create checks), O2 (default logs), O3 (default iteration limit), O15 (inline prompt → 1 iteration), O17 (explain scary flag), O29 (documented config) |
 | **Remove before you add** | O5 (remove --prompt-file), O10 (merge instructions) |
 | **Fewer concepts** | O10 (merge instructions into prompt/checks), O22 (rename ralphs to reduce polysemy) |
 | **Progressive disclosure** | O3 (safe default, opt into infinite), O4 (banner only when relevant), O21 (fail-fast checks opt-in) |
 | **Convention over configuration** | O1 (detect project, create appropriate checks), O2 (default log dir), O15 (inline = one-shot), O17 (agent presets) |
-| **Clear feedback** | O6 (warn on silent exclusion), O7 (prompt summary), O14 (progress N/M), O16 (truncation indicator), O18 (per-check status), O19 (aggregate stats), O23 (preview command) |
+| **Clear feedback** | O6 (warn on silent exclusion), O7 (prompt summary), O14 (progress N/M), O16 (truncation indicator), O18/O24 (per-check status), O19 (aggregate stats), O23/O30 (prompt visibility), O25 (warn on missing placeholder), O26 (validate commands) |
 | **Fewer steps** | O1 (init creates working setup), O8 (better template), O20 (reload without restart) |
-| **Obvious naming** | O22 (rename ralphs to prompts/tasks) |
+| **Obvious naming** | O22 (rename ralphs to prompts/tasks), O27 (clarify stop-on-error scope) |
+| **Observability is trust** | O7, O14, O16, O24, O25, O26, O28, O30 (every invisible operation gets a signal) |
+
+---
+
+## Recommended Implementation Order
+
+Based on re-ranking with cross-cutting insights:
+
+**Phase 1 — "Just Works" (all XS-S effort, highest combined impact):**
+1. O4: Suppress banner on `ralph run` (XS)
+2. O14: Show iteration progress N/M (XS)
+3. O15: Default `-n 1` for inline prompts (XS)
+4. O24: Render per-check events in ConsoleEmitter (XS — events already exist)
+5. O29: Add inline comments to generated `ralph.toml` (XS)
+6. O7: Show prompt assembly summary per iteration (S)
+7. O19: Aggregate check statistics in run summary (S)
+8. O25: Warn on unresolved named placeholders (S)
+
+**Phase 2 — "Smart Setup" (S-M effort, addresses the biggest setup gap):**
+9. O1: Smart `ralph init` with auto-created checks (S)
+10. O8: Better `ralph init` prompt template (S)
+11. O17a: Add comment to `ralph.toml` explaining dangerous flag (S)
+12. O3: Default iteration limit of 5 (S, needs careful migration comms)
+13. O26: Validate check/context commands in `ralph status` (S)
+14. O6: Warn on silent context/instruction exclusion (S-M)
+
+**Phase 3 — "Observable Loop" (M effort, addresses monitoring gaps):**
+15. O28: Fix non-Claude agent output during logging (M — prerequisite for O2)
+16. O2: Default log directory (S, but depends on O28)
+17. O16: Show truncation details (S)
+18. O30: Save assembled prompt to log directory (S)
+
+**Phase 4 — "Power User Tools" (M-L effort, addresses expert needs):**
+19. O23: Preview command (M)
+20. O5: Remove `--prompt-file` flag (S-M)
+21. O21: Fail-fast checks (S-M)
+22. O27: Clarify stop-on-error semantics (S-M)
+23. O9: Hot-reload primitives (M)
 
 ---
 
@@ -401,3 +577,9 @@ Ranked by: (impact on user's job) × (frequency of the job) / (effort + risk)
 11. **Should `ralph status` run automatically before `ralph run` (first time only)?** If the setup isn't valid (missing prompt file, missing command), `ralph run` fails with an error at `cli.py:318-320`. Running status checks proactively would catch issues earlier and print more helpful diagnostics. But it adds latency to every run.
 
 12. **Would a `ralph preview` command (O23) cannibalize `ralph run -n 1`?** Some users already use `-n 1` as a dry-run-ish workflow. A preview command would be more explicit ("show me the prompt but don't run it") vs. `-n 1` ("run one real iteration"). They serve different needs: preview is for debugging prompt assembly, `-n 1` is for testing the full loop.
+
+13. **Should O2 (default logging) be blocked on O28 (fix non-Claude output)?** Enabling default logging for non-Claude agents would cause F43 (zero terminal output during iteration) to become the default experience. This is a worse UX than no logging. Recommendation: implement O28 first, then O2.
+
+14. **Is `context.success` field being ignored a bug or a feature?** `resolve_contexts` at `contexts.py:120-146` uses context output regardless of whether the command succeeded. The FAQ says "Context commands run regardless of exit code" — but users may not expect failed command output in their prompt. Should there be a `required: true` field that skips injection on failure?
+
+15. **Should `--stop-on-error` cover check failures too?** The current behavior (only stops on agent process failure) makes sense for the self-healing loop model. But users from CI/CD backgrounds expect "stop on error" to mean "stop when anything fails." Options: rename to `--stop-on-agent-error`, add `--stop-on-check-failure`, or change the behavior with a deprecation warning.
