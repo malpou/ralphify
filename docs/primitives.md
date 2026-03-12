@@ -346,6 +346,91 @@ When you run `ralph run`, the prompt is resolved in this order (first match wins
 
 Named prompts support all the same features as the root `PROMPT.md`: context and instruction placeholders resolve as normal, and check failures are appended after each iteration.
 
+Named prompts also support [prompt-scoped primitives](#prompt-scoped-primitives) — checks, contexts, and instructions that only apply when running that specific prompt.
+
+## Prompt-scoped primitives
+
+When you use [named prompts](#prompts), you can attach checks, contexts, and instructions **to a specific prompt**. These prompt-scoped primitives live inside the prompt's directory and are merged with your global primitives when that prompt runs.
+
+### Why use them
+
+Different tasks need different validation. A documentation prompt might need a `mkdocs build` check but not a `cargo test` check. A refactoring prompt might need stricter lint rules. Prompt-scoped primitives let you customize the loop per task without cluttering the global `.ralph/` directory.
+
+### Directory structure
+
+Place primitive directories inside the named prompt's directory, using the same `checks/`, `contexts/`, `instructions/` layout:
+
+```
+.ralph/prompts/docs/
+├── PROMPT.md
+├── checks/
+│   └── docs-build/
+│       └── CHECK.md          ← only runs with the "docs" prompt
+├── contexts/
+│   └── doc-coverage/
+│       └── CONTEXT.md        ← only injected with the "docs" prompt
+└── instructions/
+    └── writing-style/
+        └── INSTRUCTION.md    ← only included with the "docs" prompt
+```
+
+### How merging works
+
+When you run `ralph run docs`, ralphify discovers both global and prompt-scoped primitives, then merges them:
+
+1. **Global primitives** from `.ralph/checks/`, `.ralph/contexts/`, `.ralph/instructions/` are loaded first
+2. **Prompt-scoped primitives** from `.ralph/prompts/docs/checks/`, etc. are loaded next
+3. If a local primitive has the **same name** as a global one, the **local version wins**
+4. Enabled filtering happens **after** the merge — a disabled local primitive can suppress a global one
+
+This means you can:
+
+- **Add** prompt-specific primitives that only run for that prompt
+- **Override** a global primitive by creating a local one with the same name
+- **Suppress** a global primitive by creating a disabled local one with the same name
+
+### Example: override a global check
+
+Say you have a global test check:
+
+```
+.ralph/checks/tests/CHECK.md     ← command: pytest
+```
+
+For your `docs` prompt, you want to skip full tests and only validate the docs build. Create a local override:
+
+```
+.ralph/prompts/docs/checks/tests/CHECK.md
+```
+
+```markdown
+---
+enabled: false
+---
+```
+
+This disables the global `tests` check when running the `docs` prompt, because the local primitive with the same name (`tests`) takes precedence.
+
+Then add a prompt-specific check:
+
+```
+.ralph/prompts/docs/checks/docs-build/CHECK.md
+```
+
+```markdown
+---
+command: mkdocs build --strict
+timeout: 60
+---
+Fix any MkDocs build warnings or errors.
+```
+
+Now `ralph run docs` runs only the `docs-build` check (plus any other global checks not overridden).
+
+### With ad-hoc prompts
+
+Prompt-scoped primitives only apply when running a named prompt. Ad-hoc prompts (`ralph run -p "..."`) use global primitives only, since there is no prompt directory to scan.
+
 ## Behavior notes
 
 Important runtime behaviors that affect how you design and organize your primitives.
@@ -410,21 +495,27 @@ Setting `enabled: false` in frontmatter skips the primitive during execution but
 
 ```
 .ralph/
-├── checks/
+├── checks/                          ← global checks (all prompts)
 │   ├── lint/
 │   │   └── CHECK.md
 │   └── tests/
 │       ├── CHECK.md
 │       └── run.sh
-├── contexts/
+├── contexts/                        ← global contexts
 │   └── git-log/
 │       └── CONTEXT.md
-├── instructions/
+├── instructions/                    ← global instructions
 │   └── code-style/
 │       └── INSTRUCTION.md
 └── prompts/
     ├── docs/
-    │   └── PROMPT.md
+    │   ├── PROMPT.md
+    │   ├── checks/                  ← prompt-scoped (docs only)
+    │   │   └── docs-build/
+    │   │       └── CHECK.md
+    │   └── instructions/
+    │       └── writing-style/
+    │           └── INSTRUCTION.md
     └── refactor/
         └── PROMPT.md
 ```

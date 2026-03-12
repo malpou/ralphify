@@ -236,6 +236,8 @@ enabled: true
 You are a test-writing agent. Each iteration starts fresh...
 ```
 
+You can also attach checks, contexts, and instructions to a specific named prompt — they'll only apply when that prompt runs. See [prompt-scoped primitives](primitives.md#prompt-scoped-primitives) for details.
+
 See [Primitives — Prompts](primitives.md#prompts) for the full reference.
 
 ## Tips
