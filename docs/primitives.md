@@ -81,23 +81,6 @@ Instead of a `command` in frontmatter, you can place an executable script named 
 
 If both a `command` and a `run.*` script exist, the script takes precedence. Scripts and commands always run with the **project root** as the working directory, not the primitive's directory.
 
-### HTML comments are stripped
-
-You can use HTML comments in any primitive file for internal notes — they're stripped before the content is injected into the prompt:
-
-```markdown
----
-command: pytest -x
-timeout: 120
-enabled: true
----
-<!-- TODO: consider adding --tb=short flag -->
-<!-- Agreed on this policy in sprint retro 2025-01-10 -->
-Fix all failing tests. Do not skip or delete tests.
-```
-
-The agent never sees the comments. This is useful for documenting why a check exists or what you've tried.
-
 ### How check failures appear in the prompt
 
 When a check fails, ralphify appends a section like this to the next iteration's prompt:
@@ -397,44 +380,6 @@ This means you can:
 - **Override** a global primitive by creating a local one with the same name
 - **Suppress** a global primitive by creating a disabled local one with the same name
 
-### Example: override a global check
-
-Say you have a global test check:
-
-```
-.ralphify/checks/tests/CHECK.md     ← command: pytest
-```
-
-For your `docs` ralph, you want to skip full tests and only validate the docs build. Create a local override:
-
-```
-.ralphify/ralphs/docs/checks/tests/CHECK.md
-```
-
-```markdown
----
-enabled: false
----
-```
-
-This disables the global `tests` check when running the `docs` ralph, because the local primitive with the same name (`tests`) takes precedence.
-
-Then add a ralph-specific check:
-
-```
-.ralphify/ralphs/docs/checks/docs-build/CHECK.md
-```
-
-```markdown
----
-command: mkdocs build --strict
-timeout: 60
----
-Fix any MkDocs build warnings or errors.
-```
-
-Now `ralph run docs` runs only the `docs-build` check (plus any other global checks not overridden).
-
 ### With ad-hoc prompts
 
 Ralph-scoped primitives only apply when running a named ralph. Ad-hoc prompts (`ralph run -p "..."`) use global primitives only, since there is no ralph directory to scan.
@@ -508,41 +453,6 @@ If a context command produces no output at all, only its static content (the bod
 
 ### Disabled primitives
 
-Setting `enabled: false` in frontmatter skips the primitive during execution but does **not** hide it. Disabled primitives still appear in `ralph status` (marked with a different indicator) and are still discovered — they're just filtered out before running. This makes it easy to toggle primitives on and off without deleting directories.
+Setting `enabled: false` skips the primitive during execution. Disabled primitives still appear in `ralph status` — they're just not run. This makes it easy to toggle primitives on and off without deleting directories.
 
-## Directory structure
-
-```
-.ralphify/
-├── checks/                          ← global checks (all ralphs)
-│   ├── lint/
-│   │   └── CHECK.md
-│   └── tests/
-│       ├── CHECK.md
-│       └── run.sh
-├── contexts/                        ← global contexts
-│   └── git-log/
-│       └── CONTEXT.md
-├── instructions/                    ← global instructions
-│   └── code-style/
-│       └── INSTRUCTION.md
-└── ralphs/
-    ├── docs/
-    │   ├── RALPH.md
-    │   ├── checks/                  ← ralph-scoped (docs only)
-    │   │   └── docs-build/
-    │   │       └── CHECK.md
-    │   └── instructions/
-    │       └── writing-style/
-    │           └── INSTRUCTION.md
-    └── refactor/
-        └── RALPH.md
-```
-
-## Viewing your primitives
-
-Use `ralph status` to see all discovered primitives and whether they're enabled:
-
-```bash
-ralph status
-```
+Use `ralph status` to see all discovered primitives and whether they're enabled.
