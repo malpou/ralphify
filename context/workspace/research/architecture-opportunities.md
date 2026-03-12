@@ -255,6 +255,161 @@ When a context command fails (non-zero exit or timeout), `ContextResult.success`
 **SL6: Zero positive feedback** (`checks.py:162-164`, `engine.py:168-169`)
 When all checks pass, `format_check_failures()` returns `""` and `_assemble_prompt()` skips appending. The agent receives an identical prompt to iteration 1 — no signal that its work in the previous iteration passed all quality gates. The agent can't distinguish between "first iteration, no checks have run yet" and "iteration 5, all checks pass, your work is good." Impact: **low-medium** — most agents infer success from the absence of failure feedback, but an explicit "all checks passed" signal would reduce unnecessary re-work.
 
+### Named Ralph Resolution Trace
+
+The `ralph run <name>` path is a key workflow that spans CLI → ralphs → discovery → engine. This traces the full resolution chain.
+
+```
+ralph run docs
+┌─────────────────────────────────────────────────────────────────────┐
+│ 1. cli.py:283         prompt_name="docs" (from positional arg)      │
+│ 2. cli.py:315         resolve_ralph_source(prompt_name="docs", ...) │
+│    → ralphs.py:108    prompt_name is truthy                         │
+│    → ralphs.py:109    resolve_ralph_name("docs")                    │
+│      → ralphs.py:68   discover_ralphs(root)                         │
+│        → ralphs.py:54 discover_primitives(root, "ralphs", RALPH.md) │
+│          → _discovery.py:91 _scan_dir(.ralphify/ralphs/, "RALPH.md")│
+│      → ralphs.py:69-71 linear scan for name == "docs"               │
+│      → returns Ralph(name="docs", path=.ralphify/ralphs/docs, ...)  │
+│    → ralphs.py:110    return (".ralphify/ralphs/docs/RALPH.md",     │
+│                               "docs")                               │
+│ 3. cli.py:324         Path(prompt_file_path).exists() — validated   │
+│ 4. cli.py:331-342     RunConfig(prompt_file=path, prompt_name=name) │
+└─────────────────────────────────────────────────────────────────────┘
+
+engine.py:run_loop()
+┌─────────────────────────────────────────────────────────────────────┐
+│ 5. engine.py:51-52    _resolve_prompt_dir(config):                   │
+│    config.prompt_name="docs" and not config.prompt_text → True       │
+│    prompt_dir = Path(".ralphify/ralphs/docs/RALPH.md").parent        │
+│              = Path(".ralphify/ralphs/docs")                         │
+│ 6. engine.py:72-75    _discover_enabled_primitives(root, prompt_dir):│
+│    → discover_enabled_checks(root, prompt_dir=".ralphify/ralphs/docs")│
+│      → discover_checks(root) — global checks                        │
+│      → discover_checks_local(".ralphify/ralphs/docs")                │
+│        → _scan_dir(".ralphify/ralphs/docs/checks/", "CHECK.md")     │
+│      → merge_by_name(global, local) — local wins on name collision   │
+│      → filter enabled                                                │
+│    (same for contexts and instructions)                              │
+│ 7. engine.py:162-163  _assemble_prompt():                            │
+│    Path(".ralphify/ralphs/docs/RALPH.md").read_text()                │
+│    → parse_frontmatter(raw) → prompt body                            │
+│    → resolve_contexts, resolve_instructions, append failures         │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Assessment:** Well-designed resolution chain. Key architectural properties:
+- Named ralphs get their own prompt directory, enabling scoped primitives (checks/contexts/instructions specific to a task)
+- `merge_by_name` allows local overrides of global primitives
+- The `_resolve_prompt_dir` function cleanly derives the prompt directory from the prompt file path
+
+**Issue: Ralph name fallback silently converts to file path.** `ralphs.py:116-121` — when `ralph.toml` contains `ralph = "myralph"` and `"myralph"` is not found as a named ralph, `resolve_ralph_source` silently falls back to treating `"myralph"` as a file path. This means the error the user sees is "Prompt file 'myralph' not found" (`cli.py:325`) rather than "Ralph 'myralph' not found." The user has no indication that name resolution was attempted and failed — the error looks like a missing file, not a missing ralph. This is confusing because the user intended a name, not a path.
+
+**Issue: Ralph discovery scans on every resolution.** `resolve_ralph_name()` (`ralphs.py:68`) calls `discover_ralphs(root)` which scans the entire `.ralphify/ralphs/` directory for each lookup. During `ralph run`, this happens once at startup. But `resolve_ralph_source()` at `ralphs.py:117-118` can call `resolve_ralph_name()` even for the TOML fallback path, meaning a single invocation may scan the ralphs directory twice (once for name resolution, once if it falls back). Not a performance issue at current scale, but the pattern would become relevant if ralph counts grow.
+
+### Error Propagation Audit
+
+This section traces error handling across every module boundary in the codebase. The finding: **the codebase has no error boundary strategy — errors either crash the entire operation or are silently swallowed, with almost nothing in between.**
+
+#### Layer 1: Config Loading (`cli.py:133-140`)
+
+| Error | What happens | Code reference |
+|-------|-------------|----------------|
+| File missing | Clean exit with message | `cli.py:136-138` — **good** |
+| Invalid TOML syntax | Unhandled `tomllib.TOMLDecodeError` → raw traceback | `cli.py:139-140` |
+| Missing `[agent]` section | Unhandled `KeyError` → raw traceback | `cli.py:301` |
+| Missing `command` key | Unhandled `KeyError` → raw traceback | `cli.py:302` |
+| Extra/unknown keys | Silently ignored | No validation layer |
+
+**Pattern:** Only the file-missing case has a user-friendly error. All other config errors produce raw Python tracebacks. (Covered by O1.)
+
+#### Layer 2: Frontmatter Parsing (`_frontmatter.py`)
+
+| Error | What happens | Code reference |
+|-------|-------------|----------------|
+| No frontmatter delimiters | Returns `({}, full_text)` — body is the entire file | `_frontmatter.py:85-86` — **good, intentional** |
+| Malformed `key: value` lines | Silently skipped | `_frontmatter.py:42-45` — **good, lenient** |
+| `timeout: abc` (non-integer) | **Unhandled `ValueError`** from `int("abc")` → crashes discovery | `_frontmatter.py:50` via `_FIELD_COERCIONS` |
+| `enabled: maybe` (non-boolean) | Coerced to `False` (not in `"true", "yes", "1"`) | `_frontmatter.py:33` — **surprising but safe** |
+
+**Pattern:** Frontmatter parsing is lenient for missing/malformed structure but crashes hard on type coercion failures. A single primitive with `timeout: slow` crashes the entire discovery phase for that primitive type. The `_FIELD_COERCIONS` dict at line 31 has no try/except — `int()` and the `enabled` lambda are called directly.
+
+#### Layer 3: Primitive Discovery (`_discovery.py`)
+
+| Error | What happens | Code reference |
+|-------|-------------|----------------|
+| `.ralphify/` directory missing | Silently yields nothing | `_discovery.py:66-67` — **good** |
+| Marker file read fails (permissions) | **Unhandled exception** → crashes all discovery for that kind | `_discovery.py:77` |
+| `run.*` script directory iteration fails | **Unhandled exception** → crashes discovery | `_discovery.py:52` |
+
+**Pattern:** Discovery handles the normal "directory doesn't exist" case well, but has no error boundaries around individual primitive reads. One corrupted `CHECK.md` file (bad encoding, permission denied) crashes discovery for ALL checks, not just the broken one.
+
+#### Layer 4: Check/Context Subprocess Execution (`_runner.py`)
+
+| Error | What happens | Code reference |
+|-------|-------------|----------------|
+| Command timeout | Handled — returns `RunResult(success=False, timed_out=True)` | `_runner.py:62-68` — **good** |
+| Command not found (FileNotFoundError) | **Unhandled** → crashes the entire check/context phase | `_runner.py:50` |
+| Script not executable (PermissionError) | **Unhandled** → crashes the entire check/context phase | `_runner.py:50` |
+| Script not found (FileNotFoundError) | **Unhandled** → crashes the entire check/context phase | `_runner.py:44-45` |
+| Invalid command string (ValueError from shlex) | **Unhandled** → crashes the entire check/context phase | `_runner.py:47` |
+
+**Impact amplified by sequential execution:** Checks run via `[run_check(check, project_root) for check in checks]` (`checks.py:154`). Contexts use the same pattern (`contexts.py:126`). A single `FileNotFoundError` or `PermissionError` in any check/context aborts the entire list comprehension — remaining checks/contexts never run. The agent receives no feedback at all, rather than feedback from the checks that did succeed.
+
+#### Layer 5: Agent Execution (`_agent.py`)
+
+| Error | What happens | Code reference |
+|-------|-------------|----------------|
+| Command not found | Re-raised as `FileNotFoundError` with helpful message | `engine.py:194-198` — **good** |
+| Timeout (streaming) | Handled — process killed, returns `returncode=None` | `_agent.py:108-112` — **good** |
+| Timeout (blocking) | Handled — returns `returncode=None` | `_agent.py:184-186` — **good** |
+| `BrokenPipeError` on stdin write (streaming) | **Unhandled** → crashes iteration | `_agent.py:103` |
+| JSON decode error (streaming) | Handled — line skipped | `_agent.py:119-120` — **good** |
+
+**Pattern:** Agent execution is the best-handled layer. Most error cases are covered. The `BrokenPipeError` case is the main gap: if the agent process exits immediately after starting (e.g., invalid args), `proc.stdin.write(prompt)` raises `BrokenPipeError`. The `try/finally` at line 132-135 cleans up the process, but the exception propagates to `_run_iteration`, which is caught by the generic `except Exception` in `run_loop` — terminating the entire run.
+
+#### Layer 6: Engine Loop (`engine.py:356-390`)
+
+| Error | What happens | Code reference |
+|-------|-------------|----------------|
+| Prompt file missing/unreadable | **Caught by generic `except Exception`** → sets status FAILED, stops run | `engine.py:383-390` |
+| Discovery crash (from Layer 3) | **Caught by generic `except Exception`** → sets status FAILED, stops run | `engine.py:383-390` |
+| Check/context crash (from Layer 4) | **Caught by generic `except Exception`** → sets status FAILED, stops run | `engine.py:383-390` |
+| `KeyboardInterrupt` | Handled — sets status STOPPED | `engine.py:381-382` — **good** |
+
+**Pattern:** The generic `except Exception` at `engine.py:383` is the only error boundary in the system. It catches everything and terminates the run. This means any unhandled error in layers 2-5 escalates to "run crashed" with a traceback. There's no middle ground — no "skip this iteration and continue" or "skip this check and report the rest."
+
+#### Summary: The Error Boundary Gap
+
+```
+Error severity:     FATAL ◄──────────────────────────► SILENT
+                      │                                    │
+Where errors land:    │    (nothing in between)             │
+                      │                                    │
+Config errors:    ────┤                                    │
+Discovery crash:  ────┤                                    │
+Subprocess crash: ────┤                                    │
+                      │                                    │
+Context failures: ────┼────────────────────────────────────┤
+Missing placeholders: ┼────────────────────────────────────┤
+Truncation:       ────┼────────────────────────────────────┤
+                      │                                    │
+                   run_loop()                        resolve_contexts()
+                   except Exception                  (no check at all)
+```
+
+The codebase has exactly two error handling strategies:
+1. **Crash the run** — any unhandled exception reaches `run_loop`'s `except Exception` and terminates everything
+2. **Swallow silently** — context failures, missing placeholders, and truncation are invisible
+
+What's missing is the middle tier: **graceful degradation**. Examples:
+- A check script with bad permissions → skip that check, report the error, continue with remaining checks
+- A context timeout → mark the context as degraded, warn the user, continue with partial data
+- A corrupt frontmatter file → skip that primitive, warn, continue discovering others
+- A TOML parse error → specific error message pointing to the syntax problem
+
+This gap directly impacts **J2 (guardrails)** and **J5 (reliable workflow)**. A user who adds a new check with a typo in the command shouldn't have their entire run crash — they should see "Check 'my-check' failed to execute: command 'pytst' not found" alongside normal results from the other checks.
+
 ## Job–Architecture Alignment
 
 ### Well-Aligned
@@ -282,6 +437,9 @@ When all checks pass, `format_check_failures()` returns `""` and `_assemble_prom
 | J2 (Guardrails) | Context failures silently corrupt prompt data (SL5) | `resolve_contexts()` never checks `ContextResult.success` |
 | J2 (Guardrails) | No check progress tracking between iterations (SL4) | `check_failures_text` completely replaced each iteration |
 | J3 (Stop babysitting) | Agent can't tell if its fixes worked (SL4, SL6) | No positive feedback when checks pass; no diff of what changed |
+| J5 (Reliable workflow) | One broken primitive crashes all of its type | No error boundaries in discovery (`_discovery.py:77`) or execution (`_runner.py:50`) |
+| J5 (Reliable workflow) | Frontmatter type errors crash discovery | `_FIELD_COERCIONS` (`_frontmatter.py:50`) has no try/except |
+| J5 (Reliable workflow) | Ralph name resolution error is misleading | `ralphs.py:120-121` silently falls back from name to path |
 
 ## Opportunities
 
@@ -398,6 +556,28 @@ Ranked by: (impact on job fulfillment) × (frequency of the job) / (effort + ris
 **Effort:** S (modify `collect_output` to add labels when both streams are non-empty)
 **Risk:** Low — changes the format of output seen by the agent, which could affect agents that parse check output literally. Should only add labels when both streams are non-empty to avoid noise.
 
+### O16: Error Boundaries for Check/Context Execution [HIGH PRIORITY]
+**What:** Wrap individual check and context execution in try/except in `run_all_checks()` (`checks.py:154`) and `run_all_contexts()` (`contexts.py:126`). Catch `FileNotFoundError`, `PermissionError`, and `OSError`. When a check/context fails to execute, produce a synthetic `CheckResult`/`ContextResult` with the error message as output, rather than crashing the entire phase.
+**Job:** SJ4 → J2 (guardrails), J5 (reliable workflow)
+**Why:** A single check with a typo in its command (`pytst` instead of `pytest`) or a non-executable script crashes the entire check phase via unhandled `FileNotFoundError`. Because checks run in a list comprehension, remaining checks never execute. The agent receives no feedback at all — not even from the checks that would have succeeded. This is the most common error path for new users configuring their first checks. The fix is ~10 lines per function: wrap the `run_check`/`run_context` call in try/except and synthesize a failure result.
+**Effort:** S (~20 lines across two functions)
+**Risk:** Very low — strictly more resilient than current behavior. The synthetic failure result uses the same `CheckResult`/`ContextResult` types, so downstream code (formatting, events) works unchanged.
+**Evidence:** `checks.py:154` — `return [run_check(check, project_root) for check in checks]`. `_runner.py:50` — `subprocess.run()` raises `FileNotFoundError` for missing commands, `PermissionError` for non-executable scripts. Neither is caught.
+
+### O17: Graceful Frontmatter Type Coercion [MEDIUM PRIORITY]
+**What:** Wrap the `_FIELD_COERCIONS` call in `_parse_kv_lines()` (`_frontmatter.py:50`) in a try/except. On failure, fall back to the raw string value and emit a warning (via `warnings.warn`, matching the pattern in `checks.py:75`).
+**Job:** SJ7 → J5 (reliable workflow)
+**Why:** `timeout: slow` in a CHECK.md causes `int("slow")` to raise `ValueError`, crashing discovery for ALL checks — not just the one with the bad value. The user sees a raw traceback with no indication which file caused the problem. The fix is 3 lines: wrap `coerce(value)` in try/except, warn with the filename context, use the raw string. Downstream code that expects `int` will still fail, but the failure will be localized to that check rather than crashing all discovery.
+**Effort:** S (~5 lines)
+**Risk:** Very low — additive error handling. The raw string fallback may cause later type errors, but they'll be localized to the single primitive rather than crashing all discovery.
+
+### O18: Improve Ralph Name Resolution Error Messages [LOW PRIORITY]
+**What:** In `resolve_ralph_source()` (`ralphs.py:116-121`), when a TOML ralph value fails name resolution, check if the fallback file path exists before returning. If neither exists, raise `ValueError` with a message that mentions both the name lookup failure and the file path failure. E.g., "Ralph 'myralph' not found as a named ralph or file path. Available ralphs: docs, refactor."
+**Job:** SJ1 → J5 (reliable workflow)
+**Why:** When `ralph.toml` contains `ralph = "myralph"` and `myralph` isn't found, the fallback silently treats it as a file path (`ralphs.py:121`). The error the user sees is "Prompt file 'myralph' not found" (`cli.py:325`) — which is confusing because the user intended a ralph name, not a file path. The user has no indication that name resolution was attempted.
+**Effort:** S (~5 lines)
+**Risk:** Very low — improves error message clarity only
+
 ## Anti-Patterns Spotted
 
 ### 1. Dead Code: `detector.py`
@@ -432,6 +612,15 @@ The feedback loop's truncation strategy (`_output.py:30-31`) is **anti-correlate
 ### 6. Silent Context Corruption
 `resolve_contexts()` (`contexts.py:129`) processes all context results identically regardless of `success` or `timed_out` status. A context that crashed injects its error output (or empty output) into the prompt without any warning. This violates the principle that the system should fail visibly, not invisibly. The `ContextResult.success` and `ContextResult.timed_out` fields exist but are dead reads — no downstream code inspects them for resolution purposes. (See O12 for the fix.)
 
+### 7. Binary Error Handling: Crash or Swallow
+The codebase has exactly two error handling modes with no middle ground:
+- **Crash mode:** Any unhandled exception propagates to `run_loop`'s `except Exception` (`engine.py:383`) and terminates the entire run. This is how config errors, discovery errors, subprocess errors (FileNotFoundError, PermissionError), frontmatter coercion errors, and BrokenPipeError all behave.
+- **Swallow mode:** Context failures, missing template placeholders, and output truncation are completely invisible. No warning, no event, no log entry.
+
+The missing middle tier — **graceful degradation** — would let individual primitives fail without taking down the entire operation. Currently, a single check with `command: pytst` (typo) crashes the check phase for all checks. A single `CHECK.md` with `timeout: slow` crashes discovery for all checks. The blast radius of a single primitive's error extends to the entire primitive type.
+
+This pattern is especially harmful for new users who are iterating on their configuration. Every configuration experiment is a potential run-killing error. (See O16 for check/context execution boundaries and O17 for frontmatter coercion boundaries.)
+
 ## Open Questions
 
 1. **Is a 5th primitive type planned?** If yes, O9 (reduce discovery boilerplate) becomes higher priority. If no, the current explicit pattern is fine.
@@ -449,3 +638,7 @@ The feedback loop's truncation strategy (`_output.py:30-31`) is **anti-correlate
 7. **How much iteration history should the agent receive?** O13 proposes a check progress diff (what improved/regressed). But should the agent also receive its own previous result_text? Claude Code's streaming mode captures `result_text` from the JSON stream (`_agent.py:121-124`), but this is never fed back. Giving the agent its own previous summary alongside check results could prevent it from repeating failed approaches.
 
 8. **Should context failures be fatal or advisory?** O12 proposes surfacing context failures, but the behavior on failure is an open design question. Options: (a) skip the context entirely (safe but loses data), (b) inject the output with a warning prefix (agent sees the data is suspect), (c) abort the iteration (strict but disruptive). The right answer may depend on whether the context is critical (e.g., `git diff`) or supplementary (e.g., `uptime`).
+
+9. **Should error boundaries be per-primitive or per-phase?** O16 proposes wrapping individual check/context execution in try/except. An alternative is wrapping the entire check phase — if any check crashes, skip the check phase and continue the loop. Per-primitive is more granular (the agent still gets feedback from healthy checks) but adds more error-handling code. Per-phase is simpler but throws away partial results. The right answer depends on whether users commonly have mixed healthy/broken check configurations.
+
+10. **Should `_run_agent_streaming` defend against stdin failures?** `_agent.py:103` writes the prompt to `proc.stdin` with no protection against `BrokenPipeError`. This happens when the agent process exits immediately (bad args, crash on startup). The `try/finally` cleans up the process but the exception propagates to `run_loop` and terminates the run. Should this be caught and converted to a failed iteration (with a helpful message like "Agent exited before accepting input"), or is a run crash appropriate since the agent is fundamentally misconfigured?
