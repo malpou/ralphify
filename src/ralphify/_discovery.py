@@ -36,16 +36,14 @@ def find_run_script(directory: Path) -> Path | None:
     return None
 
 
-def discover_primitives(
-    root: Path, kind: str, marker: str
+def _scan_dir(
+    primitives_dir: Path, marker: str
 ) -> Iterator[PrimitiveEntry]:
-    """Yield a :class:`PrimitiveEntry` for each primitive found.
+    """Yield entries from *primitives_dir* that contain *marker*.
 
-    Scans ``root/.ralphify/{kind}/`` for subdirectories containing a
-    *marker* file (e.g. ``CHECK.md``), parses its frontmatter, and
-    yields results in alphabetical order.
+    Shared implementation for :func:`discover_primitives` and
+    :func:`discover_local_primitives`.  Results are in alphabetical order.
     """
-    primitives_dir = root / PRIMITIVES_DIR / kind
     if not primitives_dir.is_dir():
         return
 
@@ -60,6 +58,18 @@ def discover_primitives(
         text = marker_file.read_text()
         frontmatter, body = parse_frontmatter(text)
         yield PrimitiveEntry(entry, frontmatter, body)
+
+
+def discover_primitives(
+    root: Path, kind: str, marker: str
+) -> Iterator[PrimitiveEntry]:
+    """Yield a :class:`PrimitiveEntry` for each primitive found.
+
+    Scans ``root/.ralphify/{kind}/`` for subdirectories containing a
+    *marker* file (e.g. ``CHECK.md``), parses its frontmatter, and
+    yields results in alphabetical order.
+    """
+    return _scan_dir(root / PRIMITIVES_DIR / kind, marker)
 
 
 def discover_local_primitives(
@@ -71,18 +81,4 @@ def discover_local_primitives(
     directly (e.g. ``.ralphify/ralphs/ui/checks/``) instead of the
     global ``.ralphify/{kind}/`` path.  Results are in alphabetical order.
     """
-    primitives_dir = base_dir / kind
-    if not primitives_dir.is_dir():
-        return
-
-    for entry in sorted(primitives_dir.iterdir()):
-        if not entry.is_dir():
-            continue
-
-        marker_file = entry / marker
-        if not marker_file.exists():
-            continue
-
-        text = marker_file.read_text()
-        frontmatter, body = parse_frontmatter(text)
-        yield PrimitiveEntry(entry, frontmatter, body)
+    return _scan_dir(base_dir / kind, marker)
