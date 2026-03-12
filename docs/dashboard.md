@@ -4,7 +4,14 @@ description: How to install, launch, and use the ralphify web dashboard to manag
 
 # Web Dashboard
 
-Ralphify includes a web-based orchestration dashboard that lets you manage
+!!! warning "Coming Soon"
+    The web dashboard is **not yet available**. The design and API described on
+    this page represent what's planned for a future release. The `ralph ui`
+    command, the `[ui]` install extra, and all REST/WebSocket endpoints do not
+    exist yet. This page is published as a design preview — do not follow the
+    install or usage instructions below until this notice is removed.
+
+Ralphify will include a web-based orchestration dashboard that lets you manage
 multiple runs, watch iterations in real time, and edit primitives — all from
 your browser.
 
