@@ -204,6 +204,25 @@ class TestRunStateControls:
         assert mock_run.call_count == 1
         assert state.status == RunStatus.STOPPED
 
+    @patch(_MOCK_SUBPROCESS)
+    def test_keyboard_interrupt_sets_stopped(self, mock_run, tmp_path):
+        """Ctrl+C should set status to STOPPED, not COMPLETED."""
+        mock_run.side_effect = KeyboardInterrupt
+        config = _make_config(tmp_path, max_iterations=5)
+        state = _make_state()
+        q = QueueEmitter()
+
+        run_loop(config, state, q)
+
+        assert state.status == RunStatus.STOPPED
+
+        events = []
+        while not q.queue.empty():
+            events.append(q.queue.get())
+
+        stop_event = [e for e in events if e.type == EventType.RUN_STOPPED][0]
+        assert stop_event.data["reason"] == "user_requested"
+
     @patch(_MOCK_SUBPROCESS, side_effect=_ok)
     def test_pause_and_resume(self, mock_run, tmp_path):
         config = _make_config(tmp_path, max_iterations=3)

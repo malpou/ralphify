@@ -410,7 +410,7 @@ def run_loop(
                 time.sleep(config.delay)
 
     except KeyboardInterrupt:
-        pass
+        state.status = RunStatus.STOPPED
     except Exception as exc:
         state.status = RunStatus.FAILED
         tb = traceback.format_exc()
