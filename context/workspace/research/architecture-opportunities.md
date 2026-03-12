@@ -173,6 +173,88 @@ manager.py ──→ engine.py, _events.py, _run_types.py
 
 **Total:** ~2,896 lines across 18 modules. This is a well-sized codebase — small enough to understand fully, large enough to have real architecture.
 
+### Feedback Loop Data Flow (End-to-End Trace)
+
+The self-healing feedback loop is ralphify's core differentiator. This trace documents every transformation data undergoes from check execution to the agent receiving feedback, and identifies where signal is lost.
+
+#### Step-by-step data path
+
+```
+Iteration N: Check Phase
+┌─────────────────────────────────────────────────────────────────────┐
+│ 1. engine.py:308-311   _run_checks_phase() called                  │
+│ 2. checks.py:143-154   run_all_checks() → run_check() per check    │
+│ 3. _runner.py:49-56    subprocess.run(capture_output=True)          │
+│ 4. _output.py:12-25    collect_output() → stdout+stderr merged      │
+│    ⚠ SL1: stdout/stderr concatenated with no separator             │
+│ 5. checks.py:134-140   RunResult → CheckResult(output, passed, ..) │
+│ 6. engine.py:264       format_check_failures(check_results)        │
+│ 7. checks.py:157-185   Filter failures, format as markdown:        │
+│    - "## Check Failures" header                                    │
+│    - Per failure: ### name, exit code, truncated output, instruction│
+│ 8. _output.py:28-32    truncate_output(output, max_len=5000)       │
+│    ⚠ SL2: Truncates to first 5000 chars (head, not tail)           │
+│    ⚠ SL3: Test summaries are at the END — most useful info cut off │
+└─────────────────────────────────────────────────────────────────────┘
+
+Between Iterations
+┌─────────────────────────────────────────────────────────────────────┐
+│ 9. engine.py:368-370   check_failures_text returned from           │
+│                        _run_iteration(), carried to next iteration  │
+│    ⚠ SL4: Previous iteration's failures completely replaced        │
+│           — no diff, no history of what improved/regressed         │
+└─────────────────────────────────────────────────────────────────────┘
+
+Iteration N+1: Prompt Assembly
+┌─────────────────────────────────────────────────────────────────────┐
+│ 10. engine.py:295-298  _assemble_prompt(config, primitives,        │
+│                        context_results, check_failures_text)       │
+│ 11. engine.py:159-163  Read base prompt (file or -p text)          │
+│ 12. engine.py:164-165  Resolve contexts ({{ contexts.x }})         │
+│     ⚠ SL5: Context failures unchecked — resolve_contexts() at     │
+│            contexts.py:129 never inspects ContextResult.success    │
+│ 13. engine.py:166-167  Resolve instructions                        │
+│ 14. engine.py:168-169  Append: prompt + "\n\n" + failures_text     │
+│     ⚠ SL6: All-passed = empty string = zero signal to agent       │
+└─────────────────────────────────────────────────────────────────────┘
+
+Agent Receives Prompt
+┌─────────────────────────────────────────────────────────────────────┐
+│ 15. _agent.py:103      (streaming) proc.stdin.write(prompt)        │
+│     _agent.py:170-171  (blocking)  subprocess.run(input=prompt)    │
+│     ⚠ SL7: Prompt not logged — _write_log() captures agent output │
+│            but not the input that was sent (already in O6)         │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### Signal loss analysis
+
+**SL1: stdout/stderr conflation** (`_output.py:12-25`)
+`collect_output()` concatenates stdout and stderr into one string with no separator or labels. If a test runner writes progress to stderr and results to stdout, they're interleaved. The agent can't distinguish between a compiler warning (stderr) and a test failure message (stdout). Impact: **medium** — signal is present but muddled.
+
+**SL2+SL3: Head-biased truncation** (`_output.py:28-32`)
+`truncate_output()` keeps `text[:5000]` — the **first** 5000 characters. But most test runners (pytest, jest, go test, cargo test) output individual test results in order, then print the **failure summary at the end**. This means truncation systematically cuts off the most useful information:
+- **pytest:** "FAILURES" section with tracebacks, then "short test summary info" — both at the end
+- **jest:** summary of failed tests, expected vs. received — at the end
+- **go test:** "FAIL" lines with the failing test name — at the end
+- **cargo test:** "failures:" section listing failed tests — at the end
+
+The agent receives "PASSED test_a... PASSED test_b... PASSED test_c... (truncated)" instead of the actual failure details. **This is the single biggest signal loss point in the feedback loop.** The architecture inverts the information value: the highest-value content (failure details) is truncated while the lowest-value content (passing tests listed first) is preserved.
+
+**SL4: No check history between iterations** (`engine.py:342,368`)
+`check_failures_text` is a simple string variable that is completely overwritten each iteration. The agent receives the **current** failures but has no way to know:
+- Which checks improved (failed → passed) — its fixes worked
+- Which checks regressed (passed → failed) — its changes broke something
+- Which failures persist (same failure across iterations) — the fix isn't working
+
+On iteration 5, if the agent fixed 3 out of 5 failing checks but broke 1 new one, it sees "3 failures" with no indication that 3 others were fixed. It can't measure its own progress. Impact: **medium-high** — agents that can't track progress tend to thrash.
+
+**SL5: Context failures silently enter prompt** (`contexts.py:94-116,129-155`)
+When a context command fails (non-zero exit or timeout), `ContextResult.success` is set to `False` and `ContextResult.timed_out` may be `True`. But `resolve_contexts()` (line 129) never checks these fields. It processes every result identically — whether the context ran successfully or crashed. A failing `git log` context injects error output (or empty output) into the prompt with no warning. The engine emits `CONTEXTS_RESOLVED` with a count but no failure indicator. Impact: **medium** — the agent operates on corrupt or missing data without knowing it.
+
+**SL6: Zero positive feedback** (`checks.py:162-164`, `engine.py:168-169`)
+When all checks pass, `format_check_failures()` returns `""` and `_assemble_prompt()` skips appending. The agent receives an identical prompt to iteration 1 — no signal that its work in the previous iteration passed all quality gates. The agent can't distinguish between "first iteration, no checks have run yet" and "iteration 5, all checks pass, your work is good." Impact: **low-medium** — most agents infer success from the absence of failure feedback, but an explicit "all checks passed" signal would reduce unnecessary re-work.
+
 ## Job–Architecture Alignment
 
 ### Well-Aligned
@@ -196,6 +278,10 @@ manager.py ──→ engine.py, _events.py, _run_types.py
 | J5 (Reliable workflow) | CLI-only settings can't be defaulted in config (F42) | `ralph.toml` schema is too narrow |
 | J9 (Cost control) | No cost tracking or spend limits | No system job exists for cost management |
 | J1 (Ship features) | Non-Claude agents get degraded experience (F32, F43) | Agent mode detection hardcoded to `"claude"` binary name |
+| J2 (Guardrails) | Feedback loop systematically truncates most useful info (SL2, SL3) | `truncate_output()` keeps head, test runners put summaries at tail |
+| J2 (Guardrails) | Context failures silently corrupt prompt data (SL5) | `resolve_contexts()` never checks `ContextResult.success` |
+| J2 (Guardrails) | No check progress tracking between iterations (SL4) | `check_failures_text` completely replaced each iteration |
+| J3 (Stop babysitting) | Agent can't tell if its fixes worked (SL4, SL6) | No positive feedback when checks pass; no diff of what changed |
 
 ## Opportunities
 
@@ -272,6 +358,46 @@ Ranked by: (impact on job fulfillment) × (frequency of the job) / (effort + ris
 **Effort:** S-M (replace list comprehension with thread pool)
 **Risk:** Medium — check ordering might matter for some use cases; need to ensure thread safety in output collection. Would need an opt-in flag or config option.
 
+---
+
+### Feedback Loop Opportunities (from data flow trace)
+
+### O11: Tail-Biased Truncation [HIGH PRIORITY]
+**What:** Change `truncate_output()` (`_output.py:28-32`) to keep the **last** N characters instead of the first N, or keep both head and tail with an elision in the middle (e.g., first 1000 + `\n... (N chars truncated) ...\n` + last 4000).
+**Job:** SJ11 → J2 (guardrails — self-healing feedback quality)
+**Why:** This is the single biggest signal loss point in the feedback loop. `text[:5000]` keeps the **head** of check output, but all major test runners (pytest, jest, go test, cargo test) put failure summaries and error details at the **end**. The agent systematically receives the least useful part of the output — a stream of "PASSED" lines — while the actual failure details (tracebacks, expected-vs-received, failure counts) are truncated away. An agent that can't see what failed can't fix it. The fix is ~10 lines.
+**Effort:** S (change truncation logic in `_output.py:28-32`, ~10 lines)
+**Risk:** Very low — same API surface, better content. Test runners universally put summaries at the end, so tail-biased truncation is strictly better for the feedback loop use case.
+**Evidence:** `_output.py:30-31` — `text[:max_len]` with no consideration of content structure. Every test runner puts its summary at the end: pytest prints `=== FAILURES ===` then tracebacks then `short test summary info`; jest prints `Tests:` summary; go test prints `FAIL` lines.
+
+### O12: Context Failure Surfacing [HIGH PRIORITY]
+**What:** In `resolve_contexts()` (`contexts.py:129-155`), check `ContextResult.success` and `ContextResult.timed_out`. When a context fails, either: (a) skip it and emit a warning event, or (b) wrap the output in a warning block so the agent knows the data may be corrupt. Also emit a `CONTEXT_FAILED` event (new EventType) so the CLI can warn the user.
+**Job:** SJ2 → J2 (guardrails), J6 (feel in control)
+**Why:** When a context command fails (non-zero exit) or times out, `resolve_contexts()` silently injects whatever output was captured — which may be empty, partial, or error messages. The agent has no way to know it's operating on corrupt data. If a `git log` context fails, the agent might conclude there's no git history rather than that the context failed. `ContextResult.success` and `ContextResult.timed_out` fields already exist (line 49-50) but are never read by the resolution path.
+**Effort:** S (add conditional check in `resolve_contexts`, add event type, add ConsoleEmitter handler)
+**Risk:** Low — the context data is already potentially corrupt; surfacing this is strictly better
+
+### O13: Check Progress Feedback [MEDIUM PRIORITY]
+**What:** Include a brief summary of the previous iteration's check status in the failure feedback text. Modify `format_check_failures()` (`checks.py:157-185`) to accept the previous iteration's results and generate a diff: "Previously failing: X, Y, Z. Now passing: X, Y. Still failing: Z. New failure: W."
+**Job:** SJ3 (orchestrate) → J2 (guardrails), J3 (stop babysitting)
+**Why:** `check_failures_text` is completely overwritten each iteration (`engine.py:368`). The agent can't tell if it's making progress — it sees the current failures but not what changed. If it fixed 3 of 5 failing checks but broke 1 new one, it sees "3 failures" with no indication that 3 were fixed. Agents that can't measure their own progress tend to thrash — retrying fixes that already worked or abandoning approaches that were partially successful.
+**Effort:** M (store previous `CheckResult` list in loop state, compare in `format_check_failures`)
+**Risk:** Low — additive to the feedback text; the agent still sees current failures. The diff summary adds ~3-5 lines before the detailed failures.
+
+### O14: Positive Check Feedback [LOW PRIORITY]
+**What:** When all checks pass, `format_check_failures()` returns `""` and the prompt gets no feedback. Instead, return a brief positive signal: `"## Check Results\n\nAll N checks passed after the last iteration."` so the agent knows its work succeeded.
+**Job:** SJ3 → J1 (ship features), J3 (stop babysitting)
+**Why:** On iteration 2+ with all checks passing, the prompt is identical to iteration 1. The agent can't distinguish "first iteration, no checks run yet" from "iteration 5, all checks pass." Without positive feedback, some agents will redundantly re-verify their work or continue making unnecessary changes. An explicit "all passed" signal helps the agent focus on remaining work rather than re-checking.
+**Effort:** S (3-5 lines in `format_check_failures`, update `_assemble_prompt` to always append)
+**Risk:** Very low — adds a few tokens to the prompt; some agents may benefit more than others
+
+### O15: Separate stdout/stderr in Check Output [LOW PRIORITY]
+**What:** Change `collect_output()` (`_output.py:12-25`) to label stdout and stderr sections rather than blindly concatenating them. E.g., `"STDOUT:\n{stdout}\nSTDERR:\n{stderr}"` when both are non-empty.
+**Job:** SJ11 → J2 (guardrails)
+**Why:** stdout and stderr from check commands are concatenated with no separator or labels. Compiler warnings (stderr) mix with test output (stdout). The agent can't distinguish between a test failure message and a deprecation warning. In practice, most check commands write to only one stream, so this matters mainly for linter/compiler checks that write diagnostics to stderr and results to stdout.
+**Effort:** S (modify `collect_output` to add labels when both streams are non-empty)
+**Risk:** Low — changes the format of output seen by the agent, which could affect agents that parse check output literally. Should only add labels when both streams are non-empty to avoid noise.
+
 ## Anti-Patterns Spotted
 
 ### 1. Dead Code: `detector.py`
@@ -300,6 +426,12 @@ This creates a two-tier experience: Claude Code users get streaming output, live
 ### 4. Config→CLI Gap
 `ralph.toml` has 3 fields. `ralph run` has 8 flags. The 5 missing config fields (`timeout`, `delay`, `log_dir`, `stop_on_error`, `max_iterations`) can only be set per-invocation. Users who want consistent behavior must type the same flags every time. This violates J5 (reliable, repeatable workflow) — if the config file exists to avoid repetition, it should cover the common options.
 
+### 5. Head-Biased Truncation Inverts Signal Value
+The feedback loop's truncation strategy (`_output.py:30-31`) is **anti-correlated with information value**. Test runner output follows a universal pattern: per-test status (low value, high volume) first, failure details and summary (high value, low volume) last. By keeping `text[:5000]`, the system preserves the low-value head and discards the high-value tail. This is the architectural equivalent of a hearing aid that amplifies background noise and attenuates speech. The agent is systematically denied the information it needs most to self-heal. (See O11 for the fix.)
+
+### 6. Silent Context Corruption
+`resolve_contexts()` (`contexts.py:129`) processes all context results identically regardless of `success` or `timed_out` status. A context that crashed injects its error output (or empty output) into the prompt without any warning. This violates the principle that the system should fail visibly, not invisibly. The `ContextResult.success` and `ContextResult.timed_out` fields exist but are dead reads — no downstream code inspects them for resolution purposes. (See O12 for the fix.)
+
 ## Open Questions
 
 1. **Is a 5th primitive type planned?** If yes, O9 (reduce discovery boilerplate) becomes higher priority. If no, the current explicit pattern is fine.
@@ -311,3 +443,9 @@ This creates a two-tier experience: Claude Code users get streaming output, live
 4. **Should non-Claude agents get first-class streaming support?** O7 proposes making streaming mode configurable. But streaming requires the agent to emit parseable output on stdout. If most non-Claude agents don't support this, the config option would be a trap (user enables streaming, agent doesn't support it, broken output). A middle ground: tee-based output capture that shows output live without requiring structured streaming.
 
 5. **What's the relationship between `ralphify` and `alphify`?** Memory reference mentions alphify as a separate product for non-technical users. If alphify will wrap ralphify's library API, the public surface in `__init__.py` needs to be stable and well-documented. O4 (config schema extension) and O1 (config validation) become more important — library consumers need reliable, validated config handling.
+
+6. **Should truncation strategy be configurable per check?** O11 proposes tail-biased truncation globally. But some check types (e.g., linters) produce useful output at the head (first N violations), while test runners produce it at the tail (summary). A `truncation: head|tail|smart` frontmatter field in CHECK.md could let users optimize per check, but adds complexity. Alternatively, `smart` truncation (keep head + tail, elide middle) works well for both patterns.
+
+7. **How much iteration history should the agent receive?** O13 proposes a check progress diff (what improved/regressed). But should the agent also receive its own previous result_text? Claude Code's streaming mode captures `result_text` from the JSON stream (`_agent.py:121-124`), but this is never fed back. Giving the agent its own previous summary alongside check results could prevent it from repeating failed approaches.
+
+8. **Should context failures be fatal or advisory?** O12 proposes surfacing context failures, but the behavior on failure is an open design question. Options: (a) skip the context entirely (safe but loses data), (b) inject the output with a warning prefix (agent sees the data is suspect), (c) abort the iteration (strict but disruptive). The right answer may depend on whether the context is critical (e.g., `git diff`) or supplementary (e.g., `uptime`).
