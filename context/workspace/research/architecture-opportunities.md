@@ -410,6 +410,269 @@ What's missing is the middle tier: **graceful degradation**. Examples:
 
 This gap directly impacts **J2 (guardrails)** and **J5 (reliable workflow)**. A user who adds a new check with a typo in the command shouldn't have their entire run crash — they should see "Check 'my-check' failed to execute: command 'pytst' not found" alongside normal results from the other checks.
 
+### CLI Prompt Resolution: All Paths to Running the Loop
+
+The `run` command (`cli.py:281-346`) has 4 ways to specify what prompt to use. These paths converge on `RunConfig` but have subtly different semantics and error behavior. This trace maps all paths and identifies where they diverge.
+
+#### Path 1: Inline prompt text (`-p/--prompt`)
+```
+ralph run -p "Fix the failing test"
+┌─────────────────────────────────────────────────────────────────────┐
+│ cli.py:306   prompt_text is truthy → skip file resolution entirely  │
+│ cli.py:307   prompt_file_path = agent.get("ralph", "RALPH.md")     │
+│              ⚠ PR1: prompt_file is set but NEVER READ by engine    │
+│              (engine.py:159 checks config.prompt_text first)        │
+│ cli.py:308   resolved_prompt_name = None                           │
+│ cli.py:331   RunConfig(prompt_text="Fix the failing test",         │
+│                        prompt_file=<from toml>, prompt_name=None)  │
+│                                                                     │
+│ engine.py:51  _resolve_prompt_dir: prompt_name=None → returns None │
+│ engine.py:344 prompt_dir=None → only global primitives discovered  │
+│ engine.py:159 prompt_text is truthy → prompt = config.prompt_text  │
+│              ⚠ PR2: No frontmatter parsing for inline text         │
+│              (file-based prompts go through parse_frontmatter)      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**PR1: Dead `prompt_file` value on the `-p` path.** When `-p` is used, `prompt_file_path` is still set from `ralph.toml` (`cli.py:307`). This value is stored in `RunConfig.prompt_file` but never used — `engine.py:159-160` checks `config.prompt_text` first and skips the file read. The dead value is harmless but misleading: a reader might think the file is a fallback. More importantly, if the TOML file doesn't even have a `ralph` key, `agent.get("ralph", "RALPH.md")` silently defaults — masking a broken config. The `-p` user never discovers their `ralph.toml` is malformed.
+
+**PR2: Inline text skips frontmatter parsing.** When a prompt file is used, `engine.py:162-163` calls `parse_frontmatter(raw)` to strip the `---` block. Inline text bypasses this. If a user copies a `RALPH.md` file's content into `-p "---\ntimeout: 300\n---\nFix the test"`, the frontmatter ends up in the agent prompt verbatim. This is arguably correct (inline text has no frontmatter), but the asymmetry is undocumented.
+
+#### Path 2: Positional ralph name (`ralph run docs`)
+```
+ralph run docs
+┌─────────────────────────────────────────────────────────────────────┐
+│ cli.py:283   prompt_name="docs"                                     │
+│ cli.py:314   resolve_ralph_source(prompt_name="docs", ...)          │
+│  → ralphs.py:108-110  discover_ralphs() → find by name             │
+│  → returns (".ralphify/ralphs/docs/RALPH.md", "docs")              │
+│ cli.py:324   Path(prompt_file_path).exists() — validated            │
+│ cli.py:331   RunConfig(prompt_file=path, prompt_name="docs")       │
+│                                                                     │
+│ engine.py:51  prompt_name="docs" and not prompt_text → True        │
+│ engine.py:52  prompt_dir = Path(prompt_file).parent                │
+│              = ".ralphify/ralphs/docs"                              │
+│ engine.py:344 prompt_dir set → discovers LOCAL + GLOBAL primitives │
+│              ⚠ PR3: This is the ONLY path that gets local prims    │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**PR3: Scoped primitives only activate for named ralphs.** `_resolve_prompt_dir()` (`engine.py:45-53`) returns a `prompt_dir` only when `config.prompt_name` is set AND `config.prompt_text` is not. This means scoped primitives (checks/contexts/instructions inside a ralph directory) only work with `ralph run <name>`. If a user specifies `--prompt-file .ralphify/ralphs/docs/RALPH.md` (Path 3), `prompt_name` is `None`, so `_resolve_prompt_dir()` returns `None`, and local primitives under `.ralphify/ralphs/docs/checks/` are silently ignored. The file is read, but the scoping is lost. A user who manually points to a ralph file instead of using its name gets a degraded experience with no warning.
+
+#### Path 3: Explicit file (`--prompt-file`)
+```
+ralph run --prompt-file custom/my-prompt.md
+┌─────────────────────────────────────────────────────────────────────┐
+│ cli.py:286   prompt_file="custom/my-prompt.md"                      │
+│ cli.py:314   resolve_ralph_source(prompt_file="custom/my-prompt.md")│
+│  → ralphs.py:112-113  prompt_file is truthy → return (path, None)  │
+│ cli.py:324   Path(prompt_file_path).exists() — validated            │
+│ cli.py:331   RunConfig(prompt_file=path, prompt_name=None)         │
+│                                                                     │
+│ engine.py:51  prompt_name=None → _resolve_prompt_dir returns None  │
+│ engine.py:344 prompt_dir=None → only global primitives             │
+│              ⚠ PR3 applies here too                                │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### Path 4: TOML default (no arguments)
+```
+ralph run
+┌─────────────────────────────────────────────────────────────────────┐
+│ cli.py:283   prompt_name=None                                       │
+│ cli.py:314   resolve_ralph_source(prompt_name=None, prompt_file=None│
+│              toml_ralph="RALPH.md")  [or toml_ralph="docs"]        │
+│                                                                     │
+│ Case A: toml_ralph="RALPH.md" (has ".")                            │
+│  → ralphs.py:116  is_ralph_name("RALPH.md") → False ("." present) │
+│  → ralphs.py:123  return ("RALPH.md", None)                       │
+│  → RunConfig(prompt_file="RALPH.md", prompt_name=None)             │
+│  → engine.py:51  prompt_name=None → no prompt_dir → global only   │
+│                                                                     │
+│ Case B: toml_ralph="docs" (no "." or "/")                          │
+│  → ralphs.py:116  is_ralph_name("docs") → True                    │
+│  → ralphs.py:117-119  resolve_ralph_name("docs")                  │
+│    → Success: return (".ralphify/ralphs/docs/RALPH.md", "docs")    │
+│    → Failure: ValueError caught at ralphs.py:120-121               │
+│      ⚠ PR4: falls back to return ("docs", None)                   │
+│      → cli.py:324 checks Path("docs").exists() → probably fails   │
+│      → Error: "Prompt file 'docs' not found"                       │
+│      → User sees FILE error, not NAME error (already in O18)       │
+│                                                                     │
+│ Case C: toml_ralph="ralphs/custom.md" (has "/")                    │
+│  → ralphs.py:116  is_ralph_name("ralphs/custom.md") → False       │
+│  → ralphs.py:123  return ("ralphs/custom.md", None)               │
+│  → prompt_name=None → no local primitives                          │
+│    ⚠ PR3 applies again                                             │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**PR4: `is_ralph_name` heuristic is brittle.** `ralphs.py:88` — `"/" not in value and "." not in value`. This means `ralph = "my.task"` in `ralph.toml` is treated as a file path (because of the `.`), even if the user intended it as a name. Similarly, `ralph = "add-tests"` is treated as a name, but `ralph = "tasks/add-tests"` is treated as a path. The heuristic is correct for the common cases but has no escape hatch. A user can't force name resolution for names that happen to contain `.` or `/`, and can't force file resolution for bare names.
+
+#### Summary: Path Feature Matrix
+
+| Feature | Path 1 (-p) | Path 2 (name) | Path 3 (--file) | Path 4a (toml file) | Path 4b (toml name) |
+|---------|-------------|----------------|------------------|---------------------|---------------------|
+| Frontmatter parsed | No | Yes | Yes | Yes | Yes |
+| Local primitives | No | **Yes** | No | No | **Yes** |
+| File existence check | No | Yes | Yes | Yes | Yes |
+| Prompt source validated | N/A | At resolution | At cli.py:324 | At cli.py:324 | At resolution |
+| Config errors masked | **Yes** (PR1) | No | No | No | Partially (PR4) |
+
+**Architectural insight:** The scoped-primitives feature (local checks/contexts/instructions) only activates on 2 of 5 paths. This is by design (only named ralphs have a meaningful directory to scope to), but the asymmetry is invisible to users. A user who types `--prompt-file .ralphify/ralphs/docs/RALPH.md` might reasonably expect to get the same behavior as `ralph run docs`. The gap between these paths becomes a trap when the user moves from "named ralph that works" to "custom file path for more control" — they silently lose scoped primitives.
+
+### RunState State Machine and Threading Model
+
+The `RunState` class (`_run_types.py:61-144`) manages the lifecycle of a run through both status transitions and control events. This section validates the state machine and probes the threading model for correctness.
+
+#### State Transition Diagram
+
+```
+                     ┌──────────┐
+                     │ PENDING  │
+                     └────┬─────┘
+                          │ run_loop() sets status=RUNNING (engine.py:334)
+                          ▼
+              ┌───────────────────────────┐
+              │                           │
+         ┌────┤        RUNNING            ├────┐
+         │    │                           │    │
+         │    └─────┬───────────┬─────────┘    │
+         │          │           │              │
+    request_pause() │           │ stop_requested│
+    (sets PAUSED,   │           │ (engine.py:  │
+    clears event)   │           │ 128-129)     │
+         │          │           │              │
+         ▼          │           │              │
+   ┌──────────┐     │           │              │
+   │  PAUSED  │     │           │              │
+   └────┬─────┘     │           │              │
+        │           │           │              │
+   request_resume() │           │              │
+   (sets RUNNING,   │           │              │
+    sets event)     │           │              │
+        │           │           │              │
+        └───────────┘           │              │
+                                │              │
+                     ┌──────────┘              │
+                     │                         │
+                     ▼                         ▼
+              ┌──────────┐              ┌──────────┐
+              │ STOPPED  │              │ COMPLETED│
+              └──────────┘              └──────────┘
+                     ▲
+                     │ except Exception
+                     │ (engine.py:383-384)
+              ┌──────────┐
+              │  FAILED  │
+              └──────────┘
+```
+
+#### Validated Transitions
+
+| From | To | Trigger | Code Reference | Correct? |
+|------|----|---------|----------------|----------|
+| PENDING | RUNNING | `run_loop` starts | `engine.py:334` | **Yes** |
+| RUNNING | PAUSED | `request_pause()` | `_run_types.py:111-114` | **Yes** |
+| PAUSED | RUNNING | `request_resume()` | `_run_types.py:116-119` | **Yes** |
+| RUNNING | STOPPED | `request_stop()` detected | `engine.py:128-129` | **Yes** |
+| PAUSED | STOPPED | `request_stop()` while paused | `engine.py:107-108` via `_wait_for_resume` | **Yes** |
+| RUNNING | COMPLETED | Loop exits normally | `engine.py:392-393` | **Yes** |
+| RUNNING | FAILED | Unhandled exception | `engine.py:383-384` | **Yes** |
+| PAUSED | FAILED | Exception during pause handling | Theoretically via `engine.py:383` | **Yes** (covered by outer try/except) |
+
+#### Issue: State inconsistency during `request_pause()` / `request_resume()`
+
+**ST1: `request_pause()` sets `status` directly from any thread.**
+`_run_types.py:113` — `self.status = RunStatus.PAUSED` is set by the calling thread (typically the API/UI thread), not by the engine thread. The engine thread may be mid-iteration when `status` changes to PAUSED. Any code that checks `state.status` from the engine thread during an iteration will see PAUSED even though the loop hasn't actually paused yet — it's still executing. The engine only checks for pause at the top of the next iteration (`_handle_loop_transitions`, `engine.py:131`).
+
+In practice, this is benign: the engine thread doesn't check `state.status` during an iteration — it only reads the `_pause_event` flag at iteration boundaries. But any future code (or external observer like a dashboard) that reads `state.status` during an iteration will see a misleading PAUSED status while the agent is still running.
+
+**ST2: `request_resume()` sets `status = RUNNING` before `_pause_event.set()`.**
+`_run_types.py:117-119` — `status` transitions to RUNNING before the event is signaled. The engine thread is blocked in `_wait_for_resume` (`engine.py:104`) waiting on `_pause_event.wait()`. There's a brief window where `status` is RUNNING but the engine is still blocked. This is cosmetic — the engine unblocks on the next `wait` cycle (250ms timeout) — but a dashboard polling `state.status` would show RUNNING before the engine has actually resumed.
+
+**ST3: No transition validation.** `request_stop()`, `request_pause()`, and `request_resume()` can be called in any state. Calling `request_resume()` on a RUNNING (non-paused) run silently does nothing harmful (it sets `_pause_event`, which is already set). Calling `request_pause()` on a COMPLETED run sets `status = PAUSED` — a logically invalid state. There are no guards, and the `RunStatus` enum doesn't enforce a transition table.
+
+**Impact assessment:** ST1-ST3 are all **low severity**. The engine thread is the sole writer of counters and the sole consumer of control events. The control methods are only written by API threads. Under CPython's GIL, attribute writes are atomic. The status inconsistencies are cosmetic (250ms window at most) and only visible to external observers. However, if the codebase grows to include status-dependent behavior (e.g., "don't start a new run if one is RUNNING"), ST3 becomes a real bug.
+
+#### Threading Boundary Analysis
+
+```
+Engine Thread (run_loop)         │  API/UI Thread (RunManager)
+                                 │
+Reads:                           │  Reads:
+  state._stop_requested          │    state.status
+  state._pause_event (wait)      │    state.iteration, completed, failed
+  state._reload_requested        │    state.total
+                                 │
+Writes:                          │  Writes:
+  state.status (Running/         │    state._stop_requested (via request_stop)
+    Completed/Failed/Stopped)    │    state._pause_event (via request_pause/resume)
+  state.iteration                │    state.status (via request_pause/resume)  ⚠
+  state.completed, failed,       │    state._reload_requested (via request_reload)
+    timed_out                    │
+  state.started_at               │
+```
+
+**Conflict point:** `state.status` is written by both threads. The engine sets it to RUNNING/COMPLETED/FAILED/STOPPED; the API sets it to PAUSED/RUNNING. Under CPython's GIL, individual attribute writes are atomic, so this is safe — there's no torn read. But the lack of a single writer for status means ordering isn't guaranteed. If the API calls `request_pause()` (sets PAUSED) at the exact moment the engine finishes the loop and sets COMPLETED, the final status depends on timing. In practice, the engine's status write in the `finally` block at `engine.py:392-393` happens after the loop exits, and `request_pause()` is a no-op at that point. But the pattern is fragile.
+
+**Recommendation:** If state machine correctness matters for the UI layer (dashboard showing accurate run status), consider making the engine the sole writer of `status` via a `_pause_requested` flag pattern (same as `_stop_requested`), where the engine transitions to PAUSED itself at the iteration boundary.
+
+### Public API Surface Analysis (`__init__.py`)
+
+`__init__.py` (lines 1-73) exports 15 symbols. This section evaluates whether the public surface forms a coherent library API, particularly for the alphify product that wraps ralphify.
+
+#### Exported Surface
+
+| Symbol | Module | Category | Library Use Case |
+|--------|--------|----------|------------------|
+| `run_loop` | `engine.py` | Core | Run the autonomous loop programmatically |
+| `RunConfig` | `_run_types.py` | Core | Configure a run |
+| `RunState` | `_run_types.py` | Core | Observe/control a running loop |
+| `RunStatus` | `_run_types.py` | Core | Check lifecycle status |
+| `Event` | `_events.py` | Events | Consume structured events |
+| `EventEmitter` | `_events.py` | Events | Implement custom event handlers |
+| `EventType` | `_events.py` | Events | Switch on event types |
+| `FanoutEmitter` | `_events.py` | Events | Broadcast to multiple consumers |
+| `NullEmitter` | `_events.py` | Events | Suppress events in tests/batch |
+| `QueueEmitter` | `_events.py` | Events | Async event consumption (UI) |
+| `ManagedRun` | `manager.py` | Multi-run | Inspect a managed run |
+| `RunManager` | `manager.py` | Multi-run | Orchestrate multiple concurrent runs |
+| `discover_checks` | `checks.py` | Discovery | List available checks |
+| `run_all_checks` | `checks.py` | Discovery | Run checks programmatically |
+| `discover_contexts` | `contexts.py` | Discovery | List available contexts |
+| `run_all_contexts` | `contexts.py` | Discovery | Run contexts programmatically |
+| `discover_instructions` | `instructions.py` | Discovery | List available instructions |
+| `discover_ralphs` | `ralphs.py` | Discovery | List available ralphs |
+| `resolve_ralph_name` | `ralphs.py` | Discovery | Look up a ralph by name |
+
+#### API Coherence Issues
+
+**API1: Missing `discover_enabled_*` functions.**
+The public API exports `discover_checks`, `discover_contexts`, `discover_instructions`, `discover_ralphs` — these return ALL primitives (enabled + disabled). But the engine uses `discover_enabled_checks`, `discover_enabled_contexts`, `discover_enabled_instructions` — which merge local overrides and filter to enabled-only. A library consumer wanting to replicate what the engine does must either:
+- Call `discover_enabled_*` directly from the submodule (bypassing `__init__.py`)
+- Manually replicate the merge+filter logic from `_discovery.py:discover_enabled`
+
+The public API exposes the building blocks but not the composed operation that the engine actually uses. For alphify, this means either importing from internal modules or re-implementing filtering.
+
+**API2: `app` is exported.**
+`__init__.py:23` — `from ralphify.cli import app` exports the Typer app object. This is the CLI entry point, not a library symbol. Importing `ralphify` triggers CLI module loading (all of `cli.py`'s imports: `typer`, `rich`, `shutil`, etc.). For a pure library consumer who only wants `run_loop`, this adds unnecessary import overhead and pulls in CLI dependencies. The `app` is used by the `main()` entry point (`__init__.py:41-43`) but doesn't need to be in the module namespace.
+
+**API3: No `Check`, `Context`, `Instruction`, `Ralph` types exported.**
+The discovery functions return typed objects (`list[Check]`, `list[Context]`, etc.), but these types aren't in `__all__`. A library consumer who calls `discover_checks()` gets back `Check` objects but can't type-hint their own code without importing from `ralphify.checks` directly. The types are publicly usable but not publicly documented.
+
+**API4: No `ConsoleEmitter` exported.**
+The three emitter implementations (`NullEmitter`, `QueueEmitter`, `FanoutEmitter`) are exported, but `ConsoleEmitter` is not. A library consumer who wants terminal output identical to the CLI must import from `ralphify._console_emitter` — a private module. This is arguably intentional (ConsoleEmitter is tied to Rich, which is a CLI concern), but it means there's no "batteries included" way to get human-readable output from the library API.
+
+**API5: `run_all_checks` and `run_all_contexts` lack their counterpart resolution functions.**
+The API exports `run_all_checks` and `run_all_contexts` (execution) but not `format_check_failures` (feedback formatting) or `resolve_contexts` (prompt injection). A library consumer who runs checks can't format the results without importing from `ralphify.checks.format_check_failures` directly. The execution half of the workflow is public; the formatting half is not.
+
+#### Assessment
+
+The public API is designed around two use cases: (1) running a loop from code (`run_loop` + `RunConfig` + emitters) and (2) inspecting primitives (`discover_*`). Use case 1 is complete — `run_loop` is a self-contained entry point. Use case 2 is partial — discovery works but the types and formatting functions needed to build on top of discovery are missing.
+
+For alphify (non-technical user wrapper), the critical path is use case 1 via `RunManager`. This path is well-served: `RunManager.create_run()` → `start_run()` → drain `QueueEmitter.queue`. The gaps (API1-API5) matter more for a "power library consumer" building custom tooling around ralphify's primitives.
+
 ## Job–Architecture Alignment
 
 ### Well-Aligned
@@ -440,6 +703,10 @@ This gap directly impacts **J2 (guardrails)** and **J5 (reliable workflow)**. A 
 | J5 (Reliable workflow) | One broken primitive crashes all of its type | No error boundaries in discovery (`_discovery.py:77`) or execution (`_runner.py:50`) |
 | J5 (Reliable workflow) | Frontmatter type errors crash discovery | `_FIELD_COERCIONS` (`_frontmatter.py:50`) has no try/except |
 | J5 (Reliable workflow) | Ralph name resolution error is misleading | `ralphs.py:120-121` silently falls back from name to path |
+| J5 (Reliable workflow) | Scoped primitives silently lost on `--prompt-file` path | `_resolve_prompt_dir` only activates for named ralphs (PR3) |
+| J10 (Encode expertise) | Scoped checks don't work with all invocation paths | Feature only works on 2 of 5 prompt paths |
+| J8 (Team workflows) | Public API missing types returned by public functions | `Check`, `Context`, etc. not in `__all__` (API3) |
+| J8 (Team workflows) | Library import pulls in CLI dependencies | `__init__.py` imports `app` from `cli.py` (API2) |
 
 ## Opportunities
 
@@ -578,6 +845,46 @@ Ranked by: (impact on job fulfillment) × (frequency of the job) / (effort + ris
 **Effort:** S (~5 lines)
 **Risk:** Very low — improves error message clarity only
 
+### New Opportunities (from CLI, state machine, and API analysis)
+
+### O19: Preserve Scoped Primitives for `--prompt-file` Pointing to a Ralph Directory [MEDIUM PRIORITY]
+**What:** In `_resolve_prompt_dir()` (`engine.py:45-53`), detect when `config.prompt_file` points to a file inside `.ralphify/ralphs/<name>/` and derive `prompt_dir` from it, even when `prompt_name` is `None`. This way, `--prompt-file .ralphify/ralphs/docs/RALPH.md` gets the same scoped primitives as `ralph run docs`.
+**Job:** SJ1 → J5 (reliable workflow), J10 (encode expertise)
+**Why:** Currently, scoped primitives only activate for 2 of 5 prompt resolution paths (PR3 in the CLI resolution trace). A user who manually specifies a ralph file via `--prompt-file` loses all scoped checks/contexts/instructions with no warning. This is the kind of silent degradation that erodes trust — the user's checks stop running and they don't know why.
+**Effort:** S (~10 lines — check if `config.prompt_file` is inside the ralphs directory)
+**Risk:** Low — additive behavior. Only activates when the file is in a ralph directory structure.
+**Evidence:** `engine.py:45-53` — `_resolve_prompt_dir` only returns non-None when `config.prompt_name` is set. `cli.py:314-315` — `resolve_ralph_source` returns `prompt_name=None` for `--prompt-file`.
+
+### O20: Guard RunState Transitions Against Invalid States [LOW PRIORITY]
+**What:** Add simple guards to `request_pause()`, `request_resume()`, and `request_stop()` that check the current status before transitioning. E.g., `request_pause()` should no-op if status is COMPLETED/FAILED/STOPPED. `request_resume()` should no-op if not PAUSED.
+**Job:** SJ6 → J5 (reliable workflow), J8 (team — shared state via UI)
+**Why:** Currently, `request_pause()` on a COMPLETED run sets `status = PAUSED` — a logically invalid state (ST3 in the state machine analysis). Under the current codebase this is harmless because nothing reads status during the post-loop phase. But as the UI layer grows, status-dependent behavior (e.g., "show stop button only when RUNNING") becomes fragile if invalid states are possible.
+**Effort:** S (~5 lines per method — check status before mutating)
+**Risk:** Very low — guards are purely defensive. No change to happy-path behavior.
+
+### O21: Make Engine the Sole Writer of `status` [LOW PRIORITY]
+**What:** Replace `request_pause()` setting `status = PAUSED` with a `_pause_requested` flag (same pattern as `_stop_requested`). The engine transitions to PAUSED itself in `_handle_loop_transitions`. Similarly for `request_resume()`.
+**Job:** SJ6 → J3 (stop babysitting), J8 (team)
+**Why:** `state.status` is currently written by both the engine thread and API threads (ST1-ST2). This creates brief windows where status doesn't reflect actual engine state (e.g., status shows PAUSED while agent is still running mid-iteration). Making the engine the sole status writer eliminates these windows and simplifies reasoning about state.
+**Effort:** M (refactor 3 methods in `_run_types.py`, update `_handle_loop_transitions` in `engine.py`)
+**Risk:** Medium — changes the control API contract. `request_pause()` would no longer immediately change status; callers must wait for the engine to acknowledge.
+**Recommendation:** Only pursue if the UI layer needs accurate real-time status. For CLI-only use, the current pattern is fine.
+
+### O22: Export Primitive Types and Composition Functions from `__init__.py` [LOW PRIORITY]
+**What:** Add `Check`, `Context`, `Instruction`, `Ralph`, `CheckResult`, `ContextResult`, `format_check_failures`, `resolve_contexts`, `discover_enabled_checks`, `discover_enabled_contexts`, `discover_enabled_instructions`, and `ConsoleEmitter` to `__all__`.
+**Job:** SJ1, SJ2, SJ5 → J8 (team — library consumers), alphify integration
+**Why:** Library consumers (including alphify) must import from private modules to access the types returned by public functions (API1, API3, API4, API5 in the public API analysis). The discovery functions are public but the types they return are not. The execution functions are public but the formatting functions that complete the workflow are not. Exporting these symbols makes the library API self-sufficient.
+**Effort:** S (~10 lines — add imports and `__all__` entries)
+**Risk:** Low — purely additive. Increases the public surface area, which creates a stability commitment, but these types are already stable.
+**Recommendation:** Do this incrementally — start with the primitive types (`Check`, `Context`, `Instruction`, `Ralph`) and the `discover_enabled_*` functions. Add formatting functions and `ConsoleEmitter` when there's a concrete consumer.
+
+### O23: Separate CLI Entry Point from Library Imports [LOW PRIORITY]
+**What:** Move `from ralphify.cli import app` out of `__init__.py` and into a `ralphify.__main__` or the `main()` function itself. This prevents importing the CLI module (and its `typer`/`rich` dependencies) when using ralphify as a library.
+**Job:** SJ7 → J8 (team — library consumers)
+**Why:** `__init__.py:23` imports `app` from `cli.py`, which triggers loading of `typer`, `rich`, `shutil`, `tomllib`, and all primitive modules with their full import chains. A library consumer who only wants `run_loop` pays this cost. This matters for alphify's startup time and for any integration that imports ralphify in a larger application.
+**Effort:** S (move one import line, ensure `main()` does a lazy import)
+**Risk:** Very low — `app` isn't in `__all__` but is accessible via `ralphify.app`. Moving it to lazy import is technically a breaking change for anyone doing `from ralphify import app`, but this is an internal detail.
+
 ## Anti-Patterns Spotted
 
 ### 1. Dead Code: `detector.py`
@@ -612,6 +919,12 @@ The feedback loop's truncation strategy (`_output.py:30-31`) is **anti-correlate
 ### 6. Silent Context Corruption
 `resolve_contexts()` (`contexts.py:129`) processes all context results identically regardless of `success` or `timed_out` status. A context that crashed injects its error output (or empty output) into the prompt without any warning. This violates the principle that the system should fail visibly, not invisibly. The `ContextResult.success` and `ContextResult.timed_out` fields exist but are dead reads — no downstream code inspects them for resolution purposes. (See O12 for the fix.)
 
+### 8. Prompt Resolution Path Asymmetry
+The `run` command has 5 distinct paths to determine the prompt source (inline text, positional name, --prompt-file, TOML file path, TOML name). These paths have silently different feature sets: scoped primitives only activate on 2 of 5 paths, frontmatter parsing happens on 4 of 5 paths, and the `-p` path masks config validation errors (PR1). The asymmetry is undocumented and creates "works with `ralph run docs`, breaks with `--prompt-file`" surprises. This isn't necessarily wrong — different input modes legitimately have different semantics — but the differences should be either eliminated (make `--prompt-file` detect ralph directories and activate scoping) or documented explicitly.
+
+### 9. Dual-Writer State Pattern
+`RunState.status` is written by both the engine thread (RUNNING/COMPLETED/FAILED/STOPPED at `engine.py:334,392,384,128`) and API threads (PAUSED/RUNNING via `request_pause`/`request_resume` at `_run_types.py:113,118`). This creates brief windows where status doesn't reflect actual engine state. The pattern works under CPython's GIL but is fragile — it assumes no code makes decisions based on `status` between the API write and the engine's acknowledgment. If the codebase grows to include status-conditional behavior, this becomes a race condition source.
+
 ### 7. Binary Error Handling: Crash or Swallow
 The codebase has exactly two error handling modes with no middle ground:
 - **Crash mode:** Any unhandled exception propagates to `run_loop`'s `except Exception` (`engine.py:383`) and terminates the entire run. This is how config errors, discovery errors, subprocess errors (FileNotFoundError, PermissionError), frontmatter coercion errors, and BrokenPipeError all behave.
@@ -642,3 +955,9 @@ This pattern is especially harmful for new users who are iterating on their conf
 9. **Should error boundaries be per-primitive or per-phase?** O16 proposes wrapping individual check/context execution in try/except. An alternative is wrapping the entire check phase — if any check crashes, skip the check phase and continue the loop. Per-primitive is more granular (the agent still gets feedback from healthy checks) but adds more error-handling code. Per-phase is simpler but throws away partial results. The right answer depends on whether users commonly have mixed healthy/broken check configurations.
 
 10. **Should `_run_agent_streaming` defend against stdin failures?** `_agent.py:103` writes the prompt to `proc.stdin` with no protection against `BrokenPipeError`. This happens when the agent process exits immediately (bad args, crash on startup). The `try/finally` cleans up the process but the exception propagates to `run_loop` and terminates the run. Should this be caught and converted to a failed iteration (with a helpful message like "Agent exited before accepting input"), or is a run crash appropriate since the agent is fundamentally misconfigured?
+
+11. **Should `--prompt-file` auto-detect ralph directories?** O19 proposes deriving `prompt_dir` when `--prompt-file` points inside `.ralphify/ralphs/<name>/`. This eliminates the PR3 asymmetry but introduces implicit behavior — a file path suddenly gains scoping semantics based on where it lives. The alternative is to document the limitation and tell users to use `ralph run <name>` for scoped behavior. The right answer depends on how common the `--prompt-file` path is in practice.
+
+12. **Should `RunState.status` have a single writer?** O21 proposes making the engine the sole writer of status, using `_pause_requested`/`_resume_requested` flags. This eliminates the ST1-ST2 timing windows but changes the API contract — `request_pause()` would no longer immediately change status. For the CLI (single-threaded consumer), this doesn't matter. For the UI (dashboard polling status), the current "immediately visible" behavior may be preferred even if briefly inaccurate. The right answer depends on whether the UI prefers "fast but briefly wrong" or "correct but delayed."
+
+13. **Should the public API commit to exporting primitive types?** O22 proposes adding `Check`, `Context`, `Instruction`, etc. to `__all__`. Once exported, these types become a stability commitment — changing fields would be a breaking change. If the primitive type system is still evolving (e.g., adding new fields, changing defaults), deferring the export preserves flexibility. If alphify needs these types now, the stability commitment is unavoidable.
