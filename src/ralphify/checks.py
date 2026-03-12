@@ -7,10 +7,11 @@ iteration's prompt, creating a self-healing feedback loop.
 """
 
 import warnings
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._discovery import discover_local_primitives, discover_primitives, find_run_script
+from ralphify._discovery import PrimitiveEntry, discover_local_primitives, discover_primitives, find_run_script
 from ralphify._frontmatter import CHECK_MARKER
 from ralphify._output import truncate_output
 from ralphify._runner import run_command
@@ -51,7 +52,7 @@ class CheckResult:
     timed_out: bool = False
 
 
-def _check_from_entry(prim) -> Check | None:
+def _check_from_entry(prim: PrimitiveEntry) -> Check | None:
     """Convert a :class:`PrimitiveEntry` to a :class:`Check`, or ``None`` if invalid."""
     script = find_run_script(prim.path)
     command = prim.frontmatter.get("command")
@@ -71,7 +72,7 @@ def _check_from_entry(prim) -> Check | None:
     )
 
 
-def _checks_from_entries(entries) -> list[Check]:
+def _checks_from_entries(entries: Iterable[PrimitiveEntry]) -> list[Check]:
     """Convert primitive entries to Checks, skipping entries without a command or script."""
     return [c for c in map(_check_from_entry, entries) if c is not None]
 

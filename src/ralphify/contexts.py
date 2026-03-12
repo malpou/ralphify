@@ -8,7 +8,7 @@ A context can run a command/script, provide static text, or both.
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._discovery import discover_local_primitives, discover_primitives, find_run_script
+from ralphify._discovery import PrimitiveEntry, discover_local_primitives, discover_primitives, find_run_script
 from ralphify._frontmatter import CONTEXT_MARKER
 from ralphify._output import truncate_output
 from ralphify._runner import run_command
@@ -50,7 +50,7 @@ class ContextResult:
     timed_out: bool = False
 
 
-def _context_from_entry(prim) -> Context:
+def _context_from_entry(prim: PrimitiveEntry) -> Context:
     """Convert a :class:`PrimitiveEntry` to a :class:`Context`."""
     return Context(
         name=prim.path.name,

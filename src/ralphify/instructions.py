@@ -9,7 +9,7 @@ the body text of the INSTRUCTION.md file.
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._discovery import discover_local_primitives, discover_primitives
+from ralphify._discovery import PrimitiveEntry, discover_local_primitives, discover_primitives
 from ralphify._frontmatter import INSTRUCTION_MARKER
 from ralphify.resolver import resolve_placeholders
 
@@ -28,7 +28,7 @@ class Instruction:
     content: str = ""
 
 
-def _instruction_from_entry(prim) -> Instruction:
+def _instruction_from_entry(prim: PrimitiveEntry) -> Instruction:
     """Convert a :class:`PrimitiveEntry` to an :class:`Instruction`."""
     return Instruction(
         name=prim.path.name,

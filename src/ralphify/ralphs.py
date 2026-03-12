@@ -8,7 +8,7 @@ Ralphs are reusable task-focused prompt files that users can switch between
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._discovery import discover_primitives
+from ralphify._discovery import PrimitiveEntry, discover_primitives
 from ralphify._frontmatter import RALPH_MARKER
 
 
@@ -33,6 +33,17 @@ class Ralph:
     content: str = ""
 
 
+def _ralph_from_entry(prim: PrimitiveEntry) -> Ralph:
+    """Convert a :class:`PrimitiveEntry` to a :class:`Ralph`."""
+    return Ralph(
+        name=prim.path.name,
+        path=prim.path,
+        description=prim.frontmatter.get("description", ""),
+        enabled=prim.frontmatter.get("enabled", True),
+        content=prim.body,
+    )
+
+
 def discover_ralphs(root: Path = Path(".")) -> list[Ralph]:
     """Scan ``.ralphify/ralphs/`` for subdirectories containing ``RALPH.md``.
 
@@ -40,16 +51,7 @@ def discover_ralphs(root: Path = Path(".")) -> list[Ralph]:
     alphabetically by name.  Used by ``ralph ralphs list`` and the
     dashboard's Configure tab.
     """
-    return [
-        Ralph(
-            name=prim.path.name,
-            path=prim.path,
-            description=prim.frontmatter.get("description", ""),
-            enabled=prim.frontmatter.get("enabled", True),
-            content=prim.body,
-        )
-        for prim in discover_primitives(root, "ralphs", RALPH_MARKER)
-    ]
+    return [_ralph_from_entry(prim) for prim in discover_primitives(root, "ralphs", RALPH_MARKER)]
 
 
 def resolve_ralph_name(name: str, root: Path = Path(".")) -> Ralph:
