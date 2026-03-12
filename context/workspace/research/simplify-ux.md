@@ -1869,3 +1869,584 @@ This matrix combines all opportunities across 5 iterations, ranked by a composit
 | O10 | Merge instructions into prompt | L | Concept count |
 | O12 | Interactive init wizard | L | F5 |
 | O22 | Rename "ralphs" to "prompts" | L | F19, F28 |
+
+---
+
+## Deep Dive: The Self-Healing Feedback Loop Quality (NEW — Iteration 6)
+
+The self-healing feedback loop is ralphify's core value proposition: checks fail → failure output is injected into the next iteration's prompt → the agent fixes the issue. This is what makes ralphify more than a `while true; do claude -p < prompt; done` script. Yet the UX of this loop — how failures are presented to both the agent and the user — has not been deeply analyzed.
+
+### Walking Through the Feedback Cycle
+
+**Step 1: Check runs and fails** (`checks.py:98-117`)
+The check command runs via `run_command()`. Output (stdout + stderr) is captured as a single string via `collect_output()`. The `CheckResult` has: `passed`, `exit_code`, `output`, `timed_out`.
+
+**Step 2: Failure is formatted** (`checks.py:129-157`)
+`format_check_failures()` produces markdown:
+```markdown
+## Check Failures
+
+The following checks failed after the last iteration. Fix these issues:
+
+### tests
+**Exit code:** 1
+
+```
+FAILED tests/test_api.py::test_create_user - AssertionError: ...
+```
+
+Fix all failing tests. Do not skip or delete tests.
+```
+
+**Step 3: Failure text is injected into next prompt** (`engine.py:190-191`)
+The formatted failure text is appended to the end of the assembled prompt via string concatenation: `prompt = prompt + "\n\n" + check_failures_text`.
+
+**Step 4: Agent reads the prompt and (hopefully) fixes the issue**
+The agent receives the full prompt with check failures at the very end.
+
+### Where the Feedback Loop Degrades
+
+- **F107: Check failure output is undifferentiated — stdout and stderr are merged** (NEW, VALIDATED). `collect_output()` at `_output.py:12-25` concatenates stdout and stderr into a single string with no separator. When a test runner produces both test results (stdout) and deprecation warnings (stderr), the agent receives an interleaved mess. The critical failure information (which test failed, with what assertion) may be buried among noisy warnings. The agent can't distinguish "this is the error to fix" from "this is noise." Compare: a human would naturally filter out deprecation warnings and focus on the `FAILED` line.
+
+- **F108: Failure injection position (end of prompt) may be suboptimal for agent attention** (NEW, VALIDATED). `engine.py:190-191`: check failures are always appended to the END of the prompt. Research on LLM attention patterns shows that information at the beginning and end of context windows gets disproportionate attention ("lost in the middle" effect). End-of-prompt placement is good for attention, but it means check failures always appear AFTER the user's instructions. For prompts that end with specific constraints ("Do NOT create utility files"), the check failure text displaces those constraints from the final position. The user's carefully ordered instructions lose their trailing position to check output every time a check fails. An alternative: inject failures BEFORE the user's prompt so the user's instructions always have the last word.
+
+- **F109: Multiple check failures are concatenated without prioritization** (NEW, VALIDATED). `format_check_failures()` at `checks.py:134-157` iterates through failures in list order (which is alphabetical by check name, from `_discover_and_filter_enabled`). If both `lint` and `tests` fail, the agent sees lint errors first (alphabetically), then test failures. But often the causal chain is reversed: the agent introduced a bug (test fails) AND left some linting issues (lint fails). The agent might fix the lint issues first (because they appear first) but the lint fix might not address the underlying bug. There's no way to specify check priority or failure ordering. The best-practices docs recommend "Order checks from fastest to most important" but this ordering only affects execution speed (via potential O21 fail-fast), not feedback injection order.
+
+- **F110: Failure instruction quality varies wildly and there's no guidance in templates** (NEW, VALIDATED). The CHECK_MD_TEMPLATE at `_templates.py:10-22` includes a comment placeholder: `"Optional instructions for the agent when this check fails."` The real `.ralphify/checks/` in this project show the spectrum: `ruff-lint/CHECK.md` has no failure instruction at all (just the command), while cookbook examples have good ones ("Fix all failing tests. Do not skip or delete tests."). The failure instruction is the single most important piece of text for the self-healing loop — it tells the agent HOW to fix the problem. Yet the default template provides no guidance on how to write a good one, and `ralph new check` creates a check with no failure instruction by default.
+
+- **F111: No feedback loop metrics — user can't tell if the loop is actually self-healing** (NEW, VALIDATED). The core promise is "the loop fixes its own problems." But there's no metric for this. The user can't tell: "How often do checks fail and then pass on the next iteration?" (success rate), "How many iterations does it take to fix a failure on average?" (convergence speed), or "Are there checks that always fail?" (stuck checks). The data exists in the event stream (CHECK_PASSED/CHECK_FAILED per iteration) but isn't aggregated or analyzed. A simple "Check 'tests': failed 3 times, self-healed 2 times, currently failing" in the run summary would validate the core value proposition.
+
+- **F112: Truncation at 5,000 chars can split error messages mid-line** (NEW, VALIDATED). `truncate_output()` at `_output.py:28-32` truncates at exact character position. If the 5,000th character falls in the middle of a stack trace, the agent receives a partial error message. Example: `File "src/main.py", line 42, in crea...` — the function name is cut. The agent can't determine which function to fix. Character-based truncation should at minimum break at a newline boundary. Even better: truncate at the end of the last complete line before the limit.
+
+- **F113: Check failure text includes raw exit code which is noise for the agent** (NEW, VALIDATED). `format_check_failures()` at `checks.py:146`: `parts.append(f"**Exit code:** {r.exit_code}")`. For test runners, exit code 1 means "tests failed" — the agent already knows this from the output. For linters, exit code 1 means "violations found" — again, obvious from output. The exit code is machine-readable metadata that adds noise to the agent's prompt without adding information. The agent never needs to know the exit code — it needs the failure output and instructions. This is 15-20 characters of noise per failing check.
+
+- **F114: All-checks-pass produces zero feedback — no positive reinforcement** (NEW, VALIDATED). When all checks pass, `format_check_failures()` returns `""` and nothing is appended to the next iteration's prompt. The agent has no signal that its previous work was good. It re-reads the same prompt without any indication of progress. Compare: a human reviewer would say "All tests pass, great work — move on to the next task." Positive feedback could improve agent behavior by confirming the previous approach was correct. Even a simple `## Previous Iteration: All checks passed` would provide useful signal.
+
+### The Format Quality Problem
+
+The check failure format is designed for readability but has structural issues:
+
+```markdown
+## Check Failures
+
+The following checks failed after the last iteration. Fix these issues:
+
+### tests
+**Exit code:** 1
+
+```
+FAILED tests/test_api.py::test_create_user - AssertionError: expected 200 got 404
+```
+
+Fix all failing tests. Do not skip or delete tests.
+
+### lint
+**Exit code:** 1
+
+```
+src/main.py:42:1 F401 `os` imported but unused
+```
+
+Fix all lint errors. Do not suppress warnings with noqa comments.
+```
+
+**Issues with this format:**
+1. The header "The following checks failed after the last iteration. Fix these issues:" is 11 words of boilerplate repeated every time. The agent has read this thousands of times and gains nothing from it.
+2. The exit code is noise (F113).
+3. There's no indication of which check is most important.
+4. The failure instruction appears AFTER the output — the agent reads the error before knowing how to approach the fix. Better: instruction first, then evidence.
+5. No check execution time or timeout status — the agent can't tell if a check timed out (partial output) vs. completed with errors.
+
+---
+
+## Deep Dive: CLI Help & Feature Discoverability (NEW — Iteration 6)
+
+How do users discover features they don't know exist? The CLI `--help` output is often the first (and sometimes only) documentation users read. This section audits every help surface for quality and discoverability.
+
+### `ralph --help` Analysis
+
+```
+Usage: ralph [OPTIONS] COMMAND [ARGS]...
+  Harness toolkit for autonomous AI coding loops.
+Options:
+  --version / -V    Show version and exit.
+  --install-completion   Install completion for the current shell.
+  --show-completion      Show completion for the current shell.
+  --help            Show this message and exit.
+Commands:
+  init    Initialize ralph config and prompt template.
+  status  Show current configuration and validate setup.
+  run     Run the autonomous coding loop.
+  new     Scaffold new ralph primitives.
+```
+
+**Assessment:** Adequate. The tagline "Harness toolkit for autonomous AI coding loops" orients the user. Commands are clear. But:
+
+- **F115: No suggested workflow in top-level help** (NEW, VALIDATED). A new user sees 4 commands and must figure out the order. Adding a one-line note like "Quick start: ralph init → edit RALPH.md → ralph run" would orient users immediately. Tools like `cargo` and `docker` include workflow hints in their help text.
+
+- **F116: `--install-completion` and `--show-completion` are prominent but rarely used** (NEW, VALIDATED). These Typer-default options appear in every `--help` output, taking up 4 lines of space. They're useful for power users but distracting for new users who are scanning for the essential commands. They push the actual commands further down the screen. These can't be easily removed (they're Typer defaults), but could be suppressed with a Typer configuration.
+
+### `ralph run --help` Analysis
+
+```
+Usage: ralph run [OPTIONS] [PROMPT_NAME]
+  Run the autonomous coding loop.
+  ...description...
+Arguments:
+  [PROMPT_NAME]   Name of a ralph in .ralphify/ralphs/.
+Options:
+  -n      INTEGER   Max number of iterations. Infinite if not set.
+  --prompt / -p     Ad-hoc prompt text. Overrides the prompt file.
+  --prompt-file / -f  Path to prompt file. Overrides ralph.toml.
+  --stop-on-error / -s  Stop if the agent exits with non-zero.
+  --delay / -d      Seconds to wait between iterations.
+  --log-dir / -l    Save iteration output to log files in this directory.
+  --timeout / -t    Max seconds per iteration. Kill agent if exceeded.
+```
+
+**Assessment:** Functional but with discoverability gaps:
+
+- **F117: `PROMPT_NAME` help text says "Name of a ralph" which is circular** (NEW, VALIDATED). A new user who doesn't know what "a ralph" is gets no help. The help text should say something like "Name of a saved prompt in .ralphify/ralphs/ (e.g., 'docs', 'tests')". Currently it only makes sense if you already know the ralphify vocabulary.
+
+- **F118: No examples in `--help` output** (NEW, VALIDATED). The help text describes each flag but shows no complete command examples. A user reading `--help` can't see how the flags combine. Adding 2-3 examples at the bottom would dramatically improve usability:
+  ```
+  Examples:
+    ralph run                  # Use default prompt, infinite iterations
+    ralph run -n 5 -l logs     # 5 iterations, save logs
+    ralph run docs             # Use named ralph 'docs'
+    ralph run -p "Fix the bug" # One-shot inline prompt
+  ```
+  Typer supports an `epilog` parameter for this, but it's not used.
+
+- **F119: `-n` has no hint about safe defaults for new users** (NEW, VALIDATED). The help says "Max number of iterations. Infinite if not set." For a new user, "infinite" is intimidating. A note like "(recommended: start with -n 1 to test)" would guide new users toward the safe path documented in best practices. The best-practices page explicitly says "Never start with `ralph run` (infinite iterations)" but the help text doesn't warn.
+
+- **F120: `--stop-on-error` description doesn't clarify that it means agent error, not check error** (NEW, VALIDATED). Help says "Stop if the agent exits with non-zero." This is accurate but doesn't pre-empt the confusion documented in F33. Adding "(does not trigger on check failures)" would prevent the most common misconception about this flag.
+
+### `ralph new --help` Analysis
+
+```
+Commands:
+  check        Create a new check. Checks are scripts that run after each
+               iteration to validate the agent's work (e.g. tests, linters).
+  instruction  Create a new instruction. Instructions are template-based
+               prompts injected into the agent's context each iteration.
+  context      Create a new context. Contexts are dynamic data sources
+               (scripts or static text) injected before each iteration.
+```
+
+**Assessment:** The descriptions are good — they explain WHAT each primitive does, not just its name. But:
+
+- **F121: `ralph new ralph` is hidden from `--help`** (NEW, VALIDATED). Creating a named ralph is a core workflow, but `ralph new --help` doesn't list it. The `new_ralph` command at `cli.py:215` is `hidden=True` because `_DefaultRalphGroup` at `cli.py:46-52` auto-routes `ralph new docs` → `ralph new ralph docs`. This clever routing means users never see "ralph" as a primitive type in help. But when the user asks "how do I create a named ralph?", the help offers no answer. The only way to discover this is through docs or experimentation. `ralph new docs` works but the user has no way to know this from the CLI alone.
+
+- **F122: No `ralph new --help` suggestion of common names or patterns** (NEW, VALIDATED). When a user runs `ralph new check`, they must provide a name. The help says `name: Name of the new check.` but suggests no common patterns. A note like "Common check names: tests, lint, typecheck, build" would orient new users toward conventions. Similarly for contexts: "Common context names: git-log, test-status, plan".
+
+### `ralph status --help` Analysis
+
+Minimal: just "Show current configuration and validate setup." No options, no examples.
+
+- **F123: `ralph status` has no flags for filtering or detail level** (NEW, VALIDATED). The command always shows everything: config, ralph path validation, agent command validation, all primitives. For a user with 15 checks and 10 contexts, the output can be 40+ lines. There's no `--checks-only` or `--summary` flag. For the common "did I set this up right?" question, a compact view would be better: "Ready to run: 5 checks, 2 contexts, 1 instruction, 3 ralphs."
+
+### The Feature Discovery Funnel
+
+How does a user discover each feature?
+
+| Feature | Discovery path | Steps to discover |
+|---|---|---|
+| `ralph run` | `ralph --help` | 1 |
+| Named ralphs (`ralph run docs`) | Docs, or try `ralph run --help` → see PROMPT_NAME | 2 |
+| Checks | `ralph new --help` | 2 |
+| Contexts | `ralph new --help` | 2 |
+| Instructions | `ralph new --help` | 2 |
+| Ralph-scoped primitives | Docs only — `ralph new check --help` mentions `--ralph` but doesn't explain the concept | 3+ |
+| Failure instructions (CHECK.md body) | Docs or read the template | 3+ |
+| Placeholder syntax (`{{ contexts.name }}`) | Docs only | 3+ |
+| Named vs bulk vs implicit resolution | Docs only (how-it-works.md line 338+) | 5+ |
+| `run.*` script escape hatch | Docs only (primitives.md or error discovery) | 4+ |
+| Hot-reload via dashboard | Dashboard docs (feature doesn't exist in CLI) | N/A |
+
+**Key insight:** The first 2 levels (commands and primitive types) are discoverable from the CLI. Everything from level 3 onwards requires reading docs. For users who prefer learning-by-doing, there's a hard cliff: you can figure out `ralph init && ralph run` from help text alone, but configuring checks, writing placeholders, or understanding resolution rules requires docs.
+
+- **F124: No `ralph help <topic>` or guided learning path from CLI** (NEW, VALIDATED). Many CLI tools provide built-in topic help: `git help rebase`, `cargo help build`, `kubectl explain`. Ralphify has no topic-based help beyond `--help` on each command. A user who types `ralph help checks` gets "No such command." When the user hits a wall (e.g., "how do placeholders work?"), the CLI offers no guidance — they must find the docs site. A `ralph help` command that lists common topics with brief explanations (or links to docs) would bridge the docs-CLI gap.
+
+- **F125: Error messages don't link to relevant documentation** (NEW, VALIDATED). When something goes wrong, error messages describe the problem but never point to docs. Examples: "ralph.toml not found. Run 'ralph init' first." is good but could add "See: https://ralphify.dev/getting-started". "Cannot use both a ralph name and --prompt-file." could add "See: ralph run --help for prompt resolution rules." This is a low-effort, high-value way to connect frustrated users with the answers they need.
+
+### Tab Completion as Discovery
+
+Typer supports shell completion (`--install-completion`). With completion installed:
+- `ralph <TAB>` shows commands: init, new, run, status
+- `ralph run <TAB>` should show available named ralphs — **but does it?**
+
+- **F126: Tab completion for ralph names is not implemented** (NEW, HYPOTHESIZED). Typer's completion for positional arguments requires a callback function that returns suggestions. The `prompt_name` argument at `cli.py:277` has `typer.Argument(None, ...)` with no `autocompletion` callback. This means `ralph run <TAB>` likely shows nothing useful. Implementing completion for ralph names would make the multi-ralph workflow dramatically more discoverable: the user types `ralph run <TAB>` and sees `docs  refactor  tests` — immediately knowing what ralphs are available without running `ralph status`.
+
+---
+
+## Deep Dive: The Power User's Daily Workflow (NEW — Iteration 6)
+
+The `.ralphify/` directory in this project contains 7 named ralphs and 3 global checks — this IS a power user's setup. Analyzing it reveals the patterns and friction that accumulate over weeks of daily use.
+
+### The Actual Setup
+
+**Global checks (apply to all ralphs):**
+- `ruff-lint` — `ruff check .` (60s timeout, no failure instruction)
+- `mkdocs-build` — `uv run mkdocs build --strict` (60s timeout, no failure instruction)
+- `ty-type-check` — `ty check .` (60s timeout, no failure instruction)
+
+**Named ralphs (7):**
+- `docs` — Documentation writing agent
+- `improve-codebase` — Autonomous refactoring agent
+- `research-growth-hacking` — Research agent
+- `research-harness-engineering` — Research agent
+- `research-jobs-to-be-done` — Research agent
+- `simplify-ux` — UX research agent (this ralph)
+- `ui` — Dashboard UI agent
+
+### Observations from Real Usage
+
+**1. None of the global checks have failure instructions**
+All three CHECK.md files are just frontmatter — no body text telling the agent how to fix failures. This means when ruff finds lint errors, the agent receives:
+```markdown
+### ruff-lint
+**Exit code:** 1
+
+```
+src/foo.py:10:1 F401 `os` imported but unused
+```
+```
+...and nothing else. No guidance like "Fix all lint errors. Do not add noqa comments." This is the most common setup (user copies the scaffold, fills in the command, doesn't write failure instructions) and it works — but it leaves value on the table. The agent is smart enough to fix lint errors from the output alone, but explicit instructions would prevent edge-case behaviors (like adding noqa comments).
+
+**2. Research ralphs (4 of 7) have no checks applicable to them**
+The ralphs named `research-*` and `simplify-ux` produce markdown research documents, not code. The global checks (ruff, mkdocs, ty) are code-oriented. These ralphs run all 3 global checks every iteration even though:
+- `ruff check .` is irrelevant (research agent doesn't write Python)
+- `ty check .` is irrelevant
+- `mkdocs build --strict` is relevant only for the `docs` ralph
+
+This is wasted time and confusing feedback. If ruff fails because of a pre-existing issue, the research agent gets feedback about lint errors it didn't cause and can't fix.
+
+- **F127: Global checks run for ralphs where they're irrelevant — no per-ralph check filtering without scoped overrides** (NEW, VALIDATED). The global check model assumes all checks are relevant to all ralphs. For codebases with diverse ralph types (code, docs, research), this produces irrelevant feedback. The workaround is ralph-scoped primitives (`.ralphify/ralphs/simplify-ux/checks/ruff-lint/CHECK.md` with `enabled: false`), but: (a) users must know about scoped primitives, (b) it's 5+ levels of directory nesting (F69), (c) they must create a disable-override for every irrelevant check for every non-code ralph. For 4 research ralphs × 3 irrelevant checks, that's 12 override files, each requiring a directory and a CHECK.md with `enabled: false`.
+
+- **F128: No check "tags" or categories to match checks to ralph types** (NEW, HYPOTHESIZED). An alternative to per-ralph scoping: checks could have a `tags: [code, python]` frontmatter field, and ralphs could have `check_tags: [code]` to filter. This is more scalable than directory-based scoping for the common case of "this check only applies to code ralphs."
+
+**3. The ralph switching workflow is frequent but clunky**
+
+With 7 ralphs, the user frequently switches between them. The workflow is:
+```bash
+ralph run docs -n 5 --log-dir logs      # work on docs for a while
+ralph run improve-codebase -n 3 --log-dir logs  # switch to refactoring
+ralph run simplify-ux -n 1 --log-dir logs       # run UX research iteration
+```
+
+Every invocation repeats `--log-dir logs`. The flags don't change between ralphs, only the name. This is the exact use case for O33 (unified `[run]` config in toml) — a `log_dir = "logs"` default would eliminate the most-typed flag.
+
+- **F129: Power users repeat the same flags on every `ralph run` invocation** (NEW, VALIDATED — reinforces F42/F51). Looking at the actual workflow: `--log-dir logs` is typed on every run. `--timeout 300` is likely desired on every run. `-n` varies but has a typical range (1-10). The common pattern for a power user is: `ralph run <name> -n <N> --log-dir logs --timeout 300` — that's 40+ characters of flags that never change. A `[run]` section in ralph.toml would reduce this to `ralph run <name> -n <N>`.
+
+**4. Research ralphs output to context/ files, not code**
+
+The research ralphs (`simplify-ux`, `research-jobs-to-be-done`, etc.) write to `context/workspace/research/` files. They don't modify source code or run tests. Yet the loop's entire feedback mechanism is designed for code: checks validate code quality, failure feedback assumes the agent wrote code.
+
+- **F130: The check-based feedback loop assumes code output — non-code ralphs have no feedback mechanism** (NEW, VALIDATED). Research ralphs have no meaningful checks: ruff doesn't apply, tests don't apply, mkdocs doesn't apply (unless the research writes docs). The loop runs, the agent writes research, checks run (and may pass or fail for unrelated reasons), and the cycle repeats without useful feedback. The self-healing loop — ralphify's core value proposition — provides zero value for non-code workflows. A content-quality check (e.g., word count, structure validation, or even a second LLM reviewing the output) would extend the feedback loop to knowledge work.
+
+**5. Long ralph prompts are the norm for experienced users**
+
+The `improve-codebase` ralph is 89 lines of detailed instructions. The `simplify-ux` ralph is 121 lines. These are substantially longer than the generic ROOT_RALPH_TEMPLATE (14 lines). Experienced users invest heavily in prompt quality — the prompt becomes the primary work product of harness engineering. Yet the tooling provides no support for prompt development:
+
+- **F131: No prompt linting or structural validation** (NEW, VALIDATED). There's no check that validates the prompt itself — only checks that validate the agent's output. A prompt-level check could verify: all referenced contexts exist (no `{{ contexts.doesnt-exist }}`), placeholders use correct syntax, prompt length is reasonable, the prompt ends with clear instructions (not mid-paragraph). This would catch F37 (typo in placeholder name) at validation time rather than run time.
+
+**6. The `ralph_logs/` convention is implicit, not enforced**
+
+Multiple cookbook recipes and best-practices docs reference `--log-dir ralph_logs` or `--log-dir logs`. The actual project appears to use `logs`. There's no convention enforcement — each user/project picks their own name.
+
+### The Power User's Wishlist (inferred from patterns)
+
+Based on analyzing this project's actual `.ralphify/` setup:
+
+1. **Per-ralph default flags** — different ralphs need different `-n`, `--timeout`, and especially different checks
+2. **Check categories** — "run ruff only for code ralphs" without 12 override directories
+3. **Prompt-level validation** — catch placeholder typos before wasting an iteration
+4. **Quick ralph switching** — `ralph run docs` should just work with all the right defaults
+5. **Research/non-code feedback** — the loop should be useful for knowledge work too
+
+---
+
+## New Simplification Opportunities (Iteration 6)
+
+### Tier 1: High Impact, Low Effort (NEW)
+
+#### O67: Truncate check output at line boundary, not character boundary (NEW)
+**What:** In `truncate_output()` at `_output.py:28-32`, when the text exceeds `max_len`, find the last newline before the limit and truncate there. Include the truncation indicator with both lengths: `\n... (truncated from 12,847 to 4,980 chars at line boundary)`.
+**Why:** Addresses F112. Character-mid-line truncation can split error messages, stack traces, and assertion output at the most confusing point. Line-boundary truncation ensures the agent receives complete lines.
+**Job:** Trust (J2)
+**Effort:** XS — change one line: `return text[:text.rfind('\n', 0, max_len)] + "\n... (truncated)"` (with edge case handling).
+**Risk:** None. The output is slightly shorter (up to one line's worth fewer chars) but always well-formed.
+
+#### O68: Remove exit code from check failure format (NEW)
+**What:** Remove the `**Exit code:** {exit_code}` line from `format_check_failures()` at `checks.py:146`. The exit code provides no information the agent doesn't already have from the output.
+**Why:** Addresses F113. Reduces noise in the agent's prompt. Every failing check saves ~20 characters of wasted context. Over multiple failures across many iterations, this adds up.
+**Job:** Trust (J2)
+**Effort:** XS — delete one line.
+**Risk:** Very low. Exit code is still available in the event data for CLI display and logging.
+
+#### O69: Add failure instructions to default CHECK.md template (NEW)
+**What:** Change the CHECK_MD_TEMPLATE at `_templates.py:10-22` to include a default failure instruction: `Fix all issues reported by this check. Do not suppress or ignore warnings.` Remove the HTML comment boilerplate.
+**Why:** Addresses F110. The current template creates checks with NO failure instruction — the most important text for self-healing is omitted by default. The html comment says "Optional instructions for the agent" which signals that failure instructions are optional. They're not optional for a good feedback loop — they're essential.
+**Job:** Trust, Setup (J2, J5)
+**Effort:** XS — change the template string.
+**Risk:** Very low. Existing checks are unaffected. Only new checks get the default instruction.
+
+#### O70: Add suggested workflow to `ralph --help` epilog (NEW)
+**What:** Add an epilog to the main Typer app: `Quick start: ralph init → edit RALPH.md → ralph run -n 1`. Typer supports `app = typer.Typer(epilog="...")`.
+**Why:** Addresses F115. New users see the workflow immediately after the command list. One line, zero code complexity.
+**Job:** Setup (J1)
+**Effort:** XS — add one string to the Typer constructor.
+**Risk:** None.
+
+#### O71: Add usage examples to `ralph run --help` (NEW)
+**What:** Add an epilog to the `run` command showing 3-4 common usage patterns:
+```
+Examples:
+  ralph run                  Use default prompt, infinite iterations
+  ralph run -n 5 -l logs     5 iterations with logging
+  ralph run docs             Use named ralph 'docs'
+  ralph run -p "Fix bug"     One-shot inline prompt
+```
+**Why:** Addresses F118. Help text with examples is dramatically more useful than help text without. Users scan for patterns that match their intent.
+**Job:** Run (J1)
+**Effort:** XS — add epilog string to the `@app.command()` decorator.
+**Risk:** None.
+
+#### O72: Clarify `PROMPT_NAME` argument help text (NEW)
+**What:** Change the help for `prompt_name` at `cli.py:277` from "Name of a ralph in .ralphify/ralphs/." to "Name of a saved prompt (e.g., 'docs', 'tests'). See .ralphify/ralphs/ or run ralph status."
+**Why:** Addresses F117. The current text is circular for users who don't know the ralphify vocabulary.
+**Job:** Run (J1)
+**Effort:** XS — change one help string.
+**Risk:** None.
+
+#### O73: Add per-check execution name in failure format (NEW)
+**What:** Before each check's failure section in `format_check_failures()`, add the failure instruction BEFORE the output, and include whether the check timed out:
+```markdown
+### tests (failed)
+Fix all failing tests. Do not skip or delete tests.
+**Output:**
+```
+FAILED tests/test_api.py::test_create_user - AssertionError
+```
+```
+**Why:** Addresses the feedback format quality issues identified in this deep dive. Instruction-first ordering helps the agent approach the output with the right mindset. The `(failed)` / `(timed out)` label gives context.
+**Job:** Trust (J2)
+**Effort:** S — reorder lines in `format_check_failures()`.
+**Risk:** Very low. Changes the format seen by the agent but the information content is the same.
+
+### Tier 2: High Impact, Medium Effort (NEW)
+
+#### O74: Tab completion for ralph names (NEW)
+**What:** Add a Typer `autocompletion` callback to the `prompt_name` argument that returns available ralph names from `discover_ralphs()`.
+**Why:** Addresses F126. `ralph run <TAB>` showing available ralphs is the single best discoverability improvement for multi-ralph users. Users discover available ralphs without running any command.
+**Job:** Run, Steer (J1, J3)
+**Effort:** S — add a completion callback function that calls `discover_ralphs()` and returns names.
+**Risk:** Very low. Completion callbacks only fire during tab completion, not normal execution.
+
+#### O75: Self-healing loop metrics in run summary (NEW)
+**What:** Track per-check across iterations: how many times each check failed, how many times a failure was followed by a pass ("self-healed"), and whether a check is currently failing. Include in run summary:
+```
+Self-healing: tests failed 3×, self-healed 2×, currently passing
+             lint failed 1×, self-healed 1×, currently passing
+```
+**Why:** Addresses F111. This is the metric that validates ralphify's core value proposition. Users can see at a glance whether the feedback loop is working.
+**Job:** Trust, Monitor (J2, J6)
+**Effort:** M — track per-check state across iterations in `ConsoleEmitter` or a new aggregation layer, compute self-heal rate from successive CHECK_PASSED/CHECK_FAILED events.
+**Risk:** Low. New output only, no behavior changes.
+
+#### O76: Positive feedback injection when all checks pass (NEW)
+**What:** When all checks pass, inject a brief message into the next iteration's prompt: `## Previous Iteration\nAll checks passed. Continue with the next task from your plan.` Configurable — can be disabled via ralph.toml.
+**Why:** Addresses F114. Positive reinforcement gives the agent signal that its approach is working. Without it, the agent receives identical prompts regardless of whether it succeeded or failed (when checks pass). The asymmetry — detailed feedback on failure, silence on success — may cause the agent to be unnecessarily cautious or uncertain.
+**Job:** Trust (J2)
+**Effort:** S — add a conditional in `_assemble_prompt()` at `engine.py:190-191`: if `check_failures_text` is empty AND previous iteration had checks, append positive message.
+**Risk:** Low. Adds a small amount of prompt text. Could be seen as "noise" by some users — make it configurable.
+
+#### O77: Check relevance filtering via tags (NEW)
+**What:** Add an optional `tags` field to check and ralph frontmatter. Checks have `tags: code, python`. Ralphs have `check_tags: code` to filter which checks run. If a ralph has no `check_tags`, all checks run (backward compatible). If a check has no `tags`, it runs for all ralphs.
+**Why:** Addresses F127 and F128. The current global-or-scoped model is too coarse (global = runs everywhere) or too tedious (scoped = 12 override directories for 4 ralphs × 3 checks). Tags provide a middle ground.
+**Job:** Trust, Steer (J2, J3)
+**Effort:** M — add `tags` to frontmatter parsing, filter checks in `_discover_enabled_primitives` based on ralph tags.
+**Risk:** Medium. New frontmatter field, new filtering logic. Must be backward compatible (no tags = current behavior).
+
+### Tier 3: Medium Impact, Medium Effort (NEW)
+
+#### O78: Prompt validation check (built-in) (NEW)
+**What:** Add a built-in prompt validation step that runs before the agent (or as a `ralph validate` command): verify all `{{ contexts.X }}` placeholders reference existing contexts, all `{{ instructions.X }}` reference existing instructions, warn about potential issues (very long prompt, duplicate placeholders, placeholder in the wrong format like singular `{{ context.X }}`).
+**Why:** Addresses F131. Catches the most common prompt authoring errors before wasting an agent iteration.
+**Job:** Trust, Setup (J2, J5)
+**Effort:** M — parse the prompt for placeholders, cross-reference against discovered primitives, report mismatches.
+**Risk:** Low. Validation only, never modifies anything.
+
+#### O79: Add `--clarify-stop-on-error` hint to help text (NEW)
+**What:** Change the `--stop-on-error` help text from "Stop if the agent exits with non-zero." to "Stop if the agent process exits with non-zero (does not trigger on check failures — checks feed back into the next iteration)."
+**Why:** Addresses F120. Pre-empts the most common misconception about this flag, as documented in F33.
+**Job:** Run, Trust (J1, J2)
+**Effort:** XS — change one help string.
+**Risk:** None.
+
+#### O80: Add `-n` safety hint to help text (NEW)
+**What:** Change the `-n` help text from "Max number of iterations. Infinite if not set." to "Max number of iterations. Infinite if not set. (Tip: start with -n 1 for new setups)"
+**Why:** Addresses F119. Guides new users toward the safe pattern recommended in best practices.
+**Job:** Run (J1, J9)
+**Effort:** XS — change one help string.
+**Risk:** None.
+
+---
+
+## Updated Principles Applied (Iteration 6)
+
+| Principle | New Applications |
+|---|---|
+| **Clear feedback** | O67 (line-boundary truncation), O68 (remove noise), O69 (default failure instructions), O73 (reformat check failures), O75 (self-healing metrics), O76 (positive feedback) |
+| **Observability is trust** | O75 (metrics validate core value prop), O78 (prompt validation) |
+| **Sensible defaults** | O69 (failure instructions by default), O76 (positive feedback) |
+| **Progressive disclosure** | O70/O71 (workflow hints in help), O74 (tab completion for discovery), O78 (validation catches errors early) |
+| **Obvious naming** | O72 (clearer argument description), O79/O80 (self-documenting help text) |
+| **Convention over configuration** | O77 (check tags as lightweight category system) |
+
+---
+
+## Updated Recommended Implementation Order (Iteration 6)
+
+**Phase 1 — "Just Works" (add to existing):**
+- O67: Truncate at line boundary (XS) — prevents most confusing truncation artifacts
+- O68: Remove exit code from failure format (XS) — reduces noise
+- O69: Default failure instructions in CHECK.md template (XS) — improves all new setups
+- O70: Workflow hint in `ralph --help` (XS) — orients new users immediately
+- O71: Examples in `ralph run --help` (XS) — best CLI improvement per character
+- O72: Clearer PROMPT_NAME description (XS) — removes circular definition
+- O79: Clarify `--stop-on-error` scope (XS)
+- O80: Add `-n` safety hint (XS)
+
+**Phase 2 — "Smart Setup" (add to existing):**
+- O73: Instruction-first check failure format (S) — better feedback quality
+- O74: Tab completion for ralph names (S) — discoverability step change
+
+**Phase 3 — "Observable Loop" (add to existing):**
+- O75: Self-healing loop metrics (M) — validates core value proposition
+- O76: Positive feedback injection (S)
+
+**Phase 4 — "Power User Tools" (add to existing):**
+- O77: Check tags for per-ralph filtering (M) — solves the multi-ralph check problem
+- O78: Prompt validation (M)
+
+---
+
+## Updated Open Questions (Iteration 6)
+
+38. **Should failure instructions appear before or after check output?** O73 proposes instruction-first. Argument for: the agent reads the guidance before seeing the error, approaching diagnosis with the right mindset. Argument against: the error is the primary information; the instruction is supplementary guidance. Many prompt engineering guides recommend putting the most important information last. Need A/B testing with real agent behavior.
+
+39. **Should positive feedback (O76) be on by default?** Some users may find "All checks passed" in the prompt to be noise — the absence of failure is sufficient signal. Others may find it valuable for guiding agent behavior. Options: on by default (simple, can be disabled), off by default (conservative), or configurable per-ralph.
+
+40. **How should check tags (O77) interact with ralph-scoped primitives?** If a ralph has `check_tags: [code]` AND a ralph-scoped check exists, should the scoped check always run (regardless of tags)? Or should tags filter scoped checks too? The simplest model: tags filter global checks only; scoped checks always run for their ralph.
+
+41. **Should `ralph --help` link to the docs site?** Adding "Docs: https://ralphify.dev" to the help output is zero effort and connects CLI users to the full documentation. But it's a URL that could rot, and it's promotional in a help context. Tools like `gh` (GitHub CLI) include docs links in help.
+
+42. **Is the self-healing metric (O75) useful as a run-time display or only in the summary?** Showing "tests: failed 2×, self-healed 1×" per-iteration would be noisy. But showing it only in the final summary means the user doesn't see the pattern until the run ends. A middle ground: show it at verbose level during the run, always show in summary.
+
+43. **Should `ralph validate` be a standalone command or part of `ralph status`?** O78 proposes prompt validation. If it's part of `ralph status`, every `ralph status` invocation runs validation (which requires discovering and potentially running contexts). If it's a standalone command, it's more explicit but adds to the CLI surface. Recommendation: part of `ralph status --validate` to keep the command count down.
+
+---
+
+## Consolidated Priority Matrix (Updated with Iteration 6)
+
+### CRITICAL (implement immediately)
+| ID | What | Effort | Addresses |
+|---|---|---|---|
+| O44 | Non-zero exit code on failures | XS | F81 (CI showstopper) |
+| O55 | Run summary for all stop reasons | XS | F93 (crashed runs silent) |
+| O56 | Ctrl+C reports as STOPPED | XS | F91 (misleading status) |
+
+### Phase 1: Quick Wins (XS-S effort, high impact) — 28 items
+| ID | What | Effort | Addresses |
+|---|---|---|---|
+| O4 | Suppress banner on `ralph run` | XS | F8 |
+| O14 | Show iteration progress N/M | XS | F20 |
+| O15 | Default `-n 1` for inline prompts | XS | F21 |
+| O24 | Render per-check events in CLI | XS | F22 |
+| O29 | Inline comments in generated toml | XS | F29 |
+| O35 | Pass/fail suffix in log filenames | XS | F49 |
+| O38 | Warn on shell operators in commands | XS | F66 |
+| O39 | Validate `run.*` script permissions | XS | F59 |
+| O46 | Handle type coercion errors gracefully | XS | F77 |
+| O47 | Warn on empty prompt file | XS | F87 |
+| O48 | `ralph list` command | XS | F68 |
+| O52 | Detect inline comments in frontmatter | XS | F78 |
+| O57 | Warn about unvalidated changes on Ctrl+C | XS | F92 |
+| O59 | Estimated token count per iteration | XS | F98 |
+| O67 | Truncate at line boundary | XS | F112 |
+| O68 | Remove exit code from failure format | XS | F113 |
+| O69 | Default failure instructions in template | XS | F110 |
+| O70 | Workflow hint in `ralph --help` | XS | F115 |
+| O71 | Examples in `ralph run --help` | XS | F118 |
+| O72 | Clearer PROMPT_NAME description | XS | F117 |
+| O79 | Clarify `--stop-on-error` scope in help | XS | F120 |
+| O80 | Add `-n` safety hint in help | XS | F119 |
+| O63 | Render PROMPT_ASSEMBLED/CONTEXTS_RESOLVED | XS-S | F105, F12 |
+| O7 | Show prompt assembly summary | S | F12, F14 |
+| O19 | Aggregate check stats in run summary | S | F23 |
+| O25 | Warn on unresolved named placeholders | S | F37 |
+| O31 | Validate `ralph.toml` schema on load | S | F45 |
+| O32 | Show context timeout warnings | S | F32 |
+| O40 | Show check output snippet on failure | S | F55 |
+| O45 | Validate frontmatter field names | S | F76 |
+| O54 | Detect missing colon in frontmatter | S | F75 |
+| O58 | Track prompt size trend | S | F97 |
+| O60 | Aggregate resource metrics in summary | S | F99 |
+
+### Phase 2: Smart Setup (S-M effort) — 13 items
+| ID | What | Effort | Addresses |
+|---|---|---|---|
+| O1 | Smart `ralph init` with auto checks | S | F2, F3 |
+| O3 | Default iteration limit | S | F9, F100 |
+| O8 | Better init prompt template | S | F1 |
+| O17 | Soften dangerous flag in config | S | F17 |
+| O26 | Validate check commands in status | S | F34 |
+| O62 | Env var override for agent command | S | F102, F85 |
+| O73 | Instruction-first check failure format | S | F108, F109 |
+| O74 | Tab completion for ralph names | S | F126 |
+| O6 | Warn on silent context exclusion | S-M | F16 |
+| O34 | Status mirrors run resolution | S-M | F46, F47 |
+| O50 | `ralph use <name>` | S-M | F72 |
+| O64 | TTY detection for CI | S-M | F83 |
+| O41 | `ralph init --preset` | M | F56, F57 |
+
+### Phase 3: Observable Loop (M effort) — 11 items
+| ID | What | Effort | Addresses |
+|---|---|---|---|
+| O28 | Fix non-Claude agent output | M | F43, F50 |
+| O2 | Default log directory | S (after O28) | F10 |
+| O16 | Show truncation details | S | F11 |
+| O30 | Save prompt to log directory | S | F31 |
+| O76 | Positive feedback injection | S | F114 |
+| O33 | Unified config (`[run]` in toml) | M | F42, F51 |
+| O36 | Agent activity in CLI | S | F60 |
+| O37 | Post-iteration git diff summary | S | F61 |
+| O51 | `--quiet` and `--verbose` modes | M | F83, F84 |
+| O61 | Interruptible delay with countdown | S-M | F41, F95 |
+| O75 | Self-healing loop metrics | M | F111 |
+
+### Phase 4: Power User Tools (M-L effort) — 15 items
+| ID | What | Effort | Addresses |
+|---|---|---|---|
+| O5 | Remove `--prompt-file` flag | S-M | F6, F7 |
+| O9 | Hot-reload primitives | M | F13, F24 |
+| O21 | Fail-fast checks | S-M | F26 |
+| O23 | Preview command | M | F31, F25 |
+| O27 | Clarify stop-on-error | S-M | F33 |
+| O42 | CLI pause signal | M | F53 |
+| O43 | Diagnostic mode for assembly | M | F54 |
+| O49 | Full env var overrides | M | F85, F86 |
+| O53 | `ralph status --ralph` | M | F73, F74 |
+| O65 | Local override file | M | F102 |
+| O66 | Claude Code token extraction | M | F101 |
+| O77 | Check tags for per-ralph filtering | M | F127, F128 |
+| O78 | Prompt validation | M | F131 |
+
+### Deferred (L effort, high risk)
+| ID | What | Effort | Addresses |
+|---|---|---|---|
+| O10 | Merge instructions into prompt | L | Concept count |
+| O12 | Interactive init wizard | L | F5 |
+| O22 | Rename "ralphs" to "prompts" | L | F19, F28 |
