@@ -220,7 +220,7 @@ Or use `{{ contexts }}` to place all contexts at once:
 You are an autonomous coding agent...
 ```
 
-## Step 8: Verify your setup
+## Step 8: Verify and run
 
 Check that everything is configured correctly:
 
@@ -228,31 +228,7 @@ Check that everything is configured correctly:
 ralph status
 ```
 
-You should see output like:
-
-```
-Configuration
-  Command: claude -p --dangerously-skip-permissions
-  Ralph:   RALPH.md
-
-✓ Ralph file exists (342 chars)
-✓ Command 'claude' found on PATH
-
-Checks:  2 found
-  ✓ lint               uv run ruff check .
-  ✓ tests              uv run pytest -x
-
-Contexts:  1 found
-  ✓ git-log            git log --oneline -10
-
-Instructions:  none
-
-Ralphs:  none
-
-Ready to run.
-```
-
-## Step 9: Run the loop
+If it says "Ready to run", you're good.
 
 Start with a few iterations to verify things work as expected:
 
@@ -284,63 +260,29 @@ If a check fails, the next iteration automatically gets the failure details:
 
 The agent in iteration 3 receives the test failure output and the failure instruction ("Fix all failing tests..."), so it can fix the problem.
 
-## Step 10: Add signs while running
+Once you're confident the loop works, drop the `-n 3` to let it run indefinitely. Press `Ctrl+C` to stop.
 
-The prompt is re-read every iteration. If you see the agent doing something unhelpful, **edit `RALPH.md` while the loop is running** — add a constraint:
+## Tips from real usage
+
+**Use a plan file.** Give the agent a `PLAN.md` or `TODO.md` to read and update. This provides continuity across iterations — the agent sees what's done and what's next without needing memory.
+
+**Add signs, not essays.** When the agent does something dumb, add a short constraint to the prompt. `RALPH.md` is re-read every iteration, so changes take effect immediately:
 
 ```markdown
-## Rules
-
-- One task per iteration
-- No placeholder code
-- Run tests before committing
-- Do NOT refactor existing code unless the task requires it   ← new sign
-- Do NOT create new utility files                             ← new sign
+- Do NOT refactor existing code unless the task requires it
+- Do NOT create new utility files
 ```
 
-This is the Ralph Wiggum technique: when the agent does something dumb, you put up a sign. The next iteration reads the updated prompt and follows the new rules.
+Each sign should be specific, negative ("do NOT"), and observable from a git diff.
 
-## Step 11: Let it run
+**Use checks for hard rules, the prompt for soft rules.** If you can write a command that returns exit 0 or 1, make it a check. If it's a judgment call, put it in the prompt.
 
-Once you're confident the loop is producing good work, let it run indefinitely:
+**Order checks fast to strict.** Checks run alphabetically. Name them `01-lint`, `02-typecheck`, `03-tests` so fast checks run first.
 
-```bash
-ralph run --log-dir ralph_logs
-```
-
-Press `Ctrl+C` to stop at any time. You'll see a summary:
-
-```
-Done: 12 iteration(s) — 10 succeeded, 2 failed
-```
-
-## Your project structure
-
-After setup, your project should look something like this:
-
-```
-your-project/
-├── ralph.toml              # Loop configuration
-├── RALPH.md                # The prompt (edit anytime)
-├── TODO.md                 # Task list the agent reads
-├── .ralphify/
-│   ├── checks/
-│   │   ├── tests/
-│   │   │   └── CHECK.md    # Runs pytest after each iteration
-│   │   └── lint/
-│   │       └── CHECK.md    # Runs ruff after each iteration
-│   └── contexts/
-│       └── git-log/
-│           └── CONTEXT.md  # Injects recent git history
-├── ralph_logs/             # Iteration output logs
-│   ├── 001_20250115-142301.log
-│   ├── 002_20250115-142412.log
-│   └── ...
-└── src/                    # Your project code
-```
+**Start small.** Always `ralph run -n 3` on a new setup. Review the logs. Only scale up once you're confident the loop is productive.
 
 ## Next steps
 
-- [Cookbook](cookbook.md) — complete example setups for Python, TypeScript, bug fixing, and docs
+- [Cookbook](cookbook.md) — complete setups for Python, TypeScript, bug fixing, docs, and CI
 - [Primitives](primitives.md) — full reference for checks, contexts, instructions, and named ralphs
-- [Configuration & CLI](cli.md) — `ralph.toml` format, all commands, and options
+- [CLI Reference](cli.md) — all commands and options
