@@ -129,8 +129,13 @@ def _handle_loop_transitions(
         if not _wait_for_resume(state, emit):
             return False, primitives
 
-    if state.consume_reload_request():
-        primitives = _discover_enabled_primitives(config.project_root, ralph_dir)
+    # Re-discover primitives every iteration so edits on disk take effect
+    # immediately.  When an explicit reload was requested (e.g. from the
+    # UI), we still emit the PRIMITIVES_RELOADED event.
+    explicit_reload = state.consume_reload_request()
+    primitives = _discover_enabled_primitives(config.project_root, ralph_dir)
+
+    if explicit_reload:
         emit(EventType.PRIMITIVES_RELOADED, {
             "checks": len(primitives.checks),
             "contexts": len(primitives.contexts),
