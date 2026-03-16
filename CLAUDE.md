@@ -1,0 +1,49 @@
+# CLAUDE.md — ralphify
+
+Ralphify is the open-source framework for ralph loop harness engineering, published on [PyPI](https://pypi.org/project/ralphify/). It's a CLI tool (`ralph`) that runs AI coding agents in autonomous loops — piping prompts to agents, validating work with checks, and repeating with fresh context each iteration.
+
+For full architecture details, see `docs/contributing/codebase-map.md`.
+
+## Quick commands
+
+```bash
+uv run pytest              # Run tests (required before any commit)
+uv run pytest -x           # Stop on first failure
+uv run mkdocs build --strict  # Build docs (must pass with zero warnings)
+uv run mkdocs serve        # Preview docs at http://127.0.0.1:8000
+```
+
+## Project layout
+
+All source code is in `src/ralphify/`. The main file is `cli.py` — it contains the CLI commands and delegates to the engine for the core loop.
+
+Key modules:
+- `cli.py` — CLI commands; delegates to `_console_emitter.py` for terminal event rendering
+- `engine.py` — Core run loop orchestration with structured event emission
+- `manager.py` — Multi-run orchestration (concurrent runs via threads)
+- `_templates.py` — Scaffold templates for `ralph init` and `ralph new`
+- `_frontmatter.py` — YAML frontmatter parsing and marker/config filename constants
+- `_discovery.py` — Primitive directory scanning (`discover_primitives`, `find_run_script`)
+- `resolver.py` — Template placeholder resolution (`{{ contexts.name }}`, `{{ instructions }}`)
+- `ralphs.py` — Named ralph discovery and resolution
+- `checks.py`, `contexts.py`, `instructions.py` — The other three primitive types
+- `_events.py` — Event types and emitter protocol (NullEmitter, QueueEmitter, FanoutEmitter)
+- `_agent.py` — Run agent subprocesses (streaming + blocking modes, log writing)
+- `_output.py` — Combine/truncate stdout+stderr
+
+Tests are in `tests/` with one file per module. Docs are in `docs/` using MkDocs with Material theme.
+
+## Conventions
+
+- **Commit messages**: `docs: explain X for users who want to Y`, `feat: add X so users can Y`, `fix: resolve X that caused Y`
+- **Dependencies**: Minimal by design. Runtime deps are only `typer` and `rich`. Prefer stdlib over new deps.
+- **Tests**: No external services, no API keys. All tests use temporary directories.
+- **Docs**: Every user-facing feature needs a docs page. Run `mkdocs build --strict` before committing doc changes.
+
+## Traps
+
+- Primitive marker filenames (`CHECK.md`, `CONTEXT.md`, `INSTRUCTION.md`, `RALPH.md`) are defined as constants in `_frontmatter.py` (`CHECK_MARKER`, `CONTEXT_MARKER`, `RALPH_MARKER`, etc.). The primitives directory name is `PRIMITIVES_DIR`. All modules import from there — change the constant to rename everywhere.
+- `timeout` and `enabled` frontmatter fields have special type coercion via `_FIELD_COERCIONS` in `_frontmatter.py`. To add a new typed field, add an entry to that dict.
+- Both contexts and instructions share `resolver.py:resolve_placeholders()`. Changes affect both.
+- Output is truncated to 5000 chars in `_output.py`. This is intentional.
+- Commands in frontmatter run via `shlex.split()` — no shell features (pipes, redirections, `&&`). Scripts (`run.*`) are the escape hatch.
