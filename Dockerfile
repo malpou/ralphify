@@ -14,4 +14,5 @@ RUN mkdir -p _site && cp -r website/* _site/
 
 FROM nginx:alpine
 COPY --from=build /app/_site /usr/share/nginx/html
-EXPOSE 80
+RUN sed -i 's/listen\s*80;/listen 3000;/g' /etc/nginx/conf.d/default.conf
+EXPOSE 3000
