@@ -31,15 +31,13 @@ from ralphify.contexts import (
     resolve_contexts,
     run_all_contexts,
 )
-from ralphify.instructions import Instruction, discover_enabled_instructions, resolve_instructions
 
 
 class EnabledPrimitives(NamedTuple):
-    """The enabled checks, contexts, and instructions for a project."""
+    """The enabled checks and contexts for a project."""
 
     checks: list[Check]
     contexts: list[Context]
-    instructions: list[Instruction]
 
 
 def _resolve_ralph_dir(config: RunConfig) -> Path | None:
@@ -64,14 +62,13 @@ def _discover_enabled_primitives(
     global one with the same name.
 
     This is the **single layer** responsible for enabled filtering.
-    Downstream functions (``resolve_contexts``, ``resolve_instructions``,
-    ``run_all_contexts``, ``run_all_checks``) trust that they receive
-    only enabled primitives and do not re-filter.
+    Downstream functions (``resolve_contexts``, ``run_all_contexts``,
+    ``run_all_checks``) trust that they receive only enabled primitives
+    and do not re-filter.
     """
     return EnabledPrimitives(
         checks=discover_enabled_checks(root, ralph_dir),
         contexts=discover_enabled_contexts(root, ralph_dir),
-        instructions=discover_enabled_instructions(root, ralph_dir),
     )
 
 
@@ -137,7 +134,6 @@ def _handle_loop_transitions(
         emit(EventType.PRIMITIVES_RELOADED, {
             "checks": len(primitives.checks),
             "contexts": len(primitives.contexts),
-            "instructions": len(primitives.instructions),
         })
 
     return True, primitives
@@ -151,10 +147,10 @@ def _assemble_prompt(
 ) -> str:
     """Build the full prompt for one iteration (pure text assembly).
 
-    Reads the prompt source, resolves pre-computed context results and
-    instructions, and appends any check-failure feedback from the previous
-    iteration.  This is a pure function with no side effects — event
-    emission is handled by the caller.
+    Reads the prompt source, resolves pre-computed context results,
+    and appends any check-failure feedback from the previous iteration.
+    This is a pure function with no side effects — event emission is
+    handled by the caller.
     """
     if config.prompt_text:
         prompt = config.prompt_text
@@ -163,8 +159,6 @@ def _assemble_prompt(
         _, prompt = parse_frontmatter(raw)
     if context_results:
         prompt = resolve_contexts(prompt, context_results)
-    if primitives.instructions:
-        prompt = resolve_instructions(prompt, primitives.instructions)
     if check_failures_text:
         prompt = prompt + "\n\n" + check_failures_text
     return prompt
@@ -347,7 +341,6 @@ def run_loop(
     emit(EventType.RUN_STARTED, {
         "checks": len(primitives.checks),
         "contexts": len(primitives.contexts),
-        "instructions": len(primitives.instructions),
         "max_iterations": config.max_iterations,
         "timeout": config.timeout,
         "delay": config.delay,

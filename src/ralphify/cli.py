@@ -19,18 +19,16 @@ from rich.console import Console
 from ralphify import __version__
 from ralphify._console_emitter import ConsoleEmitter
 from ralphify._discovery import Primitive
-from ralphify._frontmatter import CHECK_MARKER, CONFIG_FILENAME, CONTEXT_MARKER, INSTRUCTION_MARKER, PRIMITIVES_DIR, RALPH_MARKER
+from ralphify._frontmatter import CHECK_MARKER, CONFIG_FILENAME, CONTEXT_MARKER, PRIMITIVES_DIR, RALPH_MARKER
 from ralphify.checks import discover_checks
 from ralphify.contexts import discover_contexts
 from ralphify._run_types import RunConfig, RunState
 from ralphify.engine import run_loop
-from ralphify.instructions import discover_instructions
 from ralphify.ralphs import discover_ralphs, resolve_ralph_source
 from ralphify.detector import detect_project
 from ralphify._templates import (
     CHECK_MD_TEMPLATE,
     CONTEXT_MD_TEMPLATE,
-    INSTRUCTION_MD_TEMPLATE,
     RALPH_MD_TEMPLATE,
     ROOT_RALPH_TEMPLATE,
     RALPH_TOML_TEMPLATE,
@@ -142,7 +140,7 @@ def _load_config() -> dict:
 
 @app.command()
 def init(
-    force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing files."),
+    force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing config."),
 ) -> None:
     """Initialize ralph config and prompt template."""
     config_path = Path(CONFIG_FILENAME)
@@ -157,8 +155,8 @@ def init(
     config_path.write_text(RALPH_TOML_TEMPLATE)
     rprint(f"[green]Created {CONFIG_FILENAME}[/green]")
 
-    if prompt_path.exists() and not force:
-        rprint("[yellow]RALPH.md already exists. Use --force to overwrite.[/yellow]")
+    if prompt_path.exists():
+        rprint("[dim]RALPH.md already exists, skipping.[/dim]")
     else:
         prompt_path.write_text(ROOT_RALPH_TEMPLATE)
         rprint("[green]Created RALPH.md[/green]")
@@ -198,15 +196,6 @@ def check(
 ) -> None:
     """Create a new check. Checks are scripts that run after each iteration to validate the agent's work (e.g. tests, linters)."""
     _scaffold_primitive("checks", name, CHECK_MARKER, CHECK_MD_TEMPLATE, ralph=ralph)
-
-
-@new_app.command()
-def instruction(
-    name: str = typer.Argument(help="Name of the new instruction."),
-    ralph: str | None = typer.Option(None, "--ralph", help="Scope instruction to a named ralph."),
-) -> None:
-    """Create a new instruction. Instructions are template-based prompts injected into the agent's context each iteration."""
-    _scaffold_primitive("instructions", name, INSTRUCTION_MARKER, INSTRUCTION_MD_TEMPLATE, ralph=ralph)
 
 
 @new_app.command()
@@ -263,10 +252,6 @@ def status() -> None:
     _print_primitives_section("Contexts", contexts,
         lambda c: str(c.script.name) if c.script else c.command or "(static)")
 
-    instructions = discover_instructions()
-    _print_primitives_section("Instructions", instructions,
-        lambda i: (i.content[:50] + "...") if len(i.content) > 50 else i.content)
-
     ralphs = discover_ralphs()
     _print_primitives_section("Ralphs", ralphs,
         lambda p: p.description or "(no description)")
@@ -280,10 +265,8 @@ def status() -> None:
 
 @app.command()
 def run(
-    ralph_name: str | None = typer.Argument(None, help="Name of a ralph in .ralphify/ralphs/."),
+    prompt: str | None = typer.Argument(None, help="Ralph name, file path, or inline prompt text."),
     n: int | None = typer.Option(None, "-n", help="Max number of iterations. Infinite if not set."),
-    prompt_text: str | None = typer.Option(None, "-p", "--prompt", help="Ad-hoc prompt text. Overrides the prompt file."),
-    ralph_file: str | None = typer.Option(None, "--ralph-file", "-f", help="Path to prompt file. Overrides ralph.toml."),
     stop_on_error: bool = typer.Option(False, "--stop-on-error", "-s", help="Stop if the agent exits with non-zero."),
     delay: float = typer.Option(0, "--delay", "-d", help="Seconds to wait between iterations."),
     log_dir: str | None = typer.Option(None, "--log-dir", "-l", help="Save iteration output to log files in this directory."),
@@ -291,39 +274,28 @@ def run(
 ) -> None:
     """Run the autonomous coding loop.
 
-    Each iteration: read RALPH.md, resolve context placeholders, resolve
-    instruction placeholders, append any check failures from the previous
-    iteration, pipe the assembled prompt to the agent, then run checks.
+    Each iteration: read RALPH.md, resolve context placeholders, append
+    any check failures from the previous iteration, pipe the assembled
+    prompt to the agent, then run checks.
     Repeat until *n* iterations or Ctrl+C.
     """
-    _print_banner()
     toml_config = _load_config()
     agent = toml_config["agent"]
     command = agent["command"]
     args = agent.get("args", [])
 
-    # Inline text (-p/--prompt) bypasses file resolution entirely.
-    if prompt_text:
-        ralph_file_path = agent.get("ralph", "RALPH.md")
-        resolved_ralph_name: str | None = None
-    else:
-        if ralph_name and ralph_file:
-            rprint("[red]Cannot use both a ralph name and --ralph-file.[/red]")
-            raise typer.Exit(1)
+    try:
+        ralph_file_path, resolved_ralph_name, prompt_text = resolve_ralph_source(
+            prompt=prompt,
+            toml_ralph=agent.get("ralph", "RALPH.md"),
+        )
+    except ValueError as e:
+        rprint(f"[red]{e}[/red]")
+        raise typer.Exit(1)
 
-        try:
-            ralph_file_path, resolved_ralph_name = resolve_ralph_source(
-                ralph_name=ralph_name,
-                ralph_file=ralph_file,
-                toml_ralph=agent.get("ralph", "RALPH.md"),
-            )
-        except ValueError as e:
-            rprint(f"[red]{e}[/red]")
-            raise typer.Exit(1)
-
-        if not Path(ralph_file_path).exists():
-            rprint(f"[red]Prompt file '{ralph_file_path}' not found.[/red]")
-            raise typer.Exit(1)
+    if not prompt_text and not Path(ralph_file_path).exists():
+        rprint(f"[red]Prompt file '{ralph_file_path}' not found.[/red]")
+        raise typer.Exit(1)
 
     if log_dir:
         rprint(f"[dim]Logging output to {log_dir}/[/dim]")

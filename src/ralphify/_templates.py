@@ -21,19 +21,6 @@ Example: "Fix all lint errors. Do not add noqa comments."
 -->
 """
 
-INSTRUCTION_MD_TEMPLATE = """\
----
-enabled: true
----
-<!--
-Write your instruction content below.
-This text will be injected into RALPH.md every iteration.
-
-Use {{ instructions.<name> }} in RALPH.md to place this specifically,
-or {{ instructions }} to inject all enabled instructions.
--->
-"""
-
 CONTEXT_MD_TEMPLATE = """\
 ---
 command: git log --oneline -10

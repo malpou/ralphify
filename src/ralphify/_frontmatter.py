@@ -1,6 +1,6 @@
 """Parse YAML frontmatter from primitive markdown files.
 
-All primitive types (checks, contexts, instructions, ralphs) store their
+All primitive types (checks, contexts, ralphs) store their
 configuration in markdown files with ``---``-delimited frontmatter.
 This module provides the shared parsing logic.
 
@@ -18,7 +18,6 @@ from collections.abc import Callable
 # Every module that needs a marker or config name should import from here.
 CHECK_MARKER = "CHECK.md"
 CONTEXT_MARKER = "CONTEXT.md"
-INSTRUCTION_MARKER = "INSTRUCTION.md"
 RALPH_MARKER = "RALPH.md"
 CONFIG_FILENAME = "ralph.toml"
 PRIMITIVES_DIR = ".ralphify"

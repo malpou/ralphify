@@ -77,8 +77,6 @@ class ConsoleEmitter:
             self._rprint(f"[dim]Checks: {data['checks']} enabled[/dim]")
         if data.get("contexts"):
             self._rprint(f"[dim]Contexts: {data['contexts']} enabled[/dim]")
-        if data.get("instructions"):
-            self._rprint(f"[dim]Instructions: {data['instructions']} enabled[/dim]")
 
     def _start_live(self) -> None:
         spinner = _IterationSpinner()

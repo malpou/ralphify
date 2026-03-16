@@ -54,11 +54,11 @@ class TestInit:
     def test_force_overwrites(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         (tmp_path / CONFIG_FILENAME).write_text("old")
-        (tmp_path / "RALPH.md").write_text("old")
+        (tmp_path / "RALPH.md").write_text("my custom prompt")
         result = runner.invoke(app, ["init", "--force"])
         assert result.exit_code == 0
         assert (tmp_path / CONFIG_FILENAME).read_text() == RALPH_TOML_TEMPLATE
-        assert (tmp_path / "RALPH.md").read_text() == ROOT_RALPH_TEMPLATE
+        assert (tmp_path / "RALPH.md").read_text() == "my custom prompt"
 
     def test_skips_ralph_if_exists_without_force(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)

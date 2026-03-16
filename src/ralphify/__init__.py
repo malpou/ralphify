@@ -34,7 +34,6 @@ from ralphify._events import (
 from ralphify.manager import ManagedRun, RunManager
 from ralphify.checks import discover_checks, run_all_checks
 from ralphify.contexts import discover_contexts, run_all_contexts
-from ralphify.instructions import discover_instructions
 from ralphify.ralphs import discover_ralphs, resolve_ralph_name
 
 
@@ -66,7 +65,6 @@ __all__ = [
     "run_all_checks",
     "discover_contexts",
     "run_all_contexts",
-    "discover_instructions",
     "discover_ralphs",
     "resolve_ralph_name",
 ]
