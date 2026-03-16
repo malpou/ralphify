@@ -1,5 +1,5 @@
 ---
-description: ralph.toml configuration format, all CLI commands (init, run, status, new), and every option with defaults and examples.
+description: ralph.toml configuration format, all CLI commands (init, run, new), and every option with defaults and examples.
 ---
 
 # Configuration & CLI Reference
@@ -108,22 +108,6 @@ The `[PROMPT]` argument is smart — it resolves in order:
 4. If omitted → fall back to `ralph.toml` `agent.ralph`
 
 Inline prompts still resolve context placeholders. When inline text is provided, `RALPH.md` doesn't need to exist.
-
-### `ralph status`
-
-Show current configuration, validate setup, and list all discovered primitives.
-
-```bash
-ralph status
-```
-
-This command checks:
-
-- Whether the prompt file exists
-- Whether the agent command is on PATH
-- All discovered checks, contexts, and named ralphs (with enabled/disabled status)
-
-If everything is configured correctly, it prints "Ready to run." If not, it tells you exactly what's wrong.
 
 ### `ralph new`
 

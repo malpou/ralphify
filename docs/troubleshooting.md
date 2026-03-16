@@ -4,7 +4,7 @@ description: Fix common ralphify issues — setup errors, agent hangs, check fai
 
 # Troubleshooting
 
-Common issues and how to fix them. If your problem isn't listed here, run `ralph status` first — it validates your setup and points out most configuration problems.
+Common issues and how to fix them. If your problem isn't listed here, run `ralph run -n 1` — it validates your setup and shows clear errors.
 
 ## Setup issues
 
@@ -14,14 +14,13 @@ You haven't initialized the project yet. Run `ralph init` in your project direct
 
 ### "Command 'claude' not found on PATH"
 
-The agent CLI isn't installed or isn't in your shell's PATH. Verify by running `claude --version` directly. If it's installed but not found, check your PATH. `ralph status` also checks this.
+The agent CLI isn't installed or isn't in your shell's PATH. Verify by running `claude --version` directly. If it's installed but not found, check your PATH.
 
-### "Not ready" from `ralph status`
+### "Agent command not found on PATH"
 
-`ralph status` found one or more problems. The output tells you exactly what's wrong:
+`ralph run` checks that the agent command exists on PATH before starting the loop. If you see this error:
 
-- **Ralph file not found** → Create it with `ralph init`, or check that the `ralph` path in `ralph.toml` is correct
-- **Command not found** → Install the agent CLI or fix the `command` in `ralph.toml`
+- Install the agent CLI or fix the `command` in `ralph.toml`
 
 ### "RALPH.md already exists"
 
@@ -99,8 +98,7 @@ Primitives are discovered once when `ralph run` starts. If you add, remove, or m
 
 1. Press `Ctrl+C` to stop the loop
 2. Make your changes (add checks, edit instructions, etc.)
-3. Run `ralph status` to verify the changes are detected
-4. Run `ralph run` again
+3. Run `ralph run` again
 
 This is different from `RALPH.md`, which **is** re-read every iteration. See [What's re-read vs. fixed at startup](primitives.md#whats-re-read-vs-fixed-at-startup) for details.
 
@@ -168,7 +166,7 @@ chmod +x .ralphify/checks/my-check/run.sh
 
 ### Check has neither command nor script
 
-If `ralph status` warns that a check has neither a `run.*` script nor a `command`, add one of:
+If a check has neither a `run.*` script nor a `command`, add one of:
 
 - A `command` field in the CHECK.md frontmatter
 - An executable script named `run.sh`, `run.py`, etc. in the check directory
@@ -181,7 +179,7 @@ If a `{{ contexts.my-context }}` placeholder silently disappears (the prompt has
 
 1. The directory name matches: `.ralphify/contexts/my-context/CONTEXT.md`
 2. The placeholder uses the exact directory name: `{{ contexts.my-context }}`
-3. The context is enabled (check with `ralph status`)
+3. The context is enabled (check the `enabled` field in its CONTEXT.md frontmatter)
 4. If the context has a command, verify the command produces output by running it manually
 
 Same rules apply for `{{ instructions.name }}`.
@@ -241,7 +239,7 @@ git checkout -b feature-b && ralph run
 
 ## Getting more help
 
-1. Run `ralph status` to validate your full setup
+1. Run `ralph run -n 1` to validate your setup — it checks your config and shows clear errors
 2. Use `ralph run -n 1 --log-dir ralph_logs` to capture a single iteration for debugging
 3. Check the [Configuration & CLI](cli.md) for all available options
 4. File an issue at [github.com/computerlovetech/ralphify](https://github.com/computerlovetech/ralphify/issues)

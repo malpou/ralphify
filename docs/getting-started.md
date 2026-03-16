@@ -174,15 +174,7 @@ You are an autonomous coding agent running in a loop...
 
 Each context must be referenced by name — contexts not referenced are excluded from the prompt.
 
-## Step 8: Verify and run
-
-Check that everything is configured correctly:
-
-```bash
-ralph status
-```
-
-If it says "Ready to run", you're good.
+## Step 8: Run the loop
 
 Start with a few iterations to verify things work as expected:
 

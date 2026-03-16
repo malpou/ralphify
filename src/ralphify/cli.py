@@ -1,4 +1,4 @@
-"""CLI commands for ralphify — init, run, status, and scaffold new primitives.
+"""CLI commands for ralphify — init, run, and scaffold new primitives.
 
 This is the main module.  The ``run`` command delegates to the engine module
 for the core autonomous loop.  Terminal rendering of events is handled by
@@ -10,22 +10,17 @@ import shutil
 import sys
 import tomllib
 import uuid
-from collections.abc import Callable
 from pathlib import Path
-from typing import TypeVar
 
 import typer
 from rich.console import Console
 
 from ralphify import __version__
 from ralphify._console_emitter import ConsoleEmitter
-from ralphify._discovery import Primitive
 from ralphify._frontmatter import CONFIG_FILENAME
-from ralphify.checks import discover_checks
-from ralphify.contexts import discover_contexts
 from ralphify._run_types import RunConfig, RunState
 from ralphify.engine import run_loop
-from ralphify.ralphs import discover_ralphs, resolve_ralph_source
+from ralphify.ralphs import resolve_ralph_source
 from ralphify.detector import detect_project
 from ralphify._templates import (
     ROOT_RALPH_TEMPLATE,
@@ -62,20 +57,6 @@ BANNER_COLORS = [
     "#E87B4A",  # orange accent
     "#E06030",  # deep orange
 ]
-
-
-_P = TypeVar("_P", bound=Primitive)
-
-
-def _print_primitives_section(label: str, items: list[_P], detail_fn: Callable[[_P], str]) -> None:
-    """Print a status section for discovered primitives."""
-    if items:
-        rprint(f"\n[bold]{label}:[/bold]  {len(items)} found")
-        for item in items:
-            icon = "[green]✓[/green]" if item.enabled else "[dim]○[/dim]"
-            rprint(f"  {icon} {item.name:<18} {detail_fn(item)}")
-    else:
-        rprint(f"\n[bold]{label}:[/bold]  [dim]none[/dim]")
 
 
 def _print_banner() -> None:
@@ -175,54 +156,6 @@ def new(
 
 
 @app.command()
-def status() -> None:
-    """Show current configuration and validate setup."""
-    config = _load_config()
-    agent = config["agent"]
-    command = agent["command"]
-    args = agent.get("args", [])
-    ralph_file = agent["ralph"]
-    ralph_path = Path(ralph_file)
-
-    rprint("[bold]Configuration[/bold]")
-    rprint(f"  Command: [cyan]{command} {' '.join(args)}[/cyan]")
-    rprint(f"  Ralph:   [cyan]{ralph_file}[/cyan]")
-
-    issues = []
-
-    if ralph_path.exists():
-        size = len(ralph_path.read_text())
-        rprint(f"\n[green]✓[/green] Ralph file exists ({size} chars)")
-    else:
-        issues.append("ralph")
-        rprint(f"\n[red]✗[/red] Ralph file '{ralph_file}' not found")
-
-    if shutil.which(command):
-        rprint(f"[green]✓[/green] Command '{command}' found on PATH")
-    else:
-        issues.append("command")
-        rprint(f"[red]✗[/red] Command '{command}' not found on PATH")
-
-    checks = discover_checks()
-    _print_primitives_section("Checks", checks,
-        lambda c: str(c.script.name) if c.script else c.command or "?")
-
-    contexts = discover_contexts()
-    _print_primitives_section("Contexts", contexts,
-        lambda c: str(c.script.name) if c.script else c.command or "(static)")
-
-    ralphs = discover_ralphs()
-    _print_primitives_section("Ralphs", ralphs,
-        lambda p: p.description or "(no description)")
-
-    if issues:
-        rprint("\n[red]Not ready.[/red] Fix the issues above before running.")
-        raise typer.Exit(1)
-    else:
-        rprint("\n[green]Ready to run.[/green]")
-
-
-@app.command()
 def run(
     prompt: str | None = typer.Argument(None, help="Named ralph from .ralphify/ralphs/."),
     n: int | None = typer.Option(None, "-n", help="Max number of iterations. Infinite if not set."),
@@ -254,6 +187,10 @@ def run(
 
     if not Path(ralph_file_path).exists():
         rprint(f"[red]Prompt file '{ralph_file_path}' not found.[/red]")
+        raise typer.Exit(1)
+
+    if not shutil.which(command):
+        rprint(f"[red]Agent command '{command}' not found on PATH.[/red]")
         raise typer.Exit(1)
 
     if log_dir:

@@ -13,6 +13,7 @@ in ``_agent.py`` so this module can focus on orchestration.
 
 from __future__ import annotations
 
+import os
 import time
 import traceback
 from datetime import datetime, timezone
@@ -52,24 +53,36 @@ def _resolve_ralph_dir(config: RunConfig) -> Path | None:
 
 
 def _discover_enabled_primitives(
-    root: Path, ralph_dir: Path | None = None,
+    root: Path,
+    ralph_dir: Path | None = None,
+    global_checks: list[str] | None = None,
+    global_contexts: list[str] | None = None,
 ) -> EnabledPrimitives:
     """Discover all primitives and return only the enabled ones.
 
-    When *ralph_dir* is set, ralph-scoped primitives are merged with
-    globals (local wins on name collisions).  Enabled filtering happens
-    **after** the merge so a disabled local primitive can suppress a
-    global one with the same name.
+    Global primitives are only included when explicitly requested via
+    *global_checks* / *global_contexts* name lists.  When ``None``, no
+    globals are selected (the library model).
 
-    This is the **single layer** responsible for enabled filtering.
-    Downstream functions (``resolve_contexts``, ``run_all_contexts``,
-    ``run_all_checks``) trust that they receive only enabled primitives
-    and do not re-filter.
+    When *ralph_dir* is set, ralph-scoped primitives are merged with
+    selected globals (local wins on name collisions).  Enabled filtering
+    happens **after** the merge so a disabled local primitive can
+    suppress a global one with the same name.
     """
     return EnabledPrimitives(
-        checks=discover_enabled_checks(root, ralph_dir),
-        contexts=discover_enabled_contexts(root, ralph_dir),
+        checks=discover_enabled_checks(root, ralph_dir, global_names=global_checks),
+        contexts=discover_enabled_contexts(root, ralph_dir, global_names=global_contexts),
     )
+
+
+def _validate_check_scripts(checks: list[Check]) -> None:
+    """Raise if any check uses a script that isn't executable."""
+    for check in checks:
+        if check.script and not os.access(check.script, os.X_OK):
+            raise PermissionError(
+                f"Check script not executable: '{check.script}'. "
+                f"Run: chmod +x {check.script}"
+            )
 
 
 class _BoundEmitter:
@@ -133,7 +146,11 @@ def _handle_loop_transitions(
     # immediately.  When an explicit reload was requested (e.g. from the
     # UI), we still emit the PRIMITIVES_RELOADED event.
     explicit_reload = state.consume_reload_request()
-    primitives = _discover_enabled_primitives(config.project_root, ralph_dir)
+    primitives = _discover_enabled_primitives(
+        config.project_root, ralph_dir,
+        global_checks=config.global_checks,
+        global_contexts=config.global_contexts,
+    )
 
     if explicit_reload:
         emit(EventType.PRIMITIVES_RELOADED, {
@@ -353,6 +370,7 @@ def run_loop(
     })
 
     try:
+        _validate_check_scripts(primitives.checks)
         while True:
             should_continue, primitives = _handle_loop_transitions(
                 state, config, primitives, emit, ralph_dir,

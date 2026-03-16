@@ -67,66 +67,6 @@ class TestInit:
         assert (tmp_path / "RALPH.md").read_text() == "my custom prompt"
 
 
-class TestStatus:
-    def test_errors_without_config(self, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 1
-        assert "not found" in result.output
-
-    def test_shows_config(self, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("my prompt")
-        result = runner.invoke(app, ["status"])
-        assert "claude" in result.output
-        assert "RALPH.md" in result.output
-
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_ready_when_all_valid(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("my prompt")
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "Ready to run" in result.output
-
-    @patch("ralphify.cli.shutil.which", return_value=None)
-    def test_not_ready_when_command_missing(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("my prompt")
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 1
-        assert "not found on PATH" in result.output
-        assert "Not ready" in result.output
-
-    def test_not_ready_when_prompt_missing(self, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 1
-        assert "not found" in result.output
-
-    @patch("ralphify.cli.shutil.which", return_value=None)
-    def test_reports_all_issues(self, mock_which, tmp_path, monkeypatch):
-        """Reports both prompt and command issues at once."""
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 1
-        assert "Ralph file" in result.output
-        assert "not found on PATH" in result.output
-
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/myagent")
-    def test_shows_prompt_size(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("x" * 150)
-        result = runner.invoke(app, ["status"])
-        assert "150 chars" in result.output
-
-
 class TestRun:
     def test_errors_without_config(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -140,6 +80,25 @@ class TestRun:
         result = runner.invoke(app, ["run"])
         assert result.exit_code == 1
         assert "not found" in result.output
+
+    @patch("ralphify.cli.shutil.which", return_value=None)
+    def test_errors_when_command_not_on_path(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "RALPH.md").write_text("go")
+        result = runner.invoke(app, ["run", "-n", "1"])
+        assert result.exit_code == 1
+        assert "not found on PATH" in result.output
+
+    @patch("ralphify._agent.subprocess.run", side_effect=_ok)
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+    def test_runs_when_command_on_path(self, mock_which, mock_run, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "RALPH.md").write_text("go")
+        result = runner.invoke(app, ["run", "-n", "1"])
+        assert result.exit_code == 0
+        assert mock_run.call_count == 1
 
     @patch("ralphify._agent.subprocess.run", side_effect=_ok)
     def test_runs_n_iterations(self, mock_run, tmp_path, monkeypatch):
@@ -179,7 +138,8 @@ class TestRun:
         assert mock_run.call_args_list[1].kwargs["input"] == "v2"
 
     @patch("ralphify._agent.subprocess.run", side_effect=_ok)
-    def test_custom_command_and_args(self, mock_run, tmp_path, monkeypatch):
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/myagent")
+    def test_custom_command_and_args(self, mock_which, mock_run, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         config = '[agent]\ncommand = "myagent"\nargs = ["--fast"]\nralph = "RALPH.md"\n'
         (tmp_path / CONFIG_FILENAME).write_text(config)
@@ -278,6 +238,42 @@ class TestRunRejectsInlinePrompt:
         result = runner.invoke(app, ["run", "do something", "-n", "1"])
         assert result.exit_code == 1
         assert "not found" in result.output.lower()
+
+
+class TestRunCheckScriptValidation:
+    @patch("ralphify._agent.subprocess.run", side_effect=_ok)
+    def test_errors_when_check_script_not_executable(self, mock_run, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "RALPH.md").write_text("go")
+
+        check_dir = tmp_path / ".ralphify" / "checks" / "my-check"
+        check_dir.mkdir(parents=True)
+        (check_dir / "CHECK.md").write_text("---\nenabled: true\n---\nFix it.")
+        script = check_dir / "run.sh"
+        script.write_text("#!/bin/bash\necho ok")
+        script.chmod(0o644)  # not executable
+
+        result = runner.invoke(app, ["run", "-n", "1"])
+        assert result.exit_code == 0  # engine catches the error
+        assert "not executable" in result.output
+
+    @patch("ralphify._agent.subprocess.run", side_effect=_ok)
+    def test_runs_when_check_script_is_executable(self, mock_run, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "RALPH.md").write_text("go")
+
+        check_dir = tmp_path / ".ralphify" / "checks" / "my-check"
+        check_dir.mkdir(parents=True)
+        (check_dir / "CHECK.md").write_text("---\nenabled: true\n---\nFix it.")
+        script = check_dir / "run.sh"
+        script.write_text("#!/bin/bash\necho ok")
+        script.chmod(0o755)  # executable
+
+        result = runner.invoke(app, ["run", "-n", "1"])
+        assert result.exit_code == 0
+        assert "not executable" not in result.output
 
 
 class TestRunLogging:
@@ -484,45 +480,6 @@ def _setup_check(tmp_path, name="ruff-lint", command="ruff check .", enabled=Tru
     return check_dir
 
 
-class TestStatusChecks:
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_no_checks_dir(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("prompt")
-
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "none" in result.output
-        assert "Ready to run" in result.output
-
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_found_checks(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("prompt")
-        _setup_check(tmp_path, "ruff-lint", "ruff check .")
-        _setup_check(tmp_path, "typecheck", "mypy .")
-
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "2 found" in result.output
-        assert "ruff-lint" in result.output
-        assert "typecheck" in result.output
-
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_disabled_check_display(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("prompt")
-        _setup_check(tmp_path, "enabled-check", "echo ok", enabled=True)
-        _setup_check(tmp_path, "disabled-check", "echo skip", enabled=False)
-
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "2 found" in result.output
-
-
 def _make_check_result(name="lint", passed=True, exit_code=0, output="ok\n",
                        timed_out=False, failure_instruction=""):
     """Helper to create a CheckResult for tests."""
@@ -727,45 +684,6 @@ def _setup_context(tmp_path, name="git-history", command="git log --oneline -5",
 
 
 
-class TestStatusContexts:
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_no_contexts_shows_none(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("prompt")
-
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "Contexts:" in result.output
-        assert "none" in result.output
-
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_found_contexts_shown(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("prompt")
-        _setup_context(tmp_path, "git-history", "git log --oneline -5")
-        _setup_context(tmp_path, "coverage", "coverage report")
-
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "2 found" in result.output
-        assert "git-history" in result.output
-        assert "coverage" in result.output
-
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_disabled_context_display(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("prompt")
-        _setup_context(tmp_path, "enabled-ctx", "echo ok", enabled=True)
-        _setup_context(tmp_path, "disabled-ctx", "echo skip", enabled=False)
-
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "2 found" in result.output
-
-
 class TestRunContexts:
     @patch("ralphify.engine.run_all_contexts")
     @patch("ralphify._agent.subprocess.run", side_effect=_ok)
@@ -838,33 +756,6 @@ def _setup_ralph(tmp_path, name="improve-docs", description="Improve docs", enab
 
 
 
-
-
-class TestStatusRalphs:
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_no_ralphs_shows_none(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("prompt")
-
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "Ralphs:" in result.output
-        assert "none" in result.output
-
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_found_ralphs_shown(self, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
-        (tmp_path / "RALPH.md").write_text("prompt")
-        _setup_ralph(tmp_path, "improve-docs")
-        _setup_ralph(tmp_path, "refactor", description="Refactor code")
-
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "2 found" in result.output
-        assert "improve-docs" in result.output
-        assert "refactor" in result.output
 
 
 class TestRunRalphName:
