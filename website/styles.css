@@ -513,6 +513,25 @@ nav {
   font-size: 1rem;
 }
 
+.install-alt {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+.install-alt code {
+  background: rgba(139, 108, 240, 0.1);
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .install-alt code {
+    background: rgba(167, 139, 245, 0.15);
+  }
+}
+
 /* ── Features ────────────────────────────────────────────── */
 
 .features {
