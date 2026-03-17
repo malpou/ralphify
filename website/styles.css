@@ -741,6 +741,29 @@ footer {
   }
 }
 
+/* ── Reduced motion ─────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .step,
+  .why-item,
+  .card,
+  .faq-item {
+    transition: none;
+  }
+
+  .btn:hover {
+    transform: none;
+  }
+
+  .step:hover,
+  .why-item:hover,
+  .card:hover,
+  .faq-item:hover {
+    transform: none;
+  }
+}
+
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 640px) {
