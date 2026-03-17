@@ -77,7 +77,7 @@ def _print_banner() -> None:
         rprint(f"[bold {color}]{prefix}{line}[/bold {color}]")
     rprint()
     rprint(f"[italic #A78BF5]{TAGLINE:^{width}}[/italic #A78BF5]")
-    rprint(f"{'':^{width}}")
+    rprint()
     help_text = "Run 'ralph --help' for usage information"
     rprint(f"[dim]{help_text:^{width}}[/dim]")
     star_text = "⭐ Star us on GitHub: https://github.com/computerlovetech/ralphify"
@@ -101,6 +101,7 @@ def main_callback(
         _print_banner()
         rprint(ctx.get_help())
         raise typer.Exit()
+
 
 def _load_config() -> dict:
     """Load and return the ralph.toml config, exiting if not found."""
