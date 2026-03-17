@@ -192,6 +192,35 @@ nav {
   margin-right: auto;
 }
 
+/* ── Agent compatibility ─────────────────────────────────── */
+
+.agent-compat {
+  margin-top: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.agent-compat a {
+  color: var(--text-muted);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgba(139, 108, 240, 0.3);
+  text-underline-offset: 2px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.agent-compat a:hover {
+  color: var(--purple-dark);
+  text-decoration-color: var(--purple-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  .agent-compat a:hover {
+    color: var(--purple-light);
+    text-decoration-color: var(--purple-light);
+  }
+}
+
 /* ── Buttons ─────────────────────────────────────────────── */
 
 .cta {
