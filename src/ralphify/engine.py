@@ -227,17 +227,17 @@ def _run_checks_phase(
 
     check_results = run_all_checks(enabled_checks, project_root, ralph_name)
 
-    # Build per-result data once; reused for both per-check and summary events.
+    # Build per-result event data once; reused for both per-check and summary events.
     results_data: list[dict] = []
     for cr in check_results:
-        result = cr.to_event_data()
-        results_data.append(result)
+        event_data = cr.to_event_data()
+        results_data.append(event_data)
         emit(
             EventType.CHECK_PASSED if cr.passed else EventType.CHECK_FAILED,
-            {"iteration": iteration, **result},
+            {"iteration": iteration, **event_data},
         )
 
-    passed = sum(1 for r in results_data if r["passed"])
+    passed = sum(1 for cr in check_results if cr.passed)
     emit(EventType.CHECKS_COMPLETED, {
         "iteration": iteration,
         "passed": passed,

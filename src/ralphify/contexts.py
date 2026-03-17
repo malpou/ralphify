@@ -49,6 +49,21 @@ class ContextResult:
     success: bool
     timed_out: bool = False
 
+    def render(self) -> str:
+        """Combine static content and truncated command output into prompt text.
+
+        This is the single source of truth for how a context result appears
+        in the assembled prompt.  Used by :func:`resolve_contexts` to build
+        the placeholder lookup dict.
+        """
+        parts: list[str] = []
+        if self.context.static_content:
+            parts.append(self.context.static_content)
+        output = truncate_output(self.output)
+        if output.strip():
+            parts.append(output.strip())
+        return "\n".join(parts)
+
 
 def _context_from_entry(prim: PrimitiveEntry) -> Context:
     """Convert a :class:`PrimitiveEntry` to a :class:`Context`."""
@@ -144,9 +159,8 @@ def run_all_contexts(contexts: list[Context], project_root: Path, ralph_name: st
 def resolve_contexts(prompt: str, results: list[ContextResult]) -> str:
     """Replace context placeholders in a prompt string.
 
-    Each context result is rendered by combining its static content (if any)
-    with its truncated command output, then injected into the prompt via
-    :func:`resolve_placeholders`.
+    Each context result is rendered via :meth:`ContextResult.render`,
+    then injected into the prompt via :func:`resolve_placeholders`.
 
     Callers are responsible for passing only the results they want
     resolved (the engine pre-filters via ``_discover_enabled_primitives``).
@@ -157,13 +171,7 @@ def resolve_contexts(prompt: str, results: list[ContextResult]) -> str:
     """
     available: dict[str, str] = {}
     for r in results:
-        parts = []
-        if r.context.static_content:
-            parts.append(r.context.static_content)
-        output = truncate_output(r.output)
-        if output.strip():
-            parts.append(output.strip())
-        rendered = "\n".join(parts)
+        rendered = r.render()
         if rendered:
             available[r.context.name] = rendered
 
