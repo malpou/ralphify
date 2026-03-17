@@ -741,6 +741,47 @@ footer {
   }
 }
 
+/* ── Focus styles (keyboard accessibility) ─────────────── */
+
+a:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.btn-primary:focus-visible {
+  outline-color: #fff;
+  box-shadow: 0 0 0 4px var(--purple);
+}
+
+.nav-links a:focus-visible {
+  outline-color: #fff;
+  border-radius: 4px;
+}
+
+.logo:focus-visible {
+  outline-color: #fff;
+  border-radius: 4px;
+}
+
+.skip-link:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  a:focus-visible,
+  .btn:focus-visible {
+    outline-color: var(--purple-light);
+  }
+
+  .btn-primary:focus-visible {
+    outline-color: #fff;
+    box-shadow: 0 0 0 4px var(--purple-light);
+  }
+}
+
 /* ── Reduced motion ─────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
