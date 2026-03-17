@@ -196,18 +196,16 @@ def _run_agent_phase(
 
     duration = format_duration(agent.elapsed)
 
-    # All state counter updates in one place for easy auditing.
     if agent.returncode is None:
-        state.timed_out += 1
-        state.failed += 1
+        state.mark_timed_out()
         event_type = EventType.ITERATION_TIMED_OUT
         state_detail = f"timed out after {duration}"
     elif agent.returncode == 0:
-        state.completed += 1
+        state.mark_completed()
         event_type = EventType.ITERATION_COMPLETED
         state_detail = f"completed ({duration})"
     else:
-        state.failed += 1
+        state.mark_failed()
         event_type = EventType.ITERATION_FAILED
         state_detail = f"failed with exit code {agent.returncode} ({duration})"
 

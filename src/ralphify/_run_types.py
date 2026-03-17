@@ -138,6 +138,19 @@ class RunState:
         """Block until unpaused or timeout. Returns True if unpaused."""
         return self._pause_event.wait(timeout=timeout)
 
+    def mark_completed(self) -> None:
+        """Record a successful iteration."""
+        self.completed += 1
+
+    def mark_failed(self) -> None:
+        """Record a failed iteration."""
+        self.failed += 1
+
+    def mark_timed_out(self) -> None:
+        """Record a timed-out iteration (also counts as failed)."""
+        self.timed_out += 1
+        self.failed += 1
+
     def consume_reload_request(self) -> bool:
         """If a reload was requested, clear the flag and return True."""
         if self._reload_requested:
