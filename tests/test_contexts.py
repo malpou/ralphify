@@ -176,16 +176,24 @@ class TestDiscoverContextsLocal:
 
 
 class TestRunContext:
-    def _make_context(self, **kwargs: object) -> Context:
-        cmd = kwargs.get("command", "echo hello")
+    def _make_context(
+        self,
+        name: str = "test-ctx",
+        path: Path = Path("/fake"),
+        command: str | None = "echo hello",
+        script: Path | None = None,
+        timeout: int = 30,
+        enabled: bool = True,
+        static_content: str = "",
+    ) -> Context:
         return Context(
-            name=str(kwargs.get("name", "test-ctx")),
-            path=Path(str(kwargs["path"])) if "path" in kwargs else Path("/fake"),
-            command=str(cmd) if cmd is not None else None,
-            script=Path(str(kwargs["script"])) if kwargs.get("script") else None,
-            timeout=int(str(kwargs["timeout"])) if "timeout" in kwargs else 30,
-            enabled=bool(kwargs.get("enabled", True)),
-            static_content=str(kwargs.get("static_content", "")),
+            name=name,
+            path=path,
+            command=command,
+            script=script,
+            timeout=timeout,
+            enabled=enabled,
+            static_content=static_content,
         )
 
     @patch(_MOCK_SUBPROCESS)

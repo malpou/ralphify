@@ -263,15 +263,24 @@ class TestDiscoverChecksLocal:
 
 
 class TestRunCheck:
-    def _make_check(self, **kwargs: object) -> Check:
+    def _make_check(
+        self,
+        name: str = "test-check",
+        path: Path = Path("/fake"),
+        command: str = "echo hello",
+        script: Path | None = None,
+        timeout: int = 60,
+        enabled: bool = True,
+        failure_instruction: str = "Fix it.",
+    ) -> Check:
         return Check(
-            name=str(kwargs.get("name", "test-check")),
-            path=Path(str(kwargs["path"])) if "path" in kwargs else Path("/fake"),
-            command=str(kwargs["command"]) if "command" in kwargs else "echo hello",
-            script=Path(str(kwargs["script"])) if kwargs.get("script") else None,
-            timeout=int(str(kwargs["timeout"])) if "timeout" in kwargs else 60,
-            enabled=bool(kwargs.get("enabled", True)),
-            failure_instruction=str(kwargs.get("failure_instruction", "Fix it.")),
+            name=name,
+            path=path,
+            command=command,
+            script=script,
+            timeout=timeout,
+            enabled=enabled,
+            failure_instruction=failure_instruction,
         )
 
     @patch(_MOCK_SUBPROCESS)

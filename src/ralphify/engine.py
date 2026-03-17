@@ -229,19 +229,21 @@ def _run_checks_phase(
 
     # Build per-result event data once; reused for both per-check and summary events.
     results_data: list[dict] = []
+    passed = 0
     for cr in check_results:
         event_data = cr.to_event_data()
         results_data.append(event_data)
+        if cr.passed:
+            passed += 1
         emit(
             EventType.CHECK_PASSED if cr.passed else EventType.CHECK_FAILED,
             {"iteration": iteration, **event_data},
         )
 
-    passed = sum(1 for cr in check_results if cr.passed)
     emit(EventType.CHECKS_COMPLETED, {
         "iteration": iteration,
         "passed": passed,
-        "failed": len(results_data) - passed,
+        "failed": len(check_results) - passed,
         "results": results_data,
     })
 
