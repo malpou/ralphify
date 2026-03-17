@@ -7,9 +7,24 @@ Ralphs are reusable task-focused prompt files that users can switch between
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import NamedTuple
 
 from ralphify._discovery import PrimitiveEntry, discover_primitives
 from ralphify._frontmatter import RALPH_MARKER
+
+
+class RalphSource(NamedTuple):
+    """Resolved ralph source: the file to read and optional ralph name.
+
+    Returned by :func:`resolve_ralph_source` so call sites can access
+    fields by name instead of unpacking a positional tuple.
+    """
+
+    file_path: str
+    """Path to the ralph markdown file (e.g. ``RALPH.md`` or ``.ralphify/ralphs/docs/RALPH.md``)."""
+
+    ralph_name: str | None
+    """The ralph's directory name if a named ralph was resolved, ``None`` for file paths."""
 
 
 @dataclass
@@ -92,30 +107,34 @@ def is_ralph_name(value: str) -> bool:
 
 def resolve_ralph_source(
     *,
-    prompt: str | None,
+    ralph_arg: str | None,
     toml_ralph: str,
-) -> tuple[str, str | None]:
-    """Resolve the positional argument into a ralph file path and optional name.
+) -> RalphSource:
+    """Resolve the CLI positional argument into a ralph file path and optional name.
 
-    Returns ``(ralph_file_path, ralph_name)``.
+    *ralph_arg* is the positional argument from ``ralph run <name>``
+    (a named ralph identifier, or ``None`` when omitted).
+
+    *toml_ralph* is the ``agent.ralph`` value from ``ralph.toml``
+    (either a ralph name like ``"docs"`` or a file path like ``"RALPH.md"``).
 
     Resolution:
 
-    1. ``None`` → fall back to ``ralph.toml`` ``agent.ralph``
-    2. Otherwise → must match a named ralph in ``.ralphify/ralphs/``
+    1. ``ralph_arg is None`` → fall back to *toml_ralph*
+    2. Otherwise → look up *ralph_arg* as a named ralph
 
     Raises ``ValueError`` if a named ralph lookup fails.
     """
-    if prompt is None:
+    if ralph_arg is None:
         # Fall back to ralph.toml agent.ralph — could be a name or a path
         if is_ralph_name(toml_ralph):
             try:
                 found = resolve_ralph_name(toml_ralph)
-                return str(found.path / RALPH_MARKER), found.name
+                return RalphSource(str(found.path / RALPH_MARKER), found.name)
             except ValueError:
-                return toml_ralph, None
-        return toml_ralph, None
+                return RalphSource(toml_ralph, None)
+        return RalphSource(toml_ralph, None)
 
     # Must be a named ralph
-    found = resolve_ralph_name(prompt)
-    return str(found.path / RALPH_MARKER), found.name
+    found = resolve_ralph_name(ralph_arg)
+    return RalphSource(str(found.path / RALPH_MARKER), found.name)

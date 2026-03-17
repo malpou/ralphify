@@ -181,17 +181,17 @@ def run(
     args = agent.get("args", [])
 
     try:
-        ralph_file_path, resolved_ralph_name = resolve_ralph_source(
-            prompt=prompt,
+        source = resolve_ralph_source(
+            ralph_arg=prompt,
             toml_ralph=agent.get("ralph", "RALPH.md"),
         )
     except ValueError as e:
         _exit_error(str(e))
 
     try:
-        ralph_text = Path(ralph_file_path).read_text()
+        ralph_text = Path(source.file_path).read_text()
     except FileNotFoundError:
-        _exit_error(f"Prompt file '{ralph_file_path}' not found.")
+        _exit_error(f"Prompt file '{source.file_path}' not found.")
 
     if not shutil.which(command):
         _exit_error(f"Agent command '{command}' not found on PATH.")
@@ -207,8 +207,8 @@ def run(
     config = RunConfig(
         command=command,
         args=args,
-        ralph_file=ralph_file_path,
-        ralph_name=resolved_ralph_name,
+        ralph_file=source.file_path,
+        ralph_name=source.ralph_name,
         max_iterations=n,
         delay=delay,
         timeout=timeout,
