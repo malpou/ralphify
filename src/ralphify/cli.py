@@ -177,8 +177,12 @@ def run(
     Repeat until *n* iterations or Ctrl+C.
     """
     toml_config = _load_config()
-    agent = toml_config["agent"]
-    command = agent["command"]
+    agent = toml_config.get("agent")
+    if not isinstance(agent, dict):
+        _exit_error(f"Missing [agent] section in {CONFIG_FILENAME}.")
+    command = agent.get("command")
+    if not command:
+        _exit_error(f"Missing 'command' in [agent] section of {CONFIG_FILENAME}.")
     args = agent.get("args", [])
 
     try:
