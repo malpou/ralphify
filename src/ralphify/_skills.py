@@ -6,19 +6,23 @@ import importlib.resources
 import shutil
 import tomllib
 from pathlib import Path
+from typing import NamedTuple
 
 from ralphify._frontmatter import CONFIG_FILENAME
 
-# Maps agent binary names to the directory where skills are installed.
-_AGENT_SKILL_DIRS: dict[str, str] = {
-    "claude": ".claude/skills",
-    "codex": ".agents/skills",
-}
 
-# Maps agent binary names to their skill invocation prefix.
-_AGENT_SKILL_PREFIX: dict[str, str] = {
-    "claude": "/",
-    "codex": "$",
+class _AgentConfig(NamedTuple):
+    """Skill integration settings for a supported agent."""
+
+    skill_dir: str
+    skill_prefix: str
+
+
+# Single source of truth for agent-specific skill settings.
+# To add a new agent, add one entry here — no other changes needed.
+_AGENTS: dict[str, _AgentConfig] = {
+    "claude": _AgentConfig(skill_dir=".claude/skills", skill_prefix="/"),
+    "codex": _AgentConfig(skill_dir=".agents/skills", skill_prefix="$"),
 }
 
 
@@ -53,7 +57,7 @@ def detect_agent() -> tuple[str, str]:
             if resolved:
                 return command, resolved
 
-    for name in ("claude", "codex"):
+    for name in _AGENTS:
         resolved = shutil.which(name)
         if resolved:
             return name, resolved
@@ -73,12 +77,12 @@ def install_skill(skill_name: str, agent_name: str) -> Path:
 
     Raises ``RuntimeError`` for unknown agent names.
     """
-    skill_dir_name = _AGENT_SKILL_DIRS.get(agent_name)
-    if skill_dir_name is None:
-        raise RuntimeError(f"Unknown agent: {agent_name!r}. Supported: {', '.join(_AGENT_SKILL_DIRS)}")
+    agent_config = _AGENTS.get(agent_name)
+    if agent_config is None:
+        raise RuntimeError(f"Unknown agent: {agent_name!r}. Supported: {', '.join(_AGENTS)}")
 
     content = read_bundled_skill(skill_name)
-    dest = Path(skill_dir_name) / skill_name / "SKILL.md"
+    dest = Path(agent_config.skill_dir) / skill_name / "SKILL.md"
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(content, encoding="utf-8")
     return dest
@@ -89,7 +93,8 @@ def build_agent_command(agent_name: str, skill_name: str, ralph_name: str | None
 
     Returns a list suitable for ``os.execvp``.
     """
-    prefix = _AGENT_SKILL_PREFIX.get(agent_name, "/")
+    agent_config = _AGENTS.get(agent_name)
+    prefix = agent_config.skill_prefix if agent_config else "/"
     invocation = f"{prefix}{skill_name}"
     if ralph_name:
         invocation = f"{invocation} {ralph_name}"
