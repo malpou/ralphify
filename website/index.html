@@ -90,6 +90,53 @@
     ]
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to run an AI coding agent in an autonomous loop with Ralphify",
+    "description": "Install Ralphify, initialize your project, and start an autonomous AI coding loop that validates and self-corrects every iteration.",
+    "totalTime": "PT2M",
+    "tool": {
+      "@type": "HowToTool",
+      "name": "Terminal (bash, zsh, or any POSIX shell)"
+    },
+    "step": [
+      {
+        "@type": "HowToStep",
+        "position": 1,
+        "name": "Install Ralphify",
+        "text": "Install the Ralphify CLI from PyPI using uv or pip.",
+        "url": "https://computerlovetech.github.io/ralphify/#install-heading",
+        "itemListElement": {
+          "@type": "HowToDirection",
+          "text": "Run: uv tool install ralphify"
+        }
+      },
+      {
+        "@type": "HowToStep",
+        "position": 2,
+        "name": "Initialize your project",
+        "text": "Run ralph init in your project directory to create a ralph.toml config file and a RALPH.md prompt file.",
+        "itemListElement": {
+          "@type": "HowToDirection",
+          "text": "Run: ralph init"
+        }
+      },
+      {
+        "@type": "HowToStep",
+        "position": 3,
+        "name": "Start the autonomous AI coding loop",
+        "text": "Run ralph run to start the loop. The agent reads your prompt, implements changes, validates with checks, and repeats — fixing its own mistakes each iteration.",
+        "url": "https://computerlovetech.github.io/ralphify/docs/getting-started/",
+        "itemListElement": {
+          "@type": "HowToDirection",
+          "text": "Run: ralph run"
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
