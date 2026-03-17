@@ -31,9 +31,12 @@ src/ralphify/           # All source code
 ├── _frontmatter.py     # Parse YAML frontmatter from markdown primitives, marker/config constants
 ├── _discovery.py       # Primitive protocol, directory scanning, merge_by_name, find_run_script
 ├── _templates.py       # Scaffold templates for init and new commands
+├── _skills.py          # Skill installation and agent detection for `ralph new`
 ├── _console_emitter.py # Rich console renderer for run-loop events (ConsoleEmitter)
 ├── _events.py          # Event types and emitter protocol (NullEmitter, QueueEmitter, FanoutEmitter)
-└── _output.py          # Combine/truncate stdout+stderr
+├── _output.py          # Combine/truncate stdout+stderr
+└── skills/             # Bundled skill definitions (installed into agent skill dirs)
+    └── new-ralph/      # AI-guided ralph creation skill for `ralph new`
 
 tests/                  # Pytest tests — one test file per module
 docs/                   # MkDocs site (Material theme) — user-facing documentation
@@ -115,6 +118,7 @@ The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders 
 3. **`cli.py`** — All CLI commands. Delegates to `engine.run_loop()` for the actual loop. Prompt source resolution (name vs. file path) lives in `ralphs.py:resolve_ralph_source()`. Scaffold templates live in `_templates.py`. Terminal event rendering lives in `_console_emitter.py`.
 4. **`_frontmatter.py`** + **`_discovery.py`** — Frontmatter parsing and primitive discovery. `_frontmatter.py` handles YAML parsing and defines marker constants. `_discovery.py` defines the `Primitive` protocol, scans `.ralphify/` directories, and provides `merge_by_name()` for overlaying ralph-scoped primitives on globals. Understanding both is essential for working on checks/contexts/ralphs.
 5. **`resolver.py`** — Template placeholder logic used by contexts. Small file but critical.
+6. **`_skills.py`** + **`skills/`** — The skill system behind `ralph new`. `_skills.py` handles agent detection (from `ralph.toml` or PATH), reads bundled skill definitions from `skills/`, installs them into the agent's skill directory (e.g. `.claude/skills/`), and builds the command to launch the agent with the skill invoked. The `skills/new-ralph/` directory contains the `SKILL.md` that guides the agent through creating a complete ralph with checks and contexts.
 
 ## Traps and gotchas
 
@@ -139,6 +143,10 @@ You need to:
 3. Wire it into `engine.py:run_loop()` — add it to `EnabledPrimitives` and use `_discover_enabled_primitives()`
 4. Add tests
 5. Update `docs/primitives.md`
+
+### If you add support for a new agent in `ralph new`...
+
+The `_AGENTS` dict in `_skills.py` is the single source of truth for agent-specific skill settings (`skill_dir` and `skill_prefix`). Add one entry there — `detect_agent()`, `install_skill()`, and `build_agent_command()` all use it automatically. No other changes needed unless the new agent requires a different invocation pattern.
 
 ### If you change the event system...
 

@@ -11,6 +11,20 @@ from typing import NamedTuple
 from ralphify._frontmatter import CONFIG_FILENAME
 
 
+class DetectedAgent(NamedTuple):
+    """Result of agent auto-detection.
+
+    Returned by :func:`detect_agent` so call sites can access fields by
+    name instead of unpacking a positional tuple.
+    """
+
+    name: str
+    """The agent binary name (e.g. ``"claude"``)."""
+
+    path: str
+    """The resolved filesystem path from :func:`shutil.which`."""
+
+
 class _AgentConfig(NamedTuple):
     """Skill integration settings for a supported agent."""
 
@@ -51,15 +65,14 @@ def read_bundled_skill(skill_name: str) -> str:
     return pkg.read_text(encoding="utf-8")
 
 
-def detect_agent() -> tuple[str, str]:
+def detect_agent() -> DetectedAgent:
     """Detect the agent binary to use.
 
     Resolution order:
     1. ``ralph.toml`` ``[agent].command``
     2. Auto-detect on PATH: ``claude``, then ``codex``
 
-    Returns ``(agent_name, agent_path)`` where *agent_name* is the
-    basename (e.g. ``"claude"``) and *agent_path* is the resolved path.
+    Returns a :class:`DetectedAgent` with the binary name and resolved path.
 
     Raises ``RuntimeError`` when no agent can be found.
     """
@@ -71,12 +84,12 @@ def detect_agent() -> tuple[str, str]:
         if command:
             resolved = shutil.which(command)
             if resolved:
-                return command, resolved
+                return DetectedAgent(command, resolved)
 
     for name in _AGENTS:
         resolved = shutil.which(name)
         if resolved:
-            return name, resolved
+            return DetectedAgent(name, resolved)
 
     raise RuntimeError(
         "No agent found. Install Claude Code or Codex, or set [agent].command in ralph.toml."
