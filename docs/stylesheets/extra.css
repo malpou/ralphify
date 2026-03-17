@@ -169,3 +169,18 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(139, 108, 240, 0.5);
 }
+
+/* ── Announcement bar ─────────────────────────────────────── */
+
+.md-banner {
+  background: linear-gradient(135deg, #8B6CF0 0%, #E87B4A 100%);
+  color: white;
+}
+
+.md-banner a {
+  color: white;
+}
+
+.md-banner a:hover {
+  color: rgba(255, 255, 255, 0.85);
+}

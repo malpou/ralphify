@@ -51,8 +51,7 @@ def discover_ralphs(root: Path = Path(".")) -> list[Ralph]:
     """Scan ``.ralphify/ralphs/`` for subdirectories containing ``RALPH.md``.
 
     Returns all discovered ralphs (both enabled and disabled) sorted
-    alphabetically by name.  Used by ``ralph ralphs list`` and the
-    dashboard's Configure tab.
+    alphabetically by name.
     """
     return [_ralph_from_entry(prim) for prim in discover_primitives(root, "ralphs", RALPH_MARKER)]
 

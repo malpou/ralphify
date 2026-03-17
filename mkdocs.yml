@@ -41,6 +41,7 @@ theme:
     - search.suggest
     - search.highlight
     - toc.follow
+  favicon: assets/favicon.svg
   icon:
     logo: material/infinity
     repo: fontawesome/brands/github

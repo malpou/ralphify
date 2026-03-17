@@ -230,6 +230,8 @@ Once you're confident the loop works, drop the `-n 3` to let it run indefinitely
 
 ## Next steps
 
+- [Writing Prompts](writing-prompts.md) — patterns for writing effective autonomous loop prompts
 - [Cookbook](cookbook.md) — copy-pasteable setups for documentation and test coverage loops
+- [How it Works](how-it-works.md) — what happens inside each iteration
 - [Primitives](primitives.md) — full reference for checks, contexts, and named ralphs
 - [CLI Reference](cli.md) — all commands and options
