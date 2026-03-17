@@ -223,9 +223,12 @@ All event types emitted by the run loop, grouped by category.
 | Event | Data fields |
 |---|---|
 | `ITERATION_STARTED` | `iteration` |
-| `ITERATION_COMPLETED` | `iteration`, `returncode`, `duration`, `duration_formatted`, `detail`, `log_file` |
+| `ITERATION_COMPLETED` | `iteration`, `returncode`, `duration`, `duration_formatted`, `detail`, `log_file`, `result_text` |
 | `ITERATION_FAILED` | same as `ITERATION_COMPLETED` |
 | `ITERATION_TIMED_OUT` | same as `ITERATION_COMPLETED` (`returncode` is `None`) |
+
+!!! note "`result_text` availability"
+    `result_text` contains the agent's final response text and is only populated when using an agent that supports streaming output (e.g. Claude Code with `--output-format stream-json`). For non-streaming agents, `result_text` is `None`. This field is useful for programmatically capturing what the agent produced each iteration — for example, to log summaries or trigger downstream workflows based on the agent's output.
 
 #### Checks
 
@@ -247,7 +250,7 @@ All event types emitted by the run loop, grouped by category.
 
 | Event | Data fields |
 |---|---|
-| `AGENT_ACTIVITY` | `raw` (dict — one stream-json line from the agent) |
+| `AGENT_ACTIVITY` | `iteration`, `raw` (dict — one stream-json line from the agent) |
 | `PRIMITIVES_RELOADED` | `checks`, `contexts` (int counts) |
 | `LOG_MESSAGE` | `message`, `level` (`"info"` / `"error"`), `traceback` (optional) |
 

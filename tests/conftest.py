@@ -5,7 +5,6 @@ from dataclasses import replace
 
 import pytest
 
-from ralphify._events import QueueEmitter
 from ralphify._run_types import RunConfig, RunState
 
 
