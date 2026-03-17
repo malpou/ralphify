@@ -44,14 +44,15 @@ config = RunConfig(
     command="claude",
     args=["-p", "--dangerously-skip-permissions"],
     ralph_file="RALPH.md",
-    prompt_text=None,       # Ad-hoc prompt (overrides ralph_file)
-    ralph_name=None,        # Named ralph from .ralphify/ralphs/
+    ralph_name=None,           # Named ralph from .ralphify/ralphs/
     max_iterations=10,
     delay=2.0,
     timeout=300,
     stop_on_error=True,
     log_dir="ralph_logs",
     project_root=Path("."),
+    global_checks=None,        # List of global check names to include (e.g. ["lint", "tests"])
+    global_contexts=None,      # List of global context names to include (e.g. ["git-log"])
 )
 ```
 

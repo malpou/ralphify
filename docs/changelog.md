@@ -6,7 +6,38 @@ description: Ralphify release history — new features, bug fixes, and breaking 
 
 All notable changes to ralphify are documented here.
 
-## 0.1.7 — Unreleased
+## 0.1.9 — 2026-03-16
+
+Tightened the primitive system: global primitives are now opt-in, context placeholders must be named, and primitives are re-discovered every iteration.
+
+### Breaking changes
+
+- **Explicit primitive dependencies required** — global checks and contexts are no longer auto-applied to all ralphs. Each ralph must declare which global primitives it uses in its frontmatter (`checks: [lint, tests]`, `contexts: [git-log]`). Unknown names produce a clear error. Ralph-local primitives still auto-apply.
+- **Named placeholders only** — the bulk `{{ contexts }}` placeholder and implicit append behavior have been removed. Each context must be referenced by name (`{{ contexts.git-log }}`). Contexts not referenced by a placeholder are excluded from the prompt.
+- **Removed `ralph status` command** — setup validation has been moved into `ralph run` startup, so a separate status command is no longer needed.
+
+### Added
+
+- **Live re-discovery** — primitives are re-discovered every iteration, so adding or editing a check, context, or ralph on disk takes effect on the next cycle without restarting the loop.
+
+### Fixed
+
+- Unknown ralph names now error immediately instead of being silently treated as inline prompts.
+
+---
+
+## 0.1.8 — 2026-03-16
+
+Redesigned `ralph new` with AI-guided setup, and added environment variables for scripts.
+
+### Added
+
+- **AI-guided `ralph new`** — `ralph new` now installs a skill into your agent (Claude Code or Codex) and launches an interactive session where the agent guides you through creating a complete ralph — prompt, checks, and contexts — via conversation. Replaces the old `ralph new check`/`ralph new context`/`ralph new ralph` scaffolding subcommands.
+- **`RALPH_NAME` environment variable** — context and check scripts now receive the name of the current ralph in `RALPH_NAME`, so scripts can adapt their behavior based on which ralph is running.
+
+---
+
+## 0.1.7 — 2026-03-12
 
 Simplified the CLI, added a spinner during iterations, and removed the experimental web dashboard to focus on the CLI experience.
 
