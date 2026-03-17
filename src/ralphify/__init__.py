@@ -20,7 +20,6 @@ try:
 except PackageNotFoundError:
     __version__ = "0.0.0"
 
-from ralphify.cli import app
 from ralphify.engine import run_loop
 from ralphify._run_types import RunConfig, RunState, RunStatus
 from ralphify._events import (
@@ -39,6 +38,7 @@ from ralphify.ralphs import discover_ralphs, resolve_ralph_name
 
 def main():
     """Entry point for the ``ralph`` CLI (called by the console script)."""
+    from ralphify.cli import app  # noqa: PLC0415 — lazy to avoid loading typer/rich for library users
     app()
 
 __all__ = [
