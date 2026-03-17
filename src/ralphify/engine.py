@@ -121,44 +121,25 @@ def _wait_for_resume(state: RunState, emit: _BoundEmitter) -> bool:
     return True
 
 
-def _handle_loop_transitions(
+def _handle_control_signals(
     state: RunState,
-    config: RunConfig,
-    primitives: EnabledPrimitives,
     emit: _BoundEmitter,
-    ralph_dir: Path | None = None,
-) -> tuple[bool, EnabledPrimitives]:
-    """Handle stop, pause, and reload transitions at the top of each iteration.
+) -> bool:
+    """Handle stop and pause requests at the top of each iteration.
 
-    Returns ``(True, primitives)`` if the loop should continue, or
-    ``(False, primitives)`` if the loop should exit.  When a reload is
-    consumed, the returned primitives are freshly discovered.
+    Returns ``True`` if the loop should continue, ``False`` if it
+    should exit.  This is purely about control flow — primitive
+    re-discovery is handled separately in the loop body.
     """
     if state.stop_requested:
         state.status = RunStatus.STOPPED
-        return False, primitives
+        return False
 
     if state.paused:
         if not _wait_for_resume(state, emit):
-            return False, primitives
+            return False
 
-    # Re-discover primitives every iteration so edits on disk take effect
-    # immediately.  When an explicit reload was requested (e.g. from the
-    # UI), we still emit the PRIMITIVES_RELOADED event.
-    explicit_reload = state.consume_reload_request()
-    primitives = _discover_enabled_primitives(
-        config.project_root, ralph_dir,
-        global_checks=config.global_checks,
-        global_contexts=config.global_contexts,
-    )
-
-    if explicit_reload:
-        emit(EventType.PRIMITIVES_RELOADED, {
-            "checks": len(primitives.checks),
-            "contexts": len(primitives.contexts),
-        })
-
-    return True, primitives
+    return True
 
 
 def _assemble_prompt(
@@ -376,11 +357,22 @@ def run_loop(
     try:
         _validate_check_scripts(primitives.checks)
         while True:
-            should_continue, primitives = _handle_loop_transitions(
-                state, config, primitives, emit, ralph_dir,
-            )
-            if not should_continue:
+            if not _handle_control_signals(state, emit):
                 break
+
+            # Re-discover primitives every iteration so edits on disk
+            # take effect immediately without restarting the loop.
+            explicit_reload = state.consume_reload_request()
+            primitives = _discover_enabled_primitives(
+                config.project_root, ralph_dir,
+                global_checks=config.global_checks,
+                global_contexts=config.global_contexts,
+            )
+            if explicit_reload:
+                emit(EventType.PRIMITIVES_RELOADED, {
+                    "checks": len(primitives.checks),
+                    "contexts": len(primitives.contexts),
+                })
 
             state.iteration += 1
             if config.max_iterations is not None and state.iteration > config.max_iterations:
