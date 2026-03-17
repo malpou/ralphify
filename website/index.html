@@ -105,6 +105,14 @@
           "@type": "Answer",
           "text": "No. Ralphify is a pure CLI tool installed via pip or uv. It runs in your terminal and works over SSH — no browser needed."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "What is an AI agent validation harness?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A validation harness wraps an AI coding agent with automated checks — tests, linters, type checkers — that run after every agent action. Ralphify is a minimal harness that validates each iteration and feeds failures back to the agent, creating a self-correcting loop. The harness defines your quality bar; the agent does the work."
+        }
       }
     ]
   }
@@ -317,6 +325,10 @@
         <div class="faq-item">
           <dt>Does Ralphify require a web UI or JavaScript runtime?</dt>
           <dd>No. Ralphify is a pure CLI tool installed via <code>pip</code> or <code>uv</code>. It runs in your terminal and works over SSH — no browser needed.</dd>
+        </div>
+        <div class="faq-item">
+          <dt>What is an AI agent validation harness?</dt>
+          <dd>A validation harness wraps an AI coding agent with automated checks — tests, linters, type checkers — that run after every agent action. Ralphify is a minimal harness that validates each iteration and feeds failures back to the agent, creating a self-correcting loop. The harness defines your quality bar; the agent does the work.</dd>
         </div>
       </dl>
     </section>
