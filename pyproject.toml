@@ -34,7 +34,7 @@ dev = [
 ]
 
 [project.urls]
-Documentation = "https://ralphify.co/docs/"
+Documentation = "https://computerlovetech.github.io/ralphify/"
 Repository = "https://github.com/computerlovetech/ralphify"
 Issues = "https://github.com/computerlovetech/ralphify/issues"
 

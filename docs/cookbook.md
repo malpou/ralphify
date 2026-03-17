@@ -1,5 +1,5 @@
 ---
-description: Copy-pasteable ralphify setups for Python, TypeScript, Rust, Go, documentation, test coverage, and bug fixing loops.
+description: Copy-pasteable ralphify setups for Python, TypeScript, Rust, Go, codebase migrations, documentation, test coverage, and bug fixing loops.
 ---
 
 # Cookbook
@@ -504,3 +504,113 @@ timeout: 60
 ```
 
 Make scripts executable: `chmod +x .ralphify/checks/coverage-threshold/run.sh .ralphify/contexts/coverage/run.sh`
+
+---
+
+## Codebase migration
+
+Systematically migrate a codebase one file at a time — JavaScript to TypeScript, Python 2 to 3, CommonJS to ESM, or any file-by-file conversion where the compiler validates correctness.
+
+This example shows JS → TypeScript. See [adaptation tips](#adapting-for-other-migrations) below for other migration types.
+
+**`RALPH.md`**
+
+```markdown
+---
+checks: [typecheck, tests]
+contexts: [migration-status]
+---
+
+# Prompt
+
+You are an autonomous migration agent running in a loop. Each iteration
+starts with a fresh context. Your progress lives in the code and git.
+
+{{ contexts.migration-status }}
+
+Review the migration status above. Pick the next unconverted `.js` file
+(start with leaf modules that have no unconverted dependents), rename it
+to `.ts` (or `.tsx` if it contains JSX), and add proper TypeScript types.
+
+## Rules
+
+- One file per iteration
+- Rename `.js` → `.ts` (or `.jsx` → `.tsx`)
+- Add proper TypeScript types — avoid `any` unless truly unavoidable
+- Update imports in other files that reference the converted file
+- Do not change runtime behavior — the migration is a pure type-safety improvement
+- Run `npx tsc --noEmit` and fix all type errors before committing
+- Run the test suite before committing
+- Commit with `refactor: migrate <filename> to TypeScript`
+```
+
+**`.ralphify/checks/typecheck/CHECK.md`**
+
+```markdown
+---
+command: npx tsc --noEmit
+timeout: 120
+---
+TypeScript compilation failed. Fix all type errors in the migrated file.
+Do not use `@ts-ignore` or `as any` to suppress errors — add proper types.
+```
+
+**`.ralphify/checks/tests/CHECK.md`**
+
+```markdown
+---
+command: npm test
+timeout: 120
+---
+Tests are failing after the migration. The migration should not change
+runtime behavior — fix the issue without altering test expectations.
+```
+
+**`.ralphify/contexts/migration-status/run.sh`** (script-based — needs shell features):
+
+```bash
+#!/bin/bash
+echo "### Files remaining (.js/.jsx)"
+find src -name '*.js' -o -name '*.jsx' | sort
+echo ""
+echo "### Files converted (.ts/.tsx)"
+find src -name '*.ts' -o -name '*.tsx' | grep -v '\.d\.ts$' | sort
+echo ""
+echo "Remaining: $(find src -name '*.js' -o -name '*.jsx' | wc -l | tr -d ' ') files"
+echo "Converted: $(find src -name '*.ts' -o -name '*.tsx' | grep -v '\.d\.ts$' | wc -l | tr -d ' ') files"
+```
+
+**`.ralphify/contexts/migration-status/CONTEXT.md`**
+
+```markdown
+---
+timeout: 30
+---
+## Migration status
+```
+
+Make the script executable: `chmod +x .ralphify/contexts/migration-status/run.sh`
+
+### Adapting for other migrations
+
+The same pattern works for any file-by-file migration where you can validate correctness automatically:
+
+**Python 2 → Python 3:**
+
+- Change the context script to find `print ` statements, `except Exception, e:` patterns, or files without `from __future__ import` annotations
+- Use checks: `python -m py_compile <file>` for syntax, `uv run pytest` for behavior
+- Prompt rule: "Use `2to3` patterns — replace `print` statements, `dict.iteritems()`, `unicode()`, etc."
+
+**CommonJS → ESM:**
+
+- Change the context script to find files with `require()` or `module.exports`
+- Use checks: `node --check <file>` for syntax, `npm test` for behavior
+- Prompt rule: "Replace `require()` with `import`, `module.exports` with `export default`, and update `package.json` if needed"
+
+**CSS → Tailwind:**
+
+- Change the context script to list components with external CSS imports
+- Use checks: `npm run build` for build validation, visual regression tests if available
+- Prompt rule: "Replace CSS classes with Tailwind utilities, remove the old CSS file when all its classes are inlined"
+
+The key to any migration recipe is a **context that shows progress** (what's done, what's left) and a **check that validates correctness** (compiler, test suite, linter). The agent handles the tedious file-by-file work while the checks prevent regressions.
