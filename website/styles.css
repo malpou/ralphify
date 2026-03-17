@@ -234,6 +234,87 @@ nav {
   margin-top: 1rem;
 }
 
+/* ── Why ────────────────────────────────────────────────── */
+
+.why {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 3rem 2rem 2rem;
+}
+
+.why h2 {
+  text-align: center;
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.why-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  max-width: 620px;
+  margin: 0 auto 2.5rem;
+  font-size: 1.05rem;
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.why-item {
+  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.why-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  .why-item:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.why-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--purple);
+}
+
+@media (prefers-color-scheme: dark) {
+  .why-icon {
+    color: var(--purple-light);
+  }
+}
+
+.why-item h3 {
+  color: var(--purple);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .why-item h3 {
+    color: var(--purple-light);
+  }
+}
+
+.why-item p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+  .why-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Install ─────────────────────────────────────────────── */
 
 .install {
