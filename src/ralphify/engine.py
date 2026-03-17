@@ -144,16 +144,15 @@ def _handle_control_signals(
 
 def _assemble_prompt(
     config: RunConfig,
-    primitives: EnabledPrimitives,
     context_results: list[ContextResult],
     check_failures_text: str,
 ) -> str:
-    """Build the full prompt for one iteration (pure text assembly).
+    """Build the full prompt for one iteration.
 
-    Reads the prompt source, resolves pre-computed context results,
-    and appends any check-failure feedback from the previous iteration.
-    This is a pure function with no side effects — event emission is
-    handled by the caller.
+    Reads the prompt source (from disk or ``config.prompt_text``),
+    resolves pre-computed context results, and appends any check-failure
+    feedback from the previous iteration.  Event emission is handled by
+    the caller.
     """
     if config.prompt_text:
         prompt = config.prompt_text
@@ -289,7 +288,7 @@ def _run_iteration(
 
     # Assemble prompt (pure text resolution)
     prompt = _assemble_prompt(
-        config, primitives, context_results, check_failures_text,
+        config, context_results, check_failures_text,
     )
     emit(EventType.PROMPT_ASSEMBLED, {"iteration": iteration, "prompt_length": len(prompt)})
 
