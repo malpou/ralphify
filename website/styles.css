@@ -335,7 +335,7 @@ nav {
 }
 
 .step h3 {
-  color: var(--purple);
+  color: var(--purple-dark);
   margin-bottom: 0.5rem;
   font-size: 1.05rem;
 }
@@ -370,7 +370,7 @@ nav {
 }
 
 .step-arrow {
-  color: var(--purple);
+  color: var(--purple-dark);
   font-size: 1.5rem;
   font-weight: 700;
   padding-top: 3rem;
@@ -456,7 +456,7 @@ nav {
 .why-icon {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
-  color: var(--purple);
+  color: var(--purple-dark);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -466,7 +466,7 @@ nav {
 }
 
 .why-item h3 {
-  color: var(--purple);
+  color: var(--purple-dark);
   margin-bottom: 0.5rem;
   font-size: 1.1rem;
 }
@@ -558,7 +558,7 @@ nav {
 }
 
 .card h3 {
-  color: var(--purple);
+  color: var(--purple-dark);
   margin-bottom: 0.5rem;
   font-size: 1.15rem;
 }
@@ -619,7 +619,7 @@ nav {
 .faq-item dt {
   font-weight: 600;
   font-size: 1.05rem;
-  color: var(--purple);
+  color: var(--purple-dark);
   margin-bottom: 0.5rem;
 }
 
