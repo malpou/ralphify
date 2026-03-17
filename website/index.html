@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ralphify — Put your AI coding agent in a while True loop</title>
   <meta name="description" content="Minimal CLI harness for autonomous AI coding loops. Pipe a prompt to an agent, validate with checks, repeat.">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Ralphify — Put your AI coding agent in a while True loop">
+  <meta property="og:description" content="Minimal CLI harness for autonomous AI coding loops. Pipe a prompt to an agent, validate with checks, repeat.">
+  <meta property="og:url" content="https://computerlovetech.github.io/ralphify/">
+  <meta property="og:site_name" content="Ralphify">
+  <meta property="og:image" content="https://computerlovetech.github.io/ralphify/docs/assets/cli-banner.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ralphify — Put your AI coding agent in a while True loop">
+  <meta name="twitter:description" content="Minimal CLI harness for autonomous AI coding loops. Pipe a prompt to an agent, validate with checks, repeat.">
+  <meta name="twitter:image" content="https://computerlovetech.github.io/ralphify/docs/assets/cli-banner.png">
+
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>∞</text></svg>">
 </head>
@@ -62,6 +77,31 @@
 <span class="dim">Done: 3 iteration(s) — 2 succeeded, 1 failed</span></code></pre>
       </div>
       <p class="terminal-caption">Iteration 2 broke a test. Iteration 3 saw the failure and fixed it — that's the self-healing loop.</p>
+    </section>
+
+    <section class="how-it-works">
+      <h2>How it works</h2>
+      <p class="how-subtitle">Every iteration follows the same cycle. The agent always starts fresh — no conversation history, no stale context.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Read prompt + contexts</h3>
+          <p>Ralphify reads your <code>RALPH.md</code> prompt, runs context commands (git log, test status, etc.), and injects the results into the prompt via placeholders.</p>
+        </div>
+        <div class="step-arrow">&rarr;</div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Agent does one thing</h3>
+          <p>The assembled prompt is piped to your agent. It reads the codebase, implements one task, runs tests, and commits. Then it exits.</p>
+        </div>
+        <div class="step-arrow">&rarr;</div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Checks validate &amp; feed back</h3>
+          <p>Checks (tests, linters) run after the agent exits. If something fails, the output feeds into the next iteration — the agent fixes its own mistakes.</p>
+        </div>
+      </div>
+      <p class="how-repeat">Then it repeats. Edit the prompt while it runs — changes take effect on the next cycle.</p>
     </section>
 
     <section class="why">
