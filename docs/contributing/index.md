@@ -90,6 +90,7 @@ docs/
 ├── writing-prompts.md    # Patterns for effective autonomous loop prompts
 ├── agents.md             # Setup guides for different agents
 ├── cookbook.md            # Complete copy-pasteable setups
+├── quick-reference.md    # Condensed cheat sheet (bookmark this one)
 ├── primitives.md         # Checks, contexts, ralphs reference
 ├── cli.md                # Configuration and CLI reference
 ├── api.md                # Python library reference (run_loop, RunConfig, events)
@@ -98,10 +99,51 @@ docs/
 │   ├── index.md          # This page
 │   └── codebase-map.md   # Architecture and module guide
 ├── changelog.md          # Version history
-└── assets/               # Images
+├── assets/               # Images and favicon
+├── stylesheets/          # Custom CSS (extra.css)
+└── overrides/            # MkDocs theme overrides (announcement bar, OG tags)
 ```
 
 Navigation is configured in `mkdocs.yml`. If you add a new page, add it to the `nav` section there.
+
+## Working on the website
+
+The deployed site at `computerlovetech.github.io/ralphify/` combines two pieces: a static **landing page** (`website/`) and the **MkDocs docs** (`docs/`). The `docs.yml` GitHub Actions workflow builds both and deploys them together to GitHub Pages.
+
+### Local preview
+
+Use the [justfile](https://github.com/casey/just) for common build tasks:
+
+```bash
+just docs-preview         # MkDocs dev server at http://127.0.0.1:8000
+just website-build        # Build the full combined site to _site/
+just website-preview      # Build + serve at http://127.0.0.1:8080
+```
+
+`just docs-preview` is the same as `uv run mkdocs serve` — use it when working only on docs. `just website-preview` builds the complete site (landing page at the root, docs under `/docs/`) so you can test cross-links between the landing page and the docs.
+
+### Docker
+
+A `Dockerfile` builds the combined site and serves it via nginx on port 3000:
+
+```bash
+docker build -t ralphify-site .
+docker run -p 3000:3000 ralphify-site
+```
+
+This mirrors the production build — useful for verifying the site works end-to-end before pushing.
+
+### Site structure after build
+
+```
+_site/
+├── index.html            # Landing page (from website/)
+├── styles.css            # Landing page styles
+└── docs/                 # MkDocs output
+    ├── index.html
+    ├── getting-started/
+    └── ...
+```
 
 ## Submitting changes
 
