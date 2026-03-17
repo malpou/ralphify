@@ -147,16 +147,16 @@ def new(
     from ralphify._skills import build_agent_command, detect_agent, install_skill
 
     try:
-        agent_name, agent_path = detect_agent()
+        agent = detect_agent()
     except RuntimeError as e:
         _exit_error(str(e))
 
     try:
-        install_skill("new-ralph", agent_name)
+        install_skill("new-ralph", agent.name)
     except RuntimeError as e:
         _exit_error(str(e))
 
-    cmd = build_agent_command(agent_name, "new-ralph", name)
+    cmd = build_agent_command(agent.name, "new-ralph", name)
     os.execvp(cmd[0], cmd)
 
 

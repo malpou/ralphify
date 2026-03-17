@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from ralphify._skills import (
+    DetectedAgent,
     build_agent_command,
     detect_agent,
     install_skill,
@@ -29,9 +30,8 @@ class TestDetectAgent:
             '[agent]\ncommand = "claude"\nargs = []\nralph = "RALPH.md"\n'
         )
         with patch("shutil.which", return_value="/usr/bin/claude"):
-            name, path = detect_agent()
-        assert name == "claude"
-        assert path == "/usr/bin/claude"
+            agent = detect_agent()
+        assert agent == DetectedAgent("claude", "/usr/bin/claude")
 
     def test_from_path_when_no_toml(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -42,8 +42,8 @@ class TestDetectAgent:
             return None
 
         with patch("shutil.which", side_effect=fake_which):
-            name, path = detect_agent()
-        assert name == "claude"
+            agent = detect_agent()
+        assert agent.name == "claude"
 
     def test_prefers_codex_on_path_when_claude_missing(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -54,8 +54,8 @@ class TestDetectAgent:
             return None
 
         with patch("shutil.which", side_effect=fake_which):
-            name, path = detect_agent()
-        assert name == "codex"
+            agent = detect_agent()
+        assert agent.name == "codex"
 
     def test_raises_when_nothing_found(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -75,8 +75,8 @@ class TestDetectAgent:
             return None
 
         with patch("shutil.which", side_effect=fake_which):
-            name, path = detect_agent()
-        assert name == "claude"
+            agent = detect_agent()
+        assert agent.name == "claude"
 
 
 class TestInstallSkill:
