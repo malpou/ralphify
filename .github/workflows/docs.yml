@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+      - "website/**"
       - "mkdocs.yml"
       - "pyproject.toml"
       - ".github/workflows/docs.yml"
@@ -31,10 +32,14 @@ jobs:
         with:
           python-version: "3.11"
       - run: uv sync --group dev
-      - run: uv run mkdocs build --strict
+      - name: Build combined site (landing page + docs)
+        run: |
+          mkdir -p _site
+          cp -r website/* _site/
+          uv run mkdocs build --strict --site-dir _site/docs
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site/
+          path: _site/
 
   deploy:
     needs: build
