@@ -13,7 +13,6 @@ in ``_agent.py`` so this module can focus on orchestration.
 
 from __future__ import annotations
 
-import os
 import time
 import traceback
 from datetime import datetime, timezone
@@ -24,7 +23,7 @@ from ralphify._events import Event, EventEmitter, EventType, NullEmitter
 from ralphify._frontmatter import parse_frontmatter
 from ralphify._output import format_duration
 from ralphify._run_types import RunConfig, RunState, RunStatus
-from ralphify.checks import Check, discover_enabled_checks, format_check_failures, run_all_checks
+from ralphify.checks import Check, discover_enabled_checks, format_check_failures, run_all_checks, validate_check_scripts
 from ralphify.contexts import (
     Context,
     ContextResult,
@@ -73,16 +72,6 @@ def _discover_enabled_primitives(
         checks=discover_enabled_checks(root, ralph_dir, global_names=global_checks),
         contexts=discover_enabled_contexts(root, ralph_dir, global_names=global_contexts),
     )
-
-
-def _validate_check_scripts(checks: list[Check]) -> None:
-    """Raise if any check uses a script that isn't executable."""
-    for check in checks:
-        if check.script and not os.access(check.script, os.X_OK):
-            raise PermissionError(
-                f"Check script not executable: '{check.script}'. "
-                f"Run: chmod +x {check.script}"
-            )
 
 
 class _BoundEmitter:
@@ -390,7 +379,7 @@ def run_loop(
     })
 
     try:
-        _validate_check_scripts(primitives.checks)
+        validate_check_scripts(primitives.checks)
         while True:
             if not _handle_control_signals(state, emit):
                 break

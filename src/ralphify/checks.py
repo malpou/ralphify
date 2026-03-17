@@ -6,6 +6,7 @@ output and failure instruction are formatted for injection into the next
 iteration's prompt, creating a self-healing feedback loop.
 """
 
+import os
 import warnings
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -123,6 +124,20 @@ def discover_enabled_checks(
         root, ralph_dir, discover_checks, discover_checks_local,
         global_names=global_names, kind="checks",
     )
+
+
+def validate_check_scripts(checks: list[Check]) -> None:
+    """Raise if any check uses a script that isn't executable.
+
+    Called by the engine before the loop starts to surface permission
+    errors early, before any iterations run.
+    """
+    for check in checks:
+        if check.script and not os.access(check.script, os.X_OK):
+            raise PermissionError(
+                f"Check script not executable: '{check.script}'. "
+                f"Run: chmod +x {check.script}"
+            )
 
 
 def run_check(check: Check, project_root: Path, ralph_name: str | None = None) -> CheckResult:
