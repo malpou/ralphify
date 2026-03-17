@@ -160,6 +160,63 @@ def new(
     os.execvp(cmd[0], cmd)
 
 
+def _build_run_config(
+    toml_config: dict,
+    ralph_arg: str | None,
+    max_iterations: int | None,
+    stop_on_error: bool,
+    delay: float,
+    log_dir: str | None,
+    timeout: float | None,
+) -> RunConfig:
+    """Validate toml config, resolve the ralph source, and build a RunConfig.
+
+    Exits with an error message for invalid config, missing files, or
+    missing agent command.  Extracted from ``run()`` so the command body
+    reads as a clean three-step flow: load config → build config → run.
+    """
+    agent = toml_config.get("agent")
+    if not isinstance(agent, dict):
+        _exit_error(f"Missing [agent] section in {CONFIG_FILENAME}.")
+    command = agent.get("command")
+    if not command:
+        _exit_error(f"Missing 'command' in [agent] section of {CONFIG_FILENAME}.")
+    args = agent.get("args", [])
+
+    try:
+        source = resolve_ralph_source(
+            ralph_arg=ralph_arg,
+            toml_ralph=agent.get("ralph", "RALPH.md"),
+        )
+    except ValueError as e:
+        _exit_error(str(e))
+
+    try:
+        ralph_text = Path(source.file_path).read_text()
+    except FileNotFoundError:
+        _exit_error(f"Prompt file '{source.file_path}' not found.")
+
+    if not shutil.which(command):
+        _exit_error(f"Agent command '{command}' not found on PATH.")
+
+    # Extract declared global primitive dependencies from ralph frontmatter
+    ralph_fm, _ = parse_frontmatter(ralph_text)
+
+    return RunConfig(
+        command=command,
+        args=args,
+        ralph_file=source.file_path,
+        ralph_name=source.ralph_name,
+        max_iterations=max_iterations,
+        delay=delay,
+        timeout=timeout,
+        stop_on_error=stop_on_error,
+        log_dir=log_dir,
+        global_checks=ralph_fm.get("checks"),
+        global_contexts=ralph_fm.get("contexts"),
+    )
+
+
 @app.command()
 def run(
     prompt: str | None = typer.Argument(None, help="Named ralph from .ralphify/ralphs/."),
@@ -177,51 +234,13 @@ def run(
     Repeat until *n* iterations or Ctrl+C.
     """
     toml_config = _load_config()
-    agent = toml_config.get("agent")
-    if not isinstance(agent, dict):
-        _exit_error(f"Missing [agent] section in {CONFIG_FILENAME}.")
-    command = agent.get("command")
-    if not command:
-        _exit_error(f"Missing 'command' in [agent] section of {CONFIG_FILENAME}.")
-    args = agent.get("args", [])
-
-    try:
-        source = resolve_ralph_source(
-            ralph_arg=prompt,
-            toml_ralph=agent.get("ralph", "RALPH.md"),
-        )
-    except ValueError as e:
-        _exit_error(str(e))
-
-    try:
-        ralph_text = Path(source.file_path).read_text()
-    except FileNotFoundError:
-        _exit_error(f"Prompt file '{source.file_path}' not found.")
-
-    if not shutil.which(command):
-        _exit_error(f"Agent command '{command}' not found on PATH.")
+    config = _build_run_config(
+        toml_config, prompt, n, stop_on_error, delay, log_dir, timeout,
+    )
 
     if log_dir:
         rprint(f"[dim]Logging output to {log_dir}/[/dim]")
 
-    # Extract declared global primitive dependencies from ralph frontmatter
-    ralph_fm, _ = parse_frontmatter(ralph_text)
-    global_checks = ralph_fm.get("checks")
-    global_contexts = ralph_fm.get("contexts")
-
-    config = RunConfig(
-        command=command,
-        args=args,
-        ralph_file=source.file_path,
-        ralph_name=source.ralph_name,
-        max_iterations=n,
-        delay=delay,
-        timeout=timeout,
-        stop_on_error=stop_on_error,
-        log_dir=log_dir,
-        global_checks=global_checks,
-        global_contexts=global_contexts,
-    )
     state = RunState(run_id=uuid.uuid4().hex[:12])
     emitter = ConsoleEmitter(_console)
 
