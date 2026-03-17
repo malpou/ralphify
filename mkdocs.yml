@@ -89,6 +89,7 @@ nav:
   - Home: index.md
   - Guide:
     - Getting Started: getting-started.md
+    - How it Works: how-it-works.md
     - Writing Prompts: writing-prompts.md
     - Using with Different Agents: agents.md
     - Cookbook: cookbook.md
