@@ -193,23 +193,30 @@ def format_check_failures(results: list[CheckResult]) -> str:
     if not failures:
         return ""
 
-    parts = ["## Check Failures\n"]
-    parts.append("The following checks failed after the last iteration. Fix these issues:\n")
+    # Each element is one line; empty strings produce blank-line separators.
+    lines = [
+        "## Check Failures",
+        "",
+        "The following checks failed after the last iteration. Fix these issues:",
+    ]
 
     for r in failures:
-        parts.append(f"### {r.check.name}")
+        lines.append("")
+        lines.append(f"### {r.check.name}")
         if r.timed_out:
-            parts.append(f"**Timed out** after {r.check.timeout}s")
+            lines.append(f"**Timed out** after {r.check.timeout}s")
         else:
-            parts.append(f"**Exit code:** {r.exit_code}")
+            lines.append(f"**Exit code:** {r.exit_code}")
 
         output = truncate_output(r.output)
-
         if output.strip():
-            parts.append(f"\n```\n{output.strip()}\n```\n")
+            lines.append("")
+            lines.append("```")
+            lines.append(output.strip())
+            lines.append("```")
 
         if r.check.failure_instruction:
-            parts.append(r.check.failure_instruction)
-            parts.append("")
+            lines.append("")
+            lines.append(r.check.failure_instruction)
 
-    return "\n".join(parts)
+    return "\n".join(lines)
