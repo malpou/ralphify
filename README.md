@@ -185,7 +185,7 @@ The agent reads this ralph fresh every iteration, so you can edit it while the l
 
 ## Documentation
 
-Full documentation at **[computerlovetech.github.io/ralphify](https://computerlovetech.github.io/ralphify/)** — tutorials, cookbook, prompt writing guide, and troubleshooting.
+Full documentation at **[computerlovetech.github.io/ralphify](https://computerlovetech.github.io/ralphify/)** — getting started tutorial, prompt writing guide, cookbook, and troubleshooting.
 
 ## Requirements
 

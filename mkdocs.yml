@@ -1,6 +1,6 @@
 site_name: Ralphify
 site_description: Harness toolkit for autonomous AI coding loops
-site_url: https://ralphify.co/docs/
+site_url: https://computerlovetech.github.io/ralphify/
 repo_url: https://github.com/computerlovetech/ralphify
 repo_name: computerlovetech/ralphify
 edit_uri: edit/main/docs/
@@ -89,6 +89,7 @@ nav:
   - Home: index.md
   - Guide:
     - Getting Started: getting-started.md
+    - Writing Prompts: writing-prompts.md
     - Using with Different Agents: agents.md
     - Cookbook: cookbook.md
   - Reference:

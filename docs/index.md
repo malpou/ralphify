@@ -122,5 +122,6 @@ Ralphify extends the basic loop with three building blocks that live in the `.ra
 ## Next steps
 
 - **[Getting Started](getting-started.md)** — from install to a running loop in 10 minutes
+- **[Writing Prompts](writing-prompts.md)** — patterns for effective autonomous loop prompts
 - **[Cookbook](cookbook.md)** — copy-pasteable setups for Python, TypeScript, bug fixing, and more
 - **[Python API](api.md)** — embed the loop in your own automation
