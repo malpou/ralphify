@@ -153,13 +153,7 @@ def _run_agent_streaming(
 
         if stream.timed_out:
             proc.kill()
-            proc.wait()
-            returncode = None
-            timed_out = True
-        else:
-            proc.wait()
-            returncode = proc.returncode
-            timed_out = False
+        proc.wait()
 
         stderr_data = proc.stderr.read()
     finally:
@@ -172,11 +166,11 @@ def _run_agent_streaming(
         log_file = _write_log(log_path_dir, iteration, "".join(stream.stdout_lines), stderr_data)
 
     return AgentResult(
-        returncode=returncode,
+        returncode=None if stream.timed_out else proc.returncode,
         elapsed=time.monotonic() - start,
         log_file=log_file,
         result_text=stream.result_text,
-        timed_out=timed_out,
+        timed_out=stream.timed_out,
     )
 
 
@@ -197,9 +191,6 @@ def _run_agent_blocking(
     Raises ``FileNotFoundError`` if the command binary does not exist.
     """
     start = time.monotonic()
-    log_file: Path | None = None
-    returncode: int | None = None
-    timed_out = False
 
     try:
         result = subprocess.run(
@@ -209,23 +200,29 @@ def _run_agent_blocking(
             timeout=timeout,
             capture_output=bool(log_path_dir),
         )
-        if log_path_dir:
-            log_file = _write_log(log_path_dir, iteration, result.stdout, result.stderr)
-            if result.stdout:
-                sys.stdout.write(result.stdout)
-            if result.stderr:
-                sys.stderr.write(result.stderr)
-        returncode = result.returncode
     except subprocess.TimeoutExpired as e:
-        timed_out = True
+        log_file = None
         if log_path_dir:
             log_file = _write_log(log_path_dir, iteration, e.stdout, e.stderr)
+        return AgentResult(
+            returncode=None,
+            elapsed=time.monotonic() - start,
+            log_file=log_file,
+            timed_out=True,
+        )
+
+    log_file: Path | None = None
+    if log_path_dir:
+        log_file = _write_log(log_path_dir, iteration, result.stdout, result.stderr)
+        if result.stdout:
+            sys.stdout.write(result.stdout)
+        if result.stderr:
+            sys.stderr.write(result.stderr)
 
     return AgentResult(
-        returncode=returncode,
+        returncode=result.returncode,
         elapsed=time.monotonic() - start,
         log_file=log_file,
-        timed_out=timed_out,
     )
 
 
