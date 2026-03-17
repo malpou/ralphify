@@ -77,6 +77,24 @@ code {
   font-family: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
 }
 
+/* Inline code pill (body text) */
+p code,
+dd code,
+li code {
+  background: rgba(139, 108, 240, 0.1);
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+@media (prefers-color-scheme: dark) {
+  p code,
+  dd code,
+  li code {
+    background: rgba(167, 139, 245, 0.15);
+  }
+}
+
 a {
   color: var(--purple-dark);
   text-decoration: none;
