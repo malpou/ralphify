@@ -256,7 +256,36 @@ Rules of thumb:
 
 - **Core prompt:** 20-50 lines is the sweet spot. Enough to be specific, short enough to leave room for work.
 - **Contexts:** Use `{{ contexts.name }}` placeholders to inject only the data the agent needs. Don't dump everything — pick the 2-3 most useful signals.
+- **User args:** Use `{{ args.name }}` to make ralphs reusable — pass project-specific values from the CLI instead of hardcoding them in the prompt.
 - **Check failure output:** This is injected automatically and can be long. If your checks produce verbose output, consider using scripts that filter to the relevant lines.
+
+## Parameterized ralphs
+
+Use [user arguments](primitives.md#user-arguments) to make a ralph reusable across different projects or configurations:
+
+```markdown
+---
+description: Research agent for any codebase
+args: [dir, focus]
+---
+
+Research the codebase at {{ args.dir }}.
+
+Focus area: {{ args.focus }}
+
+## Rules
+
+- Read the code before making claims
+- Cite specific file paths and line numbers
+- Summarize findings in RESEARCH.md
+```
+
+Run the same ralph against different projects:
+
+```bash
+ralph run research --dir ./api --focus "error handling"
+ralph run research --dir ./frontend --focus "state management"
+```
 
 ## Next steps
 

@@ -195,6 +195,7 @@ Read the codebase and existing docs. Find the biggest gap and improve one page p
 | `enabled` | bool | `true` | Set to `false` to disable without deleting |
 | `checks` | list | — | Global checks to include (see [declaring dependencies](#declaring-global-primitive-dependencies) below) |
 | `contexts` | list | — | Global contexts to include (see [declaring dependencies](#declaring-global-primitive-dependencies) below) |
+| `args` | list | — | Declared argument names for positional CLI args |
 
 ### Running a named ralph
 
@@ -202,6 +203,33 @@ Read the codebase and existing docs. Find the biggest gap and improve one page p
 ralph run docs           # Use the "docs" ralph
 ralph run refactor -n 5  # Use "refactor" for 5 iterations
 ```
+
+### User arguments
+
+Ralphs can accept user arguments from the CLI, making them reusable across different projects or configurations. Use `{{ args.name }}` placeholders in the prompt:
+
+```markdown
+---
+description: General-purpose research agent
+args: [dir, focus]
+---
+Research the codebase at {{ args.dir }}.
+Focus area: {{ args.focus }}
+```
+
+Pass arguments when running:
+
+```bash
+# Named flags
+ralph run research --dir ./my-project --focus "performance"
+
+# Positional (requires args declared in frontmatter)
+ralph run research ./my-project "performance"
+```
+
+Missing arguments resolve to empty string. The `args` frontmatter field is only required for positional arguments — named `--flag value` arguments work without it.
+
+Context and check scripts receive user arguments as `RALPH_ARG_<KEY>` environment variables (uppercase, hyphens replaced with underscores). See [CLI reference](cli.md#user-arguments) for details.
 
 You can also set a default in `ralph.toml`:
 

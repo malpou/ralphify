@@ -87,18 +87,42 @@ ralph run --stop-on-error          # Stop if agent exits non-zero
 ralph run --delay 10               # Wait 10s between iterations
 ralph run --timeout 300            # Kill agent after 5 minutes per iteration
 ralph run --log-dir ralph_logs     # Save output to log files
+ralph run research --dir ./src     # Pass user args to the ralph
 ```
 
 | Argument / Option | Short | Default | Description |
 |---|---|---|---|
-| `[PROMPT]` | | none | Named ralph from `.ralphify/ralphs/` |
+| `[RALPH]` | | none | Named ralph from `.ralphify/ralphs/` |
 | `-n` | | unlimited | Max number of iterations |
 | `--stop-on-error` | `-s` | off | Stop loop if agent exits non-zero or times out |
 | `--delay` | `-d` | `0` | Seconds to wait between iterations |
 | `--timeout` | `-t` | none | Max seconds per iteration |
 | `--log-dir` | `-l` | none | Directory for iteration log files |
+| extra `--name value` | | | User arguments passed to `{{ args.name }}` placeholders |
 
-The `[PROMPT]` argument accepts a [named ralph](primitives.md#ralphs). If omitted, ralphify falls back to `ralph.toml`'s `agent.ralph` field, which can be either a ralph name or a file path (e.g. `RALPH.md`).
+The `[RALPH]` argument accepts a [named ralph](primitives.md#ralphs). If omitted, ralphify falls back to `ralph.toml`'s `agent.ralph` field, which can be either a ralph name or a file path (e.g. `RALPH.md`).
+
+#### User arguments
+
+Extra flags after the built-in options are passed as user arguments to the ralph template. Use `{{ args.name }}` placeholders in your RALPH.md to reference them:
+
+```bash
+# Named flags — always work
+ralph run research --dir ./my-project --focus "performance"
+
+# Positional args — requires args: [dir, focus] in RALPH.md frontmatter
+ralph run research ./my-project "performance"
+
+# Mixed
+ralph run research ./my-project --focus "performance"
+```
+
+Context and check scripts receive user arguments as environment variables with the `RALPH_ARG_` prefix (uppercase, hyphens replaced with underscores):
+
+```
+RALPH_ARG_DIR=./my-project
+RALPH_ARG_FOCUS=performance
+```
 
 ### `ralph new`
 

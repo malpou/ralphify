@@ -140,7 +140,27 @@ def validate_check_scripts(checks: list[Check]) -> None:
             )
 
 
-def run_check(check: Check, project_root: Path, ralph_name: str | None = None) -> CheckResult:
+def _build_env(
+    ralph_name: str | None,
+    user_args: dict[str, str] | None,
+) -> dict[str, str] | None:
+    """Build the environment dict for check subprocesses."""
+    env: dict[str, str] = {}
+    if ralph_name:
+        env["RALPH_NAME"] = ralph_name
+    if user_args:
+        for key, value in user_args.items():
+            env_key = "RALPH_ARG_" + key.upper().replace("-", "_")
+            env[env_key] = value
+    return env or None
+
+
+def run_check(
+    check: Check,
+    project_root: Path,
+    ralph_name: str | None = None,
+    user_args: dict[str, str] | None = None,
+) -> CheckResult:
     """Run a single check and return the result.
 
     The check's script or command executes with *project_root* as the
@@ -149,8 +169,11 @@ def run_check(check: Check, project_root: Path, ralph_name: str | None = None) -
 
     When *ralph_name* is set, a ``RALPH_NAME`` environment variable is
     passed to the subprocess so scripts can read per-ralph state.
+
+    When *user_args* is set, ``RALPH_ARG_<KEY>`` environment variables
+    are passed for each user argument.
     """
-    env = {"RALPH_NAME": ralph_name} if ralph_name else None
+    env = _build_env(ralph_name, user_args)
     r = run_command(
         script=check.script,
         command=check.command,
@@ -167,7 +190,12 @@ def run_check(check: Check, project_root: Path, ralph_name: str | None = None) -
     )
 
 
-def run_all_checks(checks: list[Check], project_root: Path, ralph_name: str | None = None) -> list[CheckResult]:
+def run_all_checks(
+    checks: list[Check],
+    project_root: Path,
+    ralph_name: str | None = None,
+    user_args: dict[str, str] | None = None,
+) -> list[CheckResult]:
     """Run every check sequentially and return all results.
 
     Checks execute in the order given (the engine sorts alphabetically by
@@ -180,8 +208,11 @@ def run_all_checks(checks: list[Check], project_root: Path, ralph_name: str | No
 
     When *ralph_name* is set, it is forwarded to each check subprocess
     as the ``RALPH_NAME`` environment variable.
+
+    When *user_args* is set, ``RALPH_ARG_<KEY>`` environment variables
+    are forwarded to each check subprocess.
     """
-    return [run_check(check, project_root, ralph_name) for check in checks]
+    return [run_check(check, project_root, ralph_name, user_args) for check in checks]
 
 
 def format_check_failures(results: list[CheckResult]) -> str:

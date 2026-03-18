@@ -3,7 +3,7 @@
 Only named placeholders are supported: {{ kind.name }} → specific content.
 """
 
-from ralphify.resolver import resolve_placeholders
+from ralphify.resolver import resolve_args, resolve_placeholders
 
 
 class TestEmptyAvailable:
@@ -122,3 +122,42 @@ class TestKindIsolation:
             "my.kind",
         )
         assert result == "value"
+
+
+class TestResolveArgs:
+    def test_single_arg(self):
+        result = resolve_args("Research {{ args.dir }}", {"dir": "./my-project"})
+        assert result == "Research ./my-project"
+
+    def test_multiple_args(self):
+        result = resolve_args(
+            "{{ args.dir }} focus: {{ args.focus }}",
+            {"dir": "./src", "focus": "performance"},
+        )
+        assert result == "./src focus: performance"
+
+    def test_empty_args_clears_placeholders(self):
+        result = resolve_args("Before {{ args.dir }} after", {})
+        assert result == "Before  after"
+
+    def test_unknown_arg_resolves_to_empty(self):
+        result = resolve_args(
+            "{{ args.known }} {{ args.unknown }}",
+            {"known": "value"},
+        )
+        assert result == "value "
+
+    def test_does_not_touch_context_placeholders(self):
+        result = resolve_args(
+            "{{ args.dir }} and {{ contexts.git }}",
+            {"dir": "./src"},
+        )
+        assert result == "./src and {{ contexts.git }}"
+
+    def test_whitespace_tolerant(self):
+        result = resolve_args("{{  args.dir  }}", {"dir": "."})
+        assert result == "."
+
+    def test_hyphenated_arg_name(self):
+        result = resolve_args("{{ args.my-dir }}", {"my-dir": "/tmp"})
+        assert result == "/tmp"

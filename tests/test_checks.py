@@ -395,6 +395,30 @@ class TestRunCheck:
 
         assert mock_run.call_args.kwargs["env"] is None
 
+    @patch(_MOCK_SUBPROCESS)
+    def test_user_args_passed_as_env(self, mock_run):
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+        check = self._make_check()
+        run_check(check, Path("/project"), user_args={"dir": "./src", "my-focus": "perf"})
+
+        passed_env = mock_run.call_args.kwargs["env"]
+        assert passed_env["RALPH_ARG_DIR"] == "./src"
+        assert passed_env["RALPH_ARG_MY_FOCUS"] == "perf"
+
+    @patch(_MOCK_SUBPROCESS)
+    def test_user_args_with_ralph_name(self, mock_run):
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+        check = self._make_check()
+        run_check(check, Path("/project"), ralph_name="docs", user_args={"dir": "."})
+
+        passed_env = mock_run.call_args.kwargs["env"]
+        assert passed_env["RALPH_NAME"] == "docs"
+        assert passed_env["RALPH_ARG_DIR"] == "."
+
 
 class TestRunAllChecks:
     @patch(_MOCK_SUBPROCESS)

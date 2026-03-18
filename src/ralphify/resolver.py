@@ -1,4 +1,4 @@
-"""Template placeholder resolution for contexts.
+"""Template placeholder resolution for contexts and args.
 
 Only named placeholders are supported:
 
@@ -36,3 +36,16 @@ def resolve_placeholders(
         return ""
 
     return named_pattern.sub(_replace_named, prompt)
+
+
+def resolve_args(prompt: str, user_args: dict[str, str]) -> str:
+    """Replace ``{{ args.name }}`` placeholders with user-supplied values.
+
+    Delegates to :func:`resolve_placeholders` with ``kind="args"``.
+    When *user_args* is empty, clears any remaining ``{{ args.* }}``
+    placeholders so they don't leak into the assembled prompt.
+    """
+    if not user_args:
+        # Clear unmatched args placeholders
+        return re.sub(r"\{\{\s*args\.[a-zA-Z0-9_-]+\s*\}\}", "", prompt)
+    return resolve_placeholders(prompt, user_args, "args")

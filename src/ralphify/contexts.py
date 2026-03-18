@@ -113,7 +113,27 @@ def discover_enabled_contexts(
     )
 
 
-def run_context(context: Context, project_root: Path, ralph_name: str | None = None) -> ContextResult:
+def _build_env(
+    ralph_name: str | None,
+    user_args: dict[str, str] | None,
+) -> dict[str, str] | None:
+    """Build the environment dict for context/check subprocesses."""
+    env: dict[str, str] = {}
+    if ralph_name:
+        env["RALPH_NAME"] = ralph_name
+    if user_args:
+        for key, value in user_args.items():
+            env_key = "RALPH_ARG_" + key.upper().replace("-", "_")
+            env[env_key] = value
+    return env or None
+
+
+def run_context(
+    context: Context,
+    project_root: Path,
+    ralph_name: str | None = None,
+    user_args: dict[str, str] | None = None,
+) -> ContextResult:
     """Run a single context and return the result.
 
     Static-only contexts (no script or command) return immediately with
@@ -122,12 +142,15 @@ def run_context(context: Context, project_root: Path, ralph_name: str | None = N
 
     When *ralph_name* is set, a ``RALPH_NAME`` environment variable is
     passed to the subprocess so scripts can read per-ralph state.
+
+    When *user_args* is set, ``RALPH_ARG_<KEY>`` environment variables
+    are passed for each user argument.
     """
     if not context.script and not context.command:
         # Static-only context, no command to run
         return ContextResult(context=context, output="", success=True)
 
-    env = {"RALPH_NAME": ralph_name} if ralph_name else None
+    env = _build_env(ralph_name, user_args)
     r = run_command(
         script=context.script,
         command=context.command,
@@ -143,7 +166,12 @@ def run_context(context: Context, project_root: Path, ralph_name: str | None = N
     )
 
 
-def run_all_contexts(contexts: list[Context], project_root: Path, ralph_name: str | None = None) -> list[ContextResult]:
+def run_all_contexts(
+    contexts: list[Context],
+    project_root: Path,
+    ralph_name: str | None = None,
+    user_args: dict[str, str] | None = None,
+) -> list[ContextResult]:
     """Run every context sequentially and return all results.
 
     Each context's command (or script) executes with *project_root* as the
@@ -152,8 +180,11 @@ def run_all_contexts(contexts: list[Context], project_root: Path, ralph_name: st
 
     When *ralph_name* is set, it is forwarded to each context subprocess
     as the ``RALPH_NAME`` environment variable.
+
+    When *user_args* is set, ``RALPH_ARG_<KEY>`` environment variables
+    are forwarded to each context subprocess.
     """
-    return [run_context(ctx, project_root, ralph_name) for ctx in contexts]
+    return [run_context(ctx, project_root, ralph_name, user_args) for ctx in contexts]
 
 
 def resolve_contexts(prompt: str, results: list[ContextResult]) -> str:

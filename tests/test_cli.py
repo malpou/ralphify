@@ -2,12 +2,14 @@ import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+import typer
 from typer.testing import CliRunner
 
 from ralphify import __version__
 from ralphify.checks import Check, CheckResult
 from ralphify.contexts import Context, ContextResult
-from ralphify.cli import app, CONFIG_FILENAME
+from ralphify.cli import app, CONFIG_FILENAME, _parse_user_args
 from ralphify._templates import RALPH_TOML_TEMPLATE, ROOT_RALPH_TEMPLATE
 
 runner = CliRunner()
@@ -821,3 +823,75 @@ class TestRunRalphName:
         result = runner.invoke(app, ["run", "inline text", "-n", "1"])
         assert result.exit_code == 1
         assert "not found" in result.output.lower()
+
+
+class TestParseUserArgs:
+    def test_named_flag(self):
+        result = _parse_user_args(["--dir", "./src"], None)
+        assert result == {"dir": "./src"}
+
+    def test_multiple_named_flags(self):
+        result = _parse_user_args(["--dir", "./src", "--focus", "perf"], None)
+        assert result == {"dir": "./src", "focus": "perf"}
+
+    def test_positional_with_declared_names(self):
+        result = _parse_user_args(["./src", "perf"], ["dir", "focus"])
+        assert result == {"dir": "./src", "focus": "perf"}
+
+    def test_mixed_positional_and_named(self):
+        result = _parse_user_args(["./src", "--focus", "perf"], ["dir", "focus"])
+        assert result == {"dir": "./src", "focus": "perf"}
+
+    def test_positional_without_declaration_errors(self):
+        with pytest.raises(typer.BadParameter, match="requires args declared"):
+            _parse_user_args(["./src"], None)
+
+    def test_too_many_positionals_errors(self):
+        with pytest.raises(typer.BadParameter, match="Too many positional"):
+            _parse_user_args(["./src", "extra"], ["dir"])
+
+    def test_flag_without_value_errors(self):
+        with pytest.raises(typer.BadParameter, match="requires a value"):
+            _parse_user_args(["--dir"], None)
+
+    def test_empty_args(self):
+        result = _parse_user_args([], None)
+        assert result == {}
+
+
+@patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+class TestRunWithUserArgs:
+    @patch("ralphify._agent.subprocess.run", side_effect=_ok)
+    def test_named_args_resolved_in_prompt(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "RALPH.md").write_text("Research {{ args.dir }}")
+
+        result = runner.invoke(app, ["run", "-n", "1", "--dir", "./my-project"])
+        assert result.exit_code == 0
+        assert mock_run.call_args.kwargs["input"] == "Research ./my-project"
+
+    @patch("ralphify._agent.subprocess.run", side_effect=_ok)
+    def test_positional_args_with_ralph_name(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        ralph_dir = tmp_path / ".ralphify" / "ralphs" / "research"
+        ralph_dir.mkdir(parents=True)
+        (ralph_dir / "RALPH.md").write_text(
+            "---\ndescription: Research\nargs: [dir, focus]\n---\n"
+            "Research {{ args.dir }} with focus on {{ args.focus }}"
+        )
+
+        result = runner.invoke(app, ["run", "research", "-n", "1", "./my-project", "performance"])
+        assert result.exit_code == 0
+        assert mock_run.call_args.kwargs["input"] == "Research ./my-project with focus on performance"
+
+    @patch("ralphify._agent.subprocess.run", side_effect=_ok)
+    def test_unused_arg_placeholders_cleared(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / CONFIG_FILENAME).write_text(RALPH_TOML_TEMPLATE)
+        (tmp_path / "RALPH.md").write_text("Before {{ args.opt }} after")
+
+        result = runner.invoke(app, ["run", "-n", "1"])
+        assert result.exit_code == 0
+        assert mock_run.call_args.kwargs["input"] == "Before  after"

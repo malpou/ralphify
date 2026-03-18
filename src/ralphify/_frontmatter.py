@@ -42,6 +42,7 @@ _FIELD_COERCIONS: dict[str, Callable[[str], object]] = {
     "enabled": lambda v: v.lower() in ("true", "yes", "1"),
     "checks": _parse_list_value,
     "contexts": _parse_list_value,
+    "args": _parse_list_value,
 }
 
 

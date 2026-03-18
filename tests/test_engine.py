@@ -493,6 +493,69 @@ class TestResolveRalphDir:
         assert _resolve_ralph_dir(config) is None
 
 
+class TestRalphArgs:
+    """Tests that ralph_args are resolved in the prompt and passed as env vars."""
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_args_resolved_in_prompt(self, mock_run, tmp_path):
+        (tmp_path / "RALPH.md").write_text(
+            "---\nargs: [dir, focus]\n---\nResearch {{ args.dir }} focus: {{ args.focus }}"
+        )
+        config = make_config(
+            tmp_path, max_iterations=1,
+            ralph_args={"dir": "./src", "focus": "perf"},
+        )
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        call_input = mock_run.call_args.kwargs["input"]
+        assert call_input == "Research ./src focus: perf"
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_empty_args_clears_placeholders(self, mock_run, tmp_path):
+        (tmp_path / "RALPH.md").write_text("Before {{ args.opt }} after")
+        config = make_config(tmp_path, max_iterations=1, ralph_args={})
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        call_input = mock_run.call_args.kwargs["input"]
+        assert call_input == "Before  after"
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_args_env_vars_passed_to_contexts(self, mock_run, tmp_path):
+        ctx_dir = tmp_path / ".ralphify" / "contexts" / "test-ctx"
+        ctx_dir.mkdir(parents=True)
+        (ctx_dir / "CONTEXT.md").write_text("---\ncommand: echo hi\n---\n")
+
+        config = make_config(
+            tmp_path, ralph_name="docs", max_iterations=1,
+            global_contexts=["test-ctx"],
+            ralph_args={"dir": "./src"},
+        )
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        context_call = mock_run.call_args_list[0]
+        assert context_call.kwargs["env"]["RALPH_ARG_DIR"] == "./src"
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_args_env_vars_passed_to_checks(self, mock_run, tmp_path):
+        check_dir = tmp_path / ".ralphify" / "checks" / "test-chk"
+        check_dir.mkdir(parents=True)
+        (check_dir / "CHECK.md").write_text("---\ncommand: echo ok\n---\n")
+
+        config = make_config(
+            tmp_path, ralph_name="docs", max_iterations=1,
+            global_checks=["test-chk"],
+            ralph_args={"focus": "perf"},
+        )
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        check_call = mock_run.call_args_list[-1]
+        assert check_call.kwargs["env"]["RALPH_ARG_FOCUS"] == "perf"
+
+
 class TestRalphNameEnv:
     """Tests that ralph_name flows to context and check subprocesses."""
 

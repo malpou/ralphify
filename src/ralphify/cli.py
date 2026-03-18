@@ -160,6 +160,46 @@ def new(
     os.execvp(cmd[0], cmd)
 
 
+def _parse_user_args(
+    raw_args: list[str],
+    declared_names: list[str] | None,
+) -> dict[str, str]:
+    """Parse extra CLI args into a dict of user arguments.
+
+    Supports ``--name value`` (named) and positional args mapped to
+    *declared_names* from frontmatter ``args: [...]``.
+
+    Raises :class:`typer.BadParameter` on invalid input.
+    """
+    result: dict[str, str] = {}
+    positional_index = 0
+    i = 0
+    while i < len(raw_args):
+        token = raw_args[i]
+        if token.startswith("--"):
+            name = token[2:]
+            if i + 1 >= len(raw_args):
+                raise typer.BadParameter(f"Flag '--{name}' requires a value.")
+            result[name] = raw_args[i + 1]
+            i += 2
+        else:
+            # Positional arg
+            if not declared_names:
+                raise typer.BadParameter(
+                    f"Positional argument '{token}' requires args declared in RALPH.md frontmatter. "
+                    f"Use --name value syntax or add 'args: [...]' to your RALPH.md."
+                )
+            if positional_index >= len(declared_names):
+                raise typer.BadParameter(
+                    f"Too many positional arguments. Expected at most {len(declared_names)} "
+                    f"({', '.join(declared_names)})."
+                )
+            result[declared_names[positional_index]] = token
+            positional_index += 1
+            i += 1
+    return result
+
+
 def _build_run_config(
     toml_config: dict,
     ralph_arg: str | None,
@@ -168,6 +208,7 @@ def _build_run_config(
     delay: float,
     log_dir: str | None,
     timeout: float | None,
+    extra_args: list[str] | None = None,
 ) -> RunConfig:
     """Validate toml config, resolve the ralph source, and build a RunConfig.
 
@@ -202,6 +243,12 @@ def _build_run_config(
     # Extract declared global primitive dependencies from ralph frontmatter
     ralph_fm, _ = parse_frontmatter(ralph_text)
 
+    # Parse user args against declared arg names from frontmatter
+    declared_names = ralph_fm.get("args")
+    ralph_args: dict[str, str] = {}
+    if extra_args:
+        ralph_args = _parse_user_args(extra_args, declared_names)
+
     return RunConfig(
         command=command,
         args=args,
@@ -214,11 +261,13 @@ def _build_run_config(
         log_dir=log_dir,
         global_checks=ralph_fm.get("checks"),
         global_contexts=ralph_fm.get("contexts"),
+        ralph_args=ralph_args,
     )
 
 
-@app.command()
+@app.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True})
 def run(
+    ctx: typer.Context,
     ralph: str | None = typer.Argument(None, help="Named ralph from .ralphify/ralphs/."),
     n: int | None = typer.Option(None, "-n", help="Max number of iterations. Infinite if not set."),
     stop_on_error: bool = typer.Option(False, "--stop-on-error", "-s", help="Stop if the agent exits with non-zero."),
@@ -232,10 +281,22 @@ def run(
     any check failures from the previous iteration, pipe the assembled
     prompt to the agent, then run checks.
     Repeat until *n* iterations or Ctrl+C.
+
+    Extra flags (--name value) and positional args are passed as user
+    arguments to the ralph template.  Use {{ args.name }} placeholders
+    in RALPH.md to reference them.
     """
+    # When ignore_unknown_options is True, Click may capture a --flag as
+    # the ralph positional argument.  Detect this and move it back to extra args.
+    extra = list(ctx.args)
+    if ralph and ralph.startswith("--"):
+        extra = [ralph] + extra
+        ralph = None
+
     toml_config = _load_config()
     config = _build_run_config(
         toml_config, ralph, n, stop_on_error, delay, log_dir, timeout,
+        extra_args=extra or None,
     )
 
     if log_dir:

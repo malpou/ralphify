@@ -31,6 +31,7 @@ from ralphify.contexts import (
     resolve_contexts,
     run_all_contexts,
 )
+from ralphify.resolver import resolve_args
 
 
 # Maps terminal run status to the reason string emitted in RUN_STOPPED events.
@@ -146,15 +147,16 @@ def _assemble_prompt(
     """Build the full prompt for one iteration.
 
     Reads the prompt source (from disk or ``config.prompt_text``),
-    resolves pre-computed context results, and appends any check-failure
-    feedback from the previous iteration.  Event emission is handled by
-    the caller.
+    resolves user args, resolves pre-computed context results, and
+    appends any check-failure feedback from the previous iteration.
+    Event emission is handled by the caller.
     """
     if config.prompt_text:
         prompt = config.prompt_text
     else:
         raw = Path(config.ralph_file).read_text()
         _, prompt = parse_frontmatter(raw)
+    prompt = resolve_args(prompt, config.ralph_args)
     if context_results:
         prompt = resolve_contexts(prompt, context_results)
     if check_failures_text:
@@ -222,6 +224,7 @@ def _run_checks_phase(
     state: RunState,
     emit: _BoundEmitter,
     ralph_name: str | None = None,
+    user_args: dict[str, str] | None = None,
 ) -> str:
     """Execute all checks, emit per-check and summary events.
 
@@ -232,7 +235,7 @@ def _run_checks_phase(
 
     emit(EventType.CHECKS_STARTED, {"iteration": iteration, "count": len(enabled_checks)})
 
-    check_results = run_all_checks(enabled_checks, project_root, ralph_name)
+    check_results = run_all_checks(enabled_checks, project_root, ralph_name, user_args=user_args)
 
     # Build per-result event data once; reused for both per-check and summary events.
     results_data: list[dict] = []
@@ -281,6 +284,7 @@ def _run_iteration(
     if primitives.contexts:
         context_results = run_all_contexts(
             primitives.contexts, config.project_root, config.ralph_name,
+            user_args=config.ralph_args or None,
         )
         emit(EventType.CONTEXTS_RESOLVED, {"iteration": iteration, "count": len(primitives.contexts)})
 
@@ -301,6 +305,7 @@ def _run_iteration(
     if primitives.checks:
         check_failures_text = _run_checks_phase(
             primitives.checks, config.project_root, state, emit, config.ralph_name,
+            user_args=config.ralph_args or None,
         )
 
     return check_failures_text, True
