@@ -6,6 +6,16 @@ description: Ralphify release history — new features, bug fixes, and breaking 
 
 All notable changes to ralphify are documented here.
 
+## 0.1.11 — 2026-03-18
+
+### Improved
+
+- **`ralph new` runs without permission prompts** — Claude Code is now launched with `--dangerously-skip-permissions` so the AI-guided setup flow is uninterrupted.
+- **Simpler `ralph new` experience** — the skill no longer asks users about checks, contexts, or frontmatter. Just describe what you want to automate in plain English and the agent builds the ralph for you.
+- **`ralph new` knows about user arguments** — the skill can now suggest `{{ args.name }}` placeholders when a ralph would benefit from being reusable across projects.
+
+---
+
 ## 0.1.10 — 2026-03-18
 
 ### Added

@@ -111,11 +111,11 @@ class TestInstallSkill:
 class TestBuildAgentCommand:
     def test_claude_with_name(self):
         cmd = build_agent_command("claude", "new-ralph", "my-task")
-        assert cmd == ["claude", "/new-ralph my-task"]
+        assert cmd == ["claude", "--dangerously-skip-permissions", "/new-ralph my-task"]
 
     def test_claude_without_name(self):
         cmd = build_agent_command("claude", "new-ralph", None)
-        assert cmd == ["claude", "/new-ralph"]
+        assert cmd == ["claude", "--dangerously-skip-permissions", "/new-ralph"]
 
     def test_codex_with_name(self):
         cmd = build_agent_command("codex", "new-ralph", "my-task")

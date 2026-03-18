@@ -30,12 +30,17 @@ class _AgentConfig(NamedTuple):
 
     skill_dir: str
     skill_prefix: str
+    extra_flags: tuple[str, ...] = ()
 
 
 # Single source of truth for agent-specific skill settings.
 # To add a new agent, add one entry here — no other changes needed.
 _AGENTS: dict[str, _AgentConfig] = {
-    "claude": _AgentConfig(skill_dir=".claude/skills", skill_prefix="/"),
+    "claude": _AgentConfig(
+        skill_dir=".claude/skills",
+        skill_prefix="/",
+        extra_flags=("--dangerously-skip-permissions",),
+    ),
     "codex": _AgentConfig(skill_dir=".agents/skills", skill_prefix="$"),
 }
 
@@ -126,4 +131,4 @@ def build_agent_command(agent_name: str, skill_name: str, ralph_name: str | None
     invocation = f"{agent_config.skill_prefix}{skill_name}"
     if ralph_name:
         invocation = f"{invocation} {ralph_name}"
-    return [agent_name, invocation]
+    return [agent_name, *agent_config.extra_flags, invocation]

@@ -1,30 +1,49 @@
 ---
 name: new-ralph
-description: Create a new ralph with prompt, checks, and contexts via guided conversation
+description: Create a new ralph from a plain-English description of what you want to automate
 argument-hint: "[name]"
 disable-model-invocation: true
 ---
 
-You are helping the user create a new **ralph** — a reusable task-focused prompt with checks and contexts for autonomous AI coding loops powered by [ralphify](https://github.com/computerlovetech/ralphify).
+You are helping the user create a new **ralph** — a reusable automation for autonomous AI coding loops powered by ralphify. The user does NOT need to know how ralphify works internally. Your job is to translate their plain description into a working ralph setup.
 
-## Ralphify primitives reference
+## What you need from the user
 
-A ralph lives at `.ralphify/ralphs/<name>/RALPH.md` and consists of:
+Ask the user to **describe what they want to automate** in plain language. For example:
+- "I want to write tests for my Python project until I hit 90% coverage"
+- "I want to refactor all my JavaScript files to TypeScript"
+- "I want to fix linting errors across the codebase"
 
-### RALPH.md
+If `$ARGUMENTS` was provided, use it as the ralph name. Otherwise, derive a short kebab-case name from their description.
+
+Ask **only what you need** to build a good setup:
+- What does "done" look like for one cycle of work?
+- What language/tools/framework is the project using?
+- Any conventions or constraints to follow?
+
+Do NOT ask the user about checks, contexts, frontmatter, or other ralphify internals. Figure those out yourself based on their description.
+
+## How ralphs work (internal reference — do not expose to user)
+
+A ralph is a directory at `.ralphify/ralphs/<name>/` containing a prompt and optional validation and data injection.
+
+### RALPH.md — the prompt
 
 ```markdown
 ---
 description: What this ralph does (one line)
+checks: [global-check-name]          # optional: include global checks
+contexts: [global-context-name]      # optional: include global contexts
+args: [dir, focus]                   # optional: declare positional CLI arg names
 enabled: true
 ---
 
-Your prompt content here. This is piped to the agent as stdin each iteration.
+Prompt text piped to the agent each iteration.
+Use {{ contexts.context-name }} to place context output.
+Use {{ args.name }} for user arguments passed from the CLI.
 ```
 
-### Checks
-
-Checks validate the agent's work **after each iteration**. If a check fails, its output and failure instruction are appended to the next iteration's prompt.
+### Checks — post-iteration validation
 
 Location: `.ralphify/ralphs/<name>/checks/<check-name>/CHECK.md`
 
@@ -37,15 +56,11 @@ enabled: true
 Fix all failing tests. Do not skip or delete tests.
 ```
 
-- `command`: parsed with `shlex.split()` — no shell features (pipes, `&&`, redirections)
-- `timeout`: seconds before the check is killed (default: 60)
-- `enabled`: set to `false` to skip without deleting
+- `command` is parsed with `shlex.split()` — no shell features (pipes, `&&`, redirections)
 - Body text = failure instruction shown to the agent when the check fails
-- If you need shell features, create a `run.sh` or `run.py` script in the check directory instead of using `command`
+- For shell features, create a `run.sh` or `run.py` script instead of using `command`
 
-### Contexts
-
-Contexts inject **dynamic data** into the prompt **before each iteration** — git history, coverage reports, file listings, etc.
+### Contexts — dynamic data injected before each iteration
 
 Location: `.ralphify/ralphs/<name>/contexts/<context-name>/CONTEXT.md`
 
@@ -59,16 +74,26 @@ enabled: true
 ```
 
 - Body text appears as a label above the command output
-- Contexts run regardless of command exit code
-- Place contexts in the prompt with `{{ contexts.context-name }}` — each context must be referenced by name
+- Reference in the prompt with `{{ contexts.context-name }}`
+
+### User arguments
+
+Ralphs can accept CLI arguments, making them reusable across different projects or configurations:
+
+- **Named flags**: `ralph run research --dir ./src --focus "perf"` → `{{ args.dir }}`, `{{ args.focus }}`
+- **Positional args**: `ralph run research ./src "perf"` — requires `args: [dir, focus]` in frontmatter
+- Missing args resolve to empty string
+- Context and check scripts receive them as `RALPH_ARG_<KEY>` environment variables (uppercase, hyphens → underscores)
+
+Use args when a ralph could be reused across different directories, files, thresholds, or configurations.
 
 ### Scripts
 
-For commands needing shell features (pipes, redirects, `&&`), create a `run.sh` or `run.py` in the primitive directory. If both a `command` and a `run.*` script exist, the script takes precedence. Remember to `chmod +x` scripts.
+For commands needing shell features, create `run.sh` / `run.py` in the primitive directory. Script takes precedence over `command`. Remember `chmod +x`.
 
 ### Execution order
 
-Primitives run in alphabetical order by directory name. Use number prefixes to control order: `01-lint/`, `02-tests/`.
+Primitives run alphabetically. Use number prefixes: `01-lint/`, `02-tests/`.
 
 ### Output truncation
 
@@ -76,41 +101,27 @@ All primitive output is truncated to 5000 characters.
 
 ## Your workflow
 
-1. **Get the ralph name.** If `$ARGUMENTS` was provided, use it as the ralph name (convert to kebab-case if needed). Otherwise, ask the user what task they want to automate and derive a short kebab-case name.
+1. **Understand the task.** Get a plain-English description. Ask short clarifying questions if needed — no more than 2-3.
 
-2. **Ask clarifying questions.** Understand the task well enough to write a good prompt:
-   - What does the agent need to accomplish each iteration?
-   - What codebase, language, or tools are involved?
-   - What validation matters? (tests, linting, type checking, builds, etc.)
-   - Are there existing patterns or conventions to follow?
+2. **Design the ralph.** Based on the description, decide:
+   - What prompt to write
+   - What checks will catch mistakes (tests, lint, type checks, builds, etc.)
+   - What context the agent needs each iteration (git log, coverage reports, file listings, etc.)
+   - Whether user arguments would make the ralph more reusable
 
-3. **Create the RALPH.md** at `.ralphify/ralphs/<name>/RALPH.md` with:
-   - Frontmatter with a clear `description`
-   - A well-structured prompt that tells the agent:
-     - What it is and what it's doing
-     - That each iteration starts fresh (progress lives in code and git)
-     - Specific rules and constraints
-     - Where to place context output (use named placeholders like `{{ contexts.name }}`)
-   - Follow these prompt patterns:
+3. **Create everything:**
+   - `RALPH.md` with a clear, specific prompt. Follow these patterns:
      - Start with role and loop awareness: "You are an autonomous X agent running in a loop."
-     - Include "Each iteration starts with a fresh context. Your progress lives in the code and git."
-     - Be specific about what "one iteration" means
+     - Include: "Each iteration starts with a fresh context. Your progress lives in the code and git."
+     - Be specific about what one iteration of work looks like
      - Include rules as a bulleted list
-     - End with commit message conventions
+     - End with commit conventions
+   - Checks for any validation that matters (tests, linting, type checking, builds)
+   - Contexts for dynamic data the agent needs
+   - `chmod +x` on any scripts
 
-4. **Create checks** at `.ralphify/ralphs/<name>/checks/<check-name>/CHECK.md`:
-   - Always include relevant validation (tests, linting, type checking, builds)
-   - Write clear failure instructions that tell the agent HOW to fix the problem
-   - Use scripts (`run.sh`) when shell features are needed
-
-5. **Create contexts** at `.ralphify/ralphs/<name>/contexts/<context-name>/CONTEXT.md` if useful:
-   - Git log for tracking progress across iterations
-   - Coverage reports for test-writing tasks
-   - File listings for navigation
-   - Use scripts for commands needing shell features
-
-6. **Set permissions** — run `chmod +x` on any `run.sh` or `run.py` scripts you create.
-
-7. **Show a summary** of everything you created (file tree with paths).
-
-8. **Suggest testing** with: `ralph run <name> -n 1`
+4. **Present a summary** to the user:
+   - Show the file tree of what you created
+   - Briefly explain what the ralph will do in each iteration
+   - Mention any checks that will catch errors
+   - Suggest running: `ralph run <name> -n 1`

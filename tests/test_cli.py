@@ -621,7 +621,7 @@ class TestNew:
         skill_file = tmp_path / ".claude" / "skills" / "new-ralph" / "SKILL.md"
         assert skill_file.exists()
         assert "new-ralph" in skill_file.read_text()
-        mock_execvp.assert_called_once_with("claude", ["claude", "/new-ralph my-task"])
+        mock_execvp.assert_called_once_with("claude", ["claude", "--dangerously-skip-permissions", "/new-ralph my-task"])
 
     @patch("ralphify.cli.os.execvp")
     @patch("shutil.which", return_value="/usr/bin/claude")
@@ -631,7 +631,7 @@ class TestNew:
 
         result = runner.invoke(app, ["new"])
         assert result.exit_code == 0
-        mock_execvp.assert_called_once_with("claude", ["claude", "/new-ralph"])
+        mock_execvp.assert_called_once_with("claude", ["claude", "--dangerously-skip-permissions", "/new-ralph"])
 
     @patch("shutil.which", return_value=None)
     def test_errors_when_no_agent_found(self, mock_which, tmp_path, monkeypatch):
