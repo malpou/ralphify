@@ -11,6 +11,16 @@ All notable changes to ralphify are documented here.
 ### Added
 
 - **User arguments for ralphs** — pass `--name value` flags or positional args to `ralph run` and reference them in prompts with `{{ args.name }}` placeholders. Declare positional arg names in frontmatter with `args: [dir, focus]`. Context and check scripts receive user arguments as `RALPH_ARG_<KEY>` environment variables.
+- **Quick reference page** — single-page cheat sheet covering CLI commands, directory structure, frontmatter fields, placeholders, and common patterns.
+- **Prompt writing guide** — best practices for writing effective RALPH.md prompts, including tips on scoping, context usage, and user arguments.
+- **"How it works" page** — explains the iteration lifecycle so users understand the system model.
+- **"When to use" guide** — helps users evaluate whether ralph loops fit their task.
+- **Agent comparison table** — side-by-side comparison of supported agents with output behavior notes.
+- **Expanded cookbook** — new recipes for Python, TypeScript, Rust, Go, bug fixing, codebase migration, and multi-ralph project setup.
+
+### Fixed
+
+- Malformed `ralph.toml` now shows a helpful error message instead of a raw `KeyError`.
 
 ---
 

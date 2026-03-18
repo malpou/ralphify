@@ -19,6 +19,7 @@ ralph run -n 1 --log-dir logs  # Single iteration with output capture
 ralph run --stop-on-error      # Stop if agent exits non-zero
 ralph run --delay 10           # Wait 10s between iterations
 ralph run --timeout 300        # Kill agent after 5 min per iteration
+ralph run research --dir ./src # Pass user args to the ralph
 
 ralph new                      # AI-guided ralph creation
 ralph new docs                 # AI-guided creation with name pre-filled
@@ -91,12 +92,15 @@ Static header text — appears above command output in the prompt.
 description: What this ralph does
 checks: [tests, lint]           # Global checks to include
 contexts: [git-log]             # Global contexts to include
+args: [dir, focus]              # Positional arg names (for positional CLI args)
 enabled: true                   # Set false to disable (default: true)
 ---
 Prompt text here. Use {{ contexts.git-log }} for placement.
 ```
 
-## Context placeholders
+## Placeholders
+
+### Context placeholders
 
 ```markdown
 {{ contexts.git-log }}          # Replaced with git-log context output
@@ -106,6 +110,18 @@ Prompt text here. Use {{ contexts.git-log }} for placement.
 - Each context must be referenced by name — unreferenced contexts are excluded
 - Unmatched placeholders resolve to empty string (no raw `{{ }}` in output)
 - Must be `contexts` (plural) — `{{ context.name }}` won't resolve
+
+### User argument placeholders
+
+```markdown
+{{ args.dir }}                 # Replaced with --dir value from CLI
+{{ args.focus }}               # Replaced with --focus value from CLI
+```
+
+- Pass via `ralph run <name> --dir ./src --focus "perf"` (named flags)
+- Or positionally: `ralph run <name> ./src "perf"` (requires `args:` in frontmatter)
+- Missing args resolve to empty string
+- Scripts receive them as `RALPH_ARG_<KEY>` env vars (uppercase, hyphens → underscores)
 
 ## Global vs. ralph-scoped primitives
 
@@ -152,6 +168,7 @@ Primitives run in **alphabetical order** by directory name. Use number prefixes 
 | Variable | Value | When set |
 |---|---|---|
 | `RALPH_NAME` | Name of the current ralph (e.g. `docs`) | Only when running a named ralph |
+| `RALPH_ARG_<KEY>` | User argument value (e.g. `RALPH_ARG_DIR`) | When user passes `--key value` to `ralph run` |
 
 ## Check failure injection
 
