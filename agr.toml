@@ -1,6 +1,7 @@
 default_source = "github"
 dependencies = [
     {path = "skills/brand-guidelines", type = "skill"},
+    {handle = "microsoft/playwright-cli/playwright-cli", type = "skill"},
 ]
 
 [[source]]
