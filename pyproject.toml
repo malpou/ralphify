@@ -1,6 +1,6 @@
 [project]
 name = "ralphify"
-version = "0.1.12"
+version = "0.2.0"
 description = "Stop stressing over not having an agent running. Ralph is always running"
 readme = "README.md"
 license = "MIT"
@@ -18,7 +18,7 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Quality Assurance",
 ]
-dependencies = ["typer>=0.9", "rich>=13.0"]
+dependencies = ["typer>=0.9", "rich>=13.0", "pyyaml>=6.0"]
 
 
 [project.scripts]

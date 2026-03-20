@@ -20,17 +20,23 @@ class RunStatus(Enum):
     Transitions follow a simple path: ``PENDING`` → ``RUNNING`` →
     terminal (``COMPLETED``, ``STOPPED``, or ``FAILED``).  A running loop
     may also be ``PAUSED`` and later resumed back to ``RUNNING``.
-
-    Check ``state.status`` to decide what UI elements to show or whether
-    it's safe to start a new run with the same resources.
     """
 
-    PENDING = "pending"       # Created but not yet started
-    RUNNING = "running"       # Loop is executing iterations
-    PAUSED = "paused"         # Paused between iterations, waiting for resume
-    STOPPED = "stopped"       # Stopped by user via request_stop()
-    COMPLETED = "completed"   # Reached max_iterations or finished naturally
-    FAILED = "failed"         # Crashed with an unhandled exception
+    PENDING = "pending"
+    RUNNING = "running"
+    PAUSED = "paused"
+    STOPPED = "stopped"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+@dataclass
+class Command:
+    """A named command from RALPH.md frontmatter."""
+
+    name: str
+    run: str
+    timeout: int = 60
 
 
 @dataclass
@@ -40,25 +46,19 @@ class RunConfig:
     Mutable by design: the engine reads fields at each iteration boundary,
     so you can change ``max_iterations``, ``delay``, or ``timeout`` while
     the loop is running and the new values take effect on the next cycle.
-
-    For CLI usage the config is built once from ``ralph.toml`` + flags.
-    For programmatic usage, construct directly and pass to :func:`run_loop`.
     """
 
-    command: str
-    args: list[str]
-    ralph_file: str
-    prompt_text: str | None = None
-    ralph_name: str | None = None
+    agent: str
+    ralph_dir: Path
+    ralph_file: Path
+    commands: list[Command] = field(default_factory=list)
+    args: dict[str, str] = field(default_factory=dict)
     max_iterations: int | None = None
     delay: float = 0
     timeout: float | None = None
     stop_on_error: bool = False
     log_dir: str | None = None
     project_root: Path = field(default_factory=lambda: Path("."))
-    global_checks: list[str] | None = None
-    global_contexts: list[str] | None = None
-    ralph_args: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -73,11 +73,6 @@ class RunState:
     an independent category.  A timed-out iteration increments both
     ``timed_out`` and ``failed``.  Therefore
     ``completed + failed == total iterations`` (use :attr:`total`).
-
-    **Threading model**: counters (``iteration``, ``completed``, etc.) are
-    written only by the engine thread and read by API threads.  Under
-    CPython's GIL this is safe — readers may see a briefly stale value,
-    which is acceptable for status display.
     """
 
     run_id: str
@@ -85,30 +80,23 @@ class RunState:
     iteration: int = 0
     completed: int = 0
     failed: int = 0
-    timed_out: int = 0  # subset of ``failed``; see class docstring
+    timed_out: int = 0
     started_at: datetime | None = None
 
     _stop_requested: bool = field(default=False, init=False, repr=False, compare=False)
     _pause_event: threading.Event = field(default_factory=threading.Event, init=False, repr=False, compare=False)
-    _reload_requested: bool = field(default=False, init=False, repr=False, compare=False)
 
     @property
     def total(self) -> int:
-        """Total iterations run (``completed + failed``).
-
-        Because ``timed_out`` is already counted in ``failed``, the total
-        is simply ``completed + failed`` — do **not** add ``timed_out``.
-        """
+        """Total iterations run (``completed + failed``)."""
         return self.completed + self.failed
 
     def __post_init__(self) -> None:
-        # Start un-paused
         self._pause_event.set()
 
     def request_stop(self) -> None:
         """Signal the loop to stop after the current iteration."""
         self._stop_requested = True
-        # Unpause so the loop can exit
         self._pause_event.set()
 
     def request_pause(self) -> None:
@@ -120,10 +108,6 @@ class RunState:
         """Resume a paused loop."""
         self.status = RunStatus.RUNNING
         self._pause_event.set()
-
-    def request_reload(self) -> None:
-        """Request re-discovery of primitives before the next iteration."""
-        self._reload_requested = True
 
     @property
     def stop_requested(self) -> bool:
@@ -151,10 +135,3 @@ class RunState:
         """Record a timed-out iteration (also counts as failed)."""
         self.timed_out += 1
         self.failed += 1
-
-    def consume_reload_request(self) -> bool:
-        """If a reload was requested, clear the flag and return True."""
-        if self._reload_requested:
-            self._reload_requested = False
-            return True
-        return False

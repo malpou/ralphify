@@ -97,8 +97,7 @@ nav:
     - Cookbook: cookbook.md
   - Reference:
     - Quick Reference: quick-reference.md
-    - Primitives: primitives.md
-    - Configuration & CLI: cli.md
+    - CLI: cli.md
     - Python API: api.md
   - Help:
     - Troubleshooting: troubleshooting.md

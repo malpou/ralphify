@@ -1,41 +1,10 @@
 ---
-description: ralph.toml configuration format, all CLI commands (init, run, new), and every option with defaults and examples.
+description: Full CLI reference for ralphify — ralph run, ralph new, all options, user arguments, and RALPH.md frontmatter format.
 ---
 
-# Configuration & CLI Reference
+# CLI Reference
 
-## `ralph.toml`
-
-The `ralph.toml` file configures how ralphify runs your agent. It's created by `ralph init` and lives in your project root.
-
-```toml
-[agent]
-command = "claude"
-args = ["-p", "--dangerously-skip-permissions"]
-ralph = "RALPH.md"
-```
-
-### Fields
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `command` | string | yes | The agent CLI executable to run |
-| `args` | list of strings | no | Arguments passed to the command |
-| `ralph` | string | yes | Path to a ralph file, or a [named ralph](primitives.md#ralphs) name |
-
-The assembled prompt is piped to the agent command as **stdin**. The full command executed each iteration is:
-
-```
-<command> <args...> < assembled_prompt
-```
-
-See [Using with Different Agents](agents.md) for setup guides for other agents.
-
----
-
-## CLI Commands
-
-### `ralph`
+## `ralph`
 
 With no subcommand, prints the banner and help text.
 
@@ -60,73 +29,66 @@ ralph --install-completion bash   # or zsh, fish
 
 Restart your shell after installing. Use `--show-completion` to print the script for manual setup.
 
-### `ralph init`
+---
 
-Initialize a project with `ralph.toml` and `RALPH.md`.
-
-```bash
-ralph init
-ralph init --force   # Overwrite existing ralph.toml
-```
-
-| Option | Short | Default | Description |
-|---|---|---|---|
-| `--force` | `-f` | off | Overwrite existing `ralph.toml` |
-
-During init, ralphify detects your project type by looking for manifest files (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`). The detected type is displayed but doesn't currently change the generated configuration — all project types get the same defaults.
-
-### `ralph run`
+## `ralph run`
 
 Start the autonomous coding loop.
 
 ```bash
-ralph run                          # Run forever (Ctrl+C to stop)
-ralph run docs                     # Use the "docs" named ralph
-ralph run -n 5                     # Run 5 iterations
-ralph run --stop-on-error          # Stop if agent exits non-zero
-ralph run --delay 10               # Wait 10s between iterations
-ralph run --timeout 300            # Kill agent after 5 minutes per iteration
-ralph run --log-dir ralph_logs     # Save output to log files
-ralph run research --dir ./src     # Pass user args to the ralph
+ralph run my-ralph                         # Run forever (Ctrl+C to stop)
+ralph run my-ralph -n 5                    # Run 5 iterations
+ralph run my-ralph --stop-on-error         # Stop if agent exits non-zero
+ralph run my-ralph --delay 10              # Wait 10s between iterations
+ralph run my-ralph --timeout 300           # Kill agent after 5 minutes per iteration
+ralph run my-ralph --log-dir ralph_logs    # Save output to log files
+ralph run my-ralph -- --dir ./src          # Pass user args to the ralph
 ```
 
 | Argument / Option | Short | Default | Description |
 |---|---|---|---|
-| `[RALPH]` | | none | Named ralph from `.ralphify/ralphs/` |
+| `PATH` | | (required) | Path to a ralph directory containing `RALPH.md` |
 | `-n` | | unlimited | Max number of iterations |
 | `--stop-on-error` | `-s` | off | Stop loop if agent exits non-zero or times out |
 | `--delay` | `-d` | `0` | Seconds to wait between iterations |
 | `--timeout` | `-t` | none | Max seconds per iteration |
 | `--log-dir` | `-l` | none | Directory for iteration log files |
-| extra `--name value` | | | User arguments passed to `{{ args.name }}` placeholders |
+| `--` | | | Separator before user arguments |
 
-The `[RALPH]` argument accepts a [named ralph](primitives.md#ralphs). If omitted, ralphify falls back to `ralph.toml`'s `agent.ralph` field, which can be either a ralph name or a file path (e.g. `RALPH.md`).
+### User arguments
 
-#### User arguments
+Extra flags after `--` are passed as user arguments to the ralph template. Use `{{ args.<name> }}` placeholders in your RALPH.md to reference them.
 
-Extra flags after the built-in options are passed as user arguments to the ralph template. Use `{{ args.name }}` placeholders in your RALPH.md to reference them:
+User arguments must be declared in the `args` frontmatter field:
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+args: [dir, focus]
+---
+
+Research the codebase at {{ args.dir }}.
+Focus area: {{ args.focus }}
+```
 
 ```bash
-# Named flags — always work
-ralph run research --dir ./my-project --focus "performance"
+# Named flags
+ralph run research -- --dir ./my-project --focus "performance"
 
-# Positional args — requires args: [dir, focus] in RALPH.md frontmatter
-ralph run research ./my-project "performance"
+# Positional args (requires args: [dir, focus] in frontmatter)
+ralph run research -- ./my-project "performance"
 
 # Mixed
-ralph run research ./my-project --focus "performance"
+ralph run research -- ./my-project --focus "performance"
 ```
 
-Context and check scripts receive user arguments as environment variables with the `RALPH_ARG_` prefix (uppercase, hyphens replaced with underscores):
+Missing args resolve to an empty string.
 
-```
-RALPH_ARG_DIR=./my-project
-RALPH_ARG_FOCUS=performance
-```
+---
 
-### `ralph new`
+## `ralph new`
 
-Create a new ralph with AI-guided setup. Installs a skill into your agent (Claude Code, Codex) and launches an interactive session where the agent guides you through creating a complete ralph — prompt, checks, and contexts — via conversation.
+Create a new ralph with AI-guided setup. Launches an interactive session where the agent guides you through creating a complete ralph via conversation.
 
 ```bash
 ralph new              # Agent helps you choose a name and build everything
@@ -137,6 +99,58 @@ ralph new my-task      # Start with a name already chosen
 |---|---|---|
 | `[NAME]` | none | Name for the new ralph. If omitted, the agent will help you choose |
 
-The command detects your agent from `ralph.toml` `[agent].command`, or auto-detects `claude` / `codex` on PATH. The skill is installed at `.claude/skills/new-ralph/SKILL.md` (or `.agents/skills/` for Codex) and kept in sync with your installed ralphify version.
+The command detects your agent and installs a skill to guide the creation process.
 
-See [Primitives](primitives.md) for the full reference on checks, contexts, and ralphs.
+---
+
+## RALPH.md format
+
+The `RALPH.md` file is the single configuration and prompt file for a ralph. It uses YAML frontmatter for settings and the body for the prompt text.
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
+  - name: git-log
+    run: git log --oneline -10
+args: [dir, focus]
+---
+
+# Prompt body
+
+{{ commands.tests }}
+
+{{ commands.git-log }}
+
+Your instructions here. Reference args with {{ args.dir }}.
+```
+
+### Frontmatter fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `agent` | string | yes | The full agent command to pipe the prompt to |
+| `commands` | list | no | Commands to run each iteration (each has `name` and `run`) |
+| `args` | list of strings | no | Declared argument names for user arguments |
+
+### Commands
+
+Each command has two fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | Identifier used in `{{ commands.<name> }}` placeholders |
+| `run` | string | Shell command to execute each iteration |
+
+Commands run in order. Output (stdout + stderr) is captured regardless of exit code. Commands are parsed with `shlex.split()` — no shell features (pipes, redirections, `&&`). For shell features, point the `run` field at a script.
+
+### Placeholders
+
+| Syntax | Resolves to |
+|---|---|
+| `{{ commands.<name> }}` | Output of the named command |
+| `{{ args.<name> }}` | Value of the named user argument |
+
+Unmatched placeholders resolve to an empty string.

@@ -17,7 +17,7 @@ Ralphify is a minimal harness for running autonomous AI coding loops, inspired b
 while :; do cat RALPH.md | claude -p ; done
 ```
 
-Ralphify wraps this pattern into a proper tool with config, iteration tracking, and clean shutdown.
+Ralphify wraps this pattern into a proper tool with commands, iteration tracking, and clean shutdown.
 
 ## Install
 
@@ -36,64 +36,66 @@ Any of these gives you the `ralph` command.
 
 ## Quickstart
 
+A ralph is a directory with a `RALPH.md` file. Create one:
+
 ```bash
-# In your project directory
-ralph init      # Creates ralph.toml + RALPH.md
-ralph run       # Starts the loop (Ctrl+C to stop)
+mkdir my-ralph
 ```
 
-That's it. Two commands.
+Create `my-ralph/RALPH.md`:
 
-### What `ralph init` creates
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest
+---
 
-**`ralph.toml`** — tells ralphify what command to run:
+You are an autonomous coding agent working in a loop.
 
-```toml
-[agent]
-command = "claude"
-args = ["-p", "--dangerously-skip-permissions"]
-ralph = "RALPH.md"
+## Test results
+
+{{ commands.tests }}
+
+If any tests are failing, fix them before continuing.
+
+## Task
+
+Implement the next feature from the TODO list.
 ```
 
-**`RALPH.md`** — a starter prompt template. This file IS the prompt. It gets piped directly to your agent each iteration. Edit it to fit your project.
+Run it:
+
+```bash
+ralph run my-ralph           # Starts the loop (Ctrl+C to stop)
+ralph run my-ralph -n 5      # Run 5 iterations then stop
+```
 
 ### What `ralph run` does
 
-Reads the prompt, pipes it to the agent, waits for it to finish, then does it again. Each iteration gets a fresh context window. Progress lives in the code and in git.
-
-```bash
-ralph run          # Run forever
-ralph run -n 10    # Run 10 iterations then stop
-ralph run docs     # Use a named ralph from .ralphify/ralphs/
-```
+Each iteration:
+1. **Runs commands** — executes all commands, captures output
+2. **Assembles prompt** — reads RALPH.md body, replaces `{{ commands.<name> }}` placeholders with output
+3. **Pipes to agent** — executes the agent command with the assembled prompt on stdin
+4. **Repeats** — goes back to step 1
 
 ### What it looks like
 
 ```
-$ ralph run -n 3 --log-dir ralph_logs
+$ ralph run my-ralph -n 3
 
 ── Iteration 1 ──
-✓ Iteration 1 completed (52.3s) → ralph_logs/001_20250115-142301.log
-  Checks: 2 passed
-    ✓ lint
-    ✓ tests
+✓ Iteration 1 completed (52.3s)
 
 ── Iteration 2 ──
 ✗ Iteration 2 failed with exit code 1 (23.1s)
-  Checks: 1 passed, 1 failed
-    ✓ lint
-    ✗ tests (exit 1)
 
 ── Iteration 3 ──
-✓ Iteration 3 completed (41.7s) → ralph_logs/003_20250115-143012.log
-  Checks: 2 passed
-    ✓ lint
-    ✓ tests
+✓ Iteration 3 completed (41.7s)
 
 Done: 3 iteration(s) — 2 succeeded, 1 failed
 ```
-
-Iteration 2 broke a test. Iteration 3 automatically received the failure output and fixed it — that's the self-healing loop in action.
 
 ## The technique
 
@@ -106,82 +108,37 @@ The Ralph Wiggum technique works because:
 
 Read the full writeup: [Ralph Wiggum as a "software engineer"](https://ghuntley.com/ralph/)
 
-## Beyond the basic loop
+## Core concepts
 
-The simple loop works, but ralphify's real power comes from three primitives that live in the `.ralphify/` directory.
+A **ralph** is a directory containing a `RALPH.md` file. That's it. Everything the ralph needs lives in that directory.
 
-### Checks — the self-healing loop
+```
+my-ralph/
+├── RALPH.md              # the prompt (required)
+├── check-coverage.sh     # script (optional)
+├── style-guide.md        # reference doc (optional)
+└── test-data.json        # any supporting file (optional)
+```
 
-Checks validate the agent's work after each iteration. When one fails, its output automatically feeds into the next iteration so the agent can fix its own mistakes.
+**RALPH.md** is the only file the framework reads. It has YAML frontmatter for configuration and a body that becomes the prompt:
+
+| Frontmatter field | Required | Description |
+|---|---|---|
+| `agent` | Yes | The agent command to run |
+| `commands` | No | List of commands (name + run) whose output fills `{{ commands.<name> }}` placeholders |
+| `args` | No | Declared argument names for `{{ args.<name> }}` placeholders |
+
+**Commands** run before each iteration. Their output replaces `{{ commands.<name> }}` placeholders in the prompt. Use them for test results, git history, lint output — anything that changes between iterations.
+
+**No project-level configuration.** No `ralph.toml`. No `.ralphify/` directory. No `ralph init`. A ralph is fully self-contained.
+
+## AI-guided setup
 
 ```bash
-mkdir -p .ralphify/checks/tests
+ralph new my-task
 ```
 
-Create `.ralphify/checks/tests/CHECK.md`:
-
-```markdown
----
-command: uv run pytest -x
-timeout: 120
----
-Fix all failing tests. Do not skip or delete tests.
-```
-
-Now the loop self-corrects:
-
-```
-Iteration 1 → Agent adds feature → tests pass ✓ → moves on
-Iteration 2 → Agent adds feature → tests fail ✗
-Iteration 3 → Agent sees failure output → fixes tests → pass ✓
-```
-
-You define what "valid" means. Ralphify feeds failures back automatically.
-
-### Contexts — dynamic data injection
-
-Contexts inject fresh data into the prompt each iteration — git history, test status, anything a shell command can produce.
-
-```bash
-mkdir -p .ralphify/contexts/git-log
-```
-
-Create `.ralphify/contexts/git-log/CONTEXT.md`:
-
-```markdown
----
-command: git log --oneline -10
----
-## Recent commits
-```
-
-The command runs before each iteration. Use `{{ contexts.git-log }}` in your `RALPH.md` to control where the output appears.
-
-### Ralphs — named task switcher
-
-Keep multiple ralphs for different jobs and switch between them at run time:
-
-```bash
-ralph new docs
-ralph new refactor
-```
-
-Edit `.ralphify/ralphs/docs/RALPH.md` with your documentation-focused prompt, then:
-
-```bash
-ralph run docs           # Use the "docs" ralph
-ralph run refactor -n 5  # Use "refactor" for 5 iterations
-```
-
-## Customizing your ralph
-
-The generated `RALPH.md` is a starting point. A good prompt for autonomous loops typically includes:
-
-- What to work on (specs, plan file, TODO list)
-- Constraints — what NOT to do (no placeholders, no skipping tests)
-- Process — how to validate and commit
-
-The agent reads this ralph fresh every iteration, so you can edit it while the loop is running. When the agent does something dumb, add a sign to the prompt — the next iteration follows the new rules.
+Launches an interactive agent conversation to scaffold a new ralph with the right commands and prompt for your project.
 
 ## Documentation
 

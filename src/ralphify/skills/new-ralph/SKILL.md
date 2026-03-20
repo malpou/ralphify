@@ -21,83 +21,93 @@ Ask **only what you need** to build a good setup:
 - What language/tools/framework is the project using?
 - Any conventions or constraints to follow?
 
-Do NOT ask the user about checks, contexts, frontmatter, or other ralphify internals. Figure those out yourself based on their description.
+Do NOT ask the user about commands, frontmatter, or other ralphify internals. Figure those out yourself based on their description.
 
 ## How ralphs work (internal reference — do not expose to user)
 
-A ralph is a directory at `.ralphify/ralphs/<name>/` containing a prompt and optional validation and data injection.
+A ralph is a directory containing a `RALPH.md` file. The directory is a self-contained unit — everything the ralph needs lives there.
 
-### RALPH.md — the prompt
-
-```markdown
----
-description: What this ralph does (one line)
-checks: [global-check-name]          # optional: include global checks
-contexts: [global-context-name]      # optional: include global contexts
-args: [dir, focus]                   # optional: declare positional CLI arg names
-enabled: true
----
-
-Prompt text piped to the agent each iteration.
-Use {{ contexts.context-name }} to place context output.
-Use {{ args.name }} for user arguments passed from the CLI.
+```
+my-ralph/
+├── RALPH.md              # the prompt (required)
+├── check-coverage.sh     # script (optional, used by commands)
+├── style-guide.md        # reference doc (optional)
+└── test-data.json        # any supporting file (optional)
 ```
 
-### Checks — post-iteration validation
+### RALPH.md format
 
-Location: `.ralphify/ralphs/<name>/checks/<check-name>/CHECK.md`
+```yaml
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest
+  - name: git-log
+    run: git log --oneline -10
+  - name: coverage
+    run: ./check-coverage.sh
+args:
+  - module
+---
 
-```markdown
----
-command: pytest -x
-timeout: 120
-enabled: true
----
-Fix all failing tests. Do not skip or delete tests.
+You are a senior engineer working on this project.
+
+## Recent changes
+
+{{ commands.git-log }}
+
+## Test results
+
+{{ commands.tests }}
+
+If any tests are failing above, fix them before continuing.
+
+## Coverage
+
+{{ commands.coverage }}
+
+## Task
+
+...
 ```
 
-- `command` is parsed with `shlex.split()` — no shell features (pipes, `&&`, redirections)
-- Body text = failure instruction shown to the agent when the check fails
-- For shell features, create a `run.sh` or `run.py` script instead of using `command`
+#### Frontmatter fields
 
-### Contexts — dynamic data injected before each iteration
+| Field | Required | Description |
+|-------|----------|-------------|
+| `agent` | Yes | The agent command to run (full command string) |
+| `commands` | No | List of commands to run each iteration |
+| `commands[].name` | Yes | Identifier, used in `{{ commands.<name> }}` placeholders |
+| `commands[].run` | Yes | Command to execute. Paths starting with `./` are relative to the ralph directory. |
+| `args` | No | Declared argument names for positional CLI args |
 
-Location: `.ralphify/ralphs/<name>/contexts/<context-name>/CONTEXT.md`
+#### Body
 
-```markdown
----
-command: git log --oneline -10
-timeout: 30
-enabled: true
----
-## Recent commits
-```
+The body is the prompt. It supports two placeholder types:
+- `{{ commands.<name> }}` — replaced with command output each iteration
+- `{{ args.<name> }}` — replaced with CLI arguments
 
-- Body text appears as a label above the command output
-- Reference in the prompt with `{{ contexts.context-name }}`
+### Commands
+
+A command is a name and something to run. The framework executes it, captures stdout/stderr, and makes the output available via `{{ commands.<name> }}`.
+
+- **Paths starting with `./` run relative to the ralph directory.** `run: ./check-coverage.sh` runs `my-ralph/check-coverage.sh`.
+- **Other commands run from the project root.** `run: uv run pytest` runs in the working directory where `ralph run` was invoked.
+- **Output is always captured** regardless of exit code.
+- **No shell features by default.** Commands are parsed with `shlex.split()`. For pipes, redirects, `&&` — use a script.
 
 ### User arguments
 
-Ralphs can accept CLI arguments, making them reusable across different projects or configurations:
+Ralphs can accept CLI arguments, making them reusable:
 
-- **Named flags**: `ralph run research --dir ./src --focus "perf"` → `{{ args.dir }}`, `{{ args.focus }}`
-- **Positional args**: `ralph run research ./src "perf"` — requires `args: [dir, focus]` in frontmatter
+- **Named flags**: `ralph run my-ralph --dir ./src --focus "perf"` → `{{ args.dir }}`, `{{ args.focus }}`
+- **Positional args**: `ralph run my-ralph ./src "perf"` — requires `args: [dir, focus]` in frontmatter
 - Missing args resolve to empty string
-- Context and check scripts receive them as `RALPH_ARG_<KEY>` environment variables (uppercase, hyphens → underscores)
-
-Use args when a ralph could be reused across different directories, files, thresholds, or configurations.
-
-### Scripts
-
-For commands needing shell features, create `run.sh` / `run.py` in the primitive directory. Script takes precedence over `command`. Remember `chmod +x`.
-
-### Execution order
-
-Primitives run alphabetically. Use number prefixes: `01-lint/`, `02-tests/`.
 
 ### Output truncation
 
-All primitive output is truncated to 5000 characters.
+All command output is truncated to 5000 characters.
 
 ## Your workflow
 
@@ -105,23 +115,23 @@ All primitive output is truncated to 5000 characters.
 
 2. **Design the ralph.** Based on the description, decide:
    - What prompt to write
-   - What checks will catch mistakes (tests, lint, type checks, builds, etc.)
-   - What context the agent needs each iteration (git log, coverage reports, file listings, etc.)
+   - What commands the agent needs (tests, lint, git log, coverage, etc.)
    - Whether user arguments would make the ralph more reusable
+   - What supporting scripts or files are needed
 
 3. **Create everything:**
-   - `RALPH.md` with a clear, specific prompt. Follow these patterns:
+   - A directory for the ralph
+   - `RALPH.md` with frontmatter (agent, commands) and a clear, specific prompt. Follow these patterns:
      - Start with role and loop awareness: "You are an autonomous X agent running in a loop."
      - Include: "Each iteration starts with a fresh context. Your progress lives in the code and git."
+     - Use `{{ commands.<name> }}` placeholders to show command output in context
      - Be specific about what one iteration of work looks like
      - Include rules as a bulleted list
      - End with commit conventions
-   - Checks for any validation that matters (tests, linting, type checking, builds)
-   - Contexts for dynamic data the agent needs
-   - `chmod +x` on any scripts
+   - Any supporting scripts (remember `chmod +x`)
 
 4. **Present a summary** to the user:
    - Show the file tree of what you created
    - Briefly explain what the ralph will do in each iteration
-   - Mention any checks that will catch errors
+   - Mention what commands will run and what they validate
    - Suggest running: `ralph run <name> -n 1`

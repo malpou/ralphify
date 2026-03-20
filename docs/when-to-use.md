@@ -12,7 +12,7 @@ Ralph loops work best when a task has these properties:
 
 **Decomposable into small, independent steps.** The loop does one thing per iteration. Tasks that naturally break into "do this, then this, then this" are ideal — implementing features from a TODO list, writing tests module by module, fixing lint errors one at a time.
 
-**Has a clear definition of "done" for each step.** Checks need something to validate. If you can express "this iteration succeeded" as a command that exits 0 or non-zero (tests pass, build succeeds, lint is clean), the self-healing loop works. If success requires human judgment ("does this look good?"), a loop can't self-correct.
+**Has a clear definition of "done" for each step.** Commands need something to validate. If you can express "this iteration succeeded" as a command that exits 0 or non-zero (tests pass, build succeeds, lint is clean), the self-healing loop works. If success requires human judgment ("does this look good?"), a loop can't self-correct.
 
 **Benefits from fresh context.** Long conversations degrade — the agent loses track of earlier instructions, fills up the context window, and starts making mistakes. If your task will take more than 15-20 minutes of agent work, a loop outperforms a single conversation because each iteration starts clean with the current state of the codebase.
 
@@ -22,11 +22,11 @@ Ralph loops work best when a task has these properties:
 
 | Task | Why it fits |
 |---|---|
-| **Implementing features from a spec** | Each feature is one iteration; tests validate correctness |
-| **Writing tests** | Each module is one iteration; coverage reports guide prioritization |
+| **Implementing features from a spec** | Each feature is one iteration; test commands validate correctness |
+| **Writing tests** | Each module is one iteration; coverage commands guide prioritization |
 | **Fixing lint / type errors** | Each fix is small and independently verifiable |
-| **Documentation improvements** | Each page is one iteration; `mkdocs build --strict` validates |
-| **Codebase migrations** (JS→TS, Python 2→3) | Each file is one iteration; the compiler validates |
+| **Documentation improvements** | Each page is one iteration; build commands validate |
+| **Codebase migrations** (JS to TS, Python 2 to 3) | Each file is one iteration; the compiler validates |
 | **Bug triage** | Each bug is one iteration; regression tests verify the fix |
 | **Refactoring** | Each extraction/rename is one iteration; tests catch regressions |
 
@@ -34,11 +34,11 @@ Ralph loops work best when a task has these properties:
 
 | Task | Why it doesn't fit |
 |---|---|
-| **Design decisions** | Requires human judgment about trade-offs — no check can validate "is this the right architecture?" |
+| **Design decisions** | Requires human judgment about trade-offs — no command can validate "is this the right architecture?" |
 | **Tasks requiring multi-step reasoning across iterations** | Each iteration starts fresh — the agent can't "continue where it left off" from memory, only from what's on disk |
 | **One-shot tasks** | If the task takes 5 minutes and you won't repeat it, just chat with the agent — the loop setup overhead isn't worth it |
-| **Tasks with no automated validation** | Without checks, there's no self-healing — the agent may compound errors across iterations |
-| **Creative writing** | Prose quality is subjective; no check can validate "is this well-written?" |
+| **Tasks with no automated validation** | Without command feedback, there's no self-healing — the agent may compound errors across iterations |
+| **Creative writing** | Prose quality is subjective; no command can validate "is this well-written?" |
 | **Interacting with external services** | API calls, deployments, and messages are hard to undo if the agent makes a mistake |
 
 ## Loop vs. single conversation
@@ -54,7 +54,7 @@ Use a **ralph loop** when:
 
 - The task involves many similar, independent steps
 - You want the agent to work autonomously without your attention
-- You have tests or checks that can validate correctness
+- You have commands that can validate correctness (tests, linters, builds)
 - The task would fill up a conversation's context window
 - You want to walk away and come back to completed work
 
@@ -62,19 +62,19 @@ Use a **ralph loop** when:
 
 Some tasks seem like they don't fit but can be adapted:
 
-**"There's no automated check for this."** Write one. Even a simple script that checks for obvious problems (file exists, no syntax errors, word count above threshold) catches the worst failures. You can always add a more thorough check later.
+**"There's no automated validation for this."** Write a command for it. Even a simple script that checks for obvious problems (file exists, no syntax errors, word count above threshold) catches the worst failures. Add it to your `commands` list and reference it in the prompt.
 
 **"The task requires multi-step reasoning."** Use a `PLAN.md` or `TODO.md` file as the coordination mechanism. The agent reads the plan each iteration, marks steps done, and the next iteration continues from there. The plan file IS the agent's memory.
 
 **"Each iteration depends on the previous one."** That's fine — the agent reads the codebase, which includes all previous iterations' commits. As long as progress is visible on disk, the fresh context model works. The agent doesn't need conversation memory when the code tells the story.
 
-**"I need to review the agent's work before it continues."** Use `-n 1` to run single iterations, review, then run again. Or use `--stop-on-error` with a check that requires your sign-off (a file you manually create or delete between iterations).
+**"I need to review the agent's work before it continues."** Use `-n 1` to run single iterations, review, then run again. Or use `--stop-on-error` with a command that checks for your sign-off.
 
 ## How many iterations?
 
 - **Start with `-n 3`** to verify your setup works and the agent produces useful output
 - **Use `-n 10-20`** for bounded tasks (a TODO list with known items)
-- **Run unlimited** (`ralph run` without `-n`) for open-ended improvement tasks with good checks — the checks prevent the agent from going off the rails
+- **Run unlimited** (`ralph run my-ralph` without `-n`) for open-ended improvement tasks with good command feedback — the commands prevent the agent from going off the rails
 - **Use `--stop-on-error`** when each iteration must succeed before the next one makes sense
 
 ## Next steps

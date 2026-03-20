@@ -4,9 +4,9 @@ description: Configure ralphify with Claude Code, Aider, Codex CLI, or any custo
 
 # Using with Different Agents
 
-Ralphify works with **any CLI that reads a prompt from stdin and exits when done**. Claude Code is the default, but you can swap in any tool that follows this contract.
+Ralphify works with **any CLI that reads a prompt from stdin and exits when done**. Claude Code is the default, but you can use any tool that follows this contract.
 
-This page shows how to configure ralphify for popular agents and how to write your own wrapper.
+This page shows how to configure the `agent` field in your RALPH.md for popular agents and how to write your own wrapper.
 
 ## Agent comparison
 
@@ -17,23 +17,19 @@ This page shows how to configure ralphify for popular agents and how to write yo
 | [Codex CLI](#codex-cli) | Via bash wrapper | No | Yes | Yes (`bash -c`) |
 | [Custom](#custom-wrapper-script) | You implement it | No | No | Yes (script) |
 
-**Streaming** means ralphify can parse the agent's output in real time, track activity during the iteration, and extract the agent's final result text. Non-streaming agents run in blocking mode — ralphify waits for the process to exit and captures output afterward.
-
-**`ralph new` support** means the `ralph new` command can install a skill into the agent for AI-guided ralph creation. Currently only Claude Code and Codex CLI support this.
-
-If you're not sure which to pick: **start with Claude Code.** It has the deepest integration, the best autonomous coding capabilities, and is the default configuration.
+If you're not sure which to pick: **start with Claude Code.** It has the deepest integration, the best autonomous coding capabilities, and is the default.
 
 ## What ralphify needs from an agent
 
 Every iteration, ralphify runs your agent like this:
 
 ```
-echo "<assembled prompt>" | <command> <args...>
+echo "<assembled prompt>" | <agent command>
 ```
 
 Your agent must:
 
-1. **Read a prompt from stdin** — the full assembled prompt (with contexts and any check failures) is piped in
+1. **Read a prompt from stdin** — the full assembled prompt is piped in
 2. **Do work in the current directory** — edit files, run commands, make commits
 3. **Exit when done** — exit code 0 means success, non-zero means failure
 
@@ -41,13 +37,12 @@ That's it. No special protocol, no API — just stdin in, work done, process exi
 
 ## Claude Code
 
-The default configuration. Claude Code's `-p` flag reads from stdin and runs non-interactively.
+The default and recommended agent.
 
-```toml
-[agent]
-command = "claude"
-args = ["-p", "--dangerously-skip-permissions"]
-ralph = "RALPH.md"
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+---
 ```
 
 | Flag | Purpose |
@@ -62,11 +57,11 @@ npm install -g @anthropic-ai/claude-code
 ```
 
 !!! info "Why `--dangerously-skip-permissions`?"
-    Without this flag, Claude Code pauses to ask for approval before editing files, running commands, or making commits. In an autonomous loop, nobody is there to approve — so the agent would hang forever. Checks act as your guardrails instead.
+    Without this flag, Claude Code pauses to ask for approval before editing files, running commands, or making commits. In an autonomous loop, nobody is there to approve — so the agent would hang forever. Commands in your RALPH.md act as your guardrails instead.
 
 ### Automatic streaming mode
 
-When ralphify detects that the agent command is `claude`, it automatically adds `--output-format stream-json --verbose` to the command. You don't need to add these flags yourself — they're injected at runtime.
+When ralphify detects that the agent command starts with `claude`, it automatically adds `--output-format stream-json --verbose` to the command. You don't need to add these flags yourself.
 
 This enables ralphify to:
 
@@ -74,23 +69,14 @@ This enables ralphify to:
 - Track agent activity in real time
 - Extract the final result text from the agent's response
 
-The flags are appended to whatever `args` you configure in `ralph.toml`, so the actual command executed each iteration is:
-
-```
-claude -p --dangerously-skip-permissions --output-format stream-json --verbose
-```
-
-This is transparent — your logs and terminal output work the same way. If you're debugging and want to see exactly what Claude Code receives, the `--verbose` flag means the agent's internal tool calls and reasoning are included in the log files when using `--log-dir`.
-
 ## Aider
 
-[Aider](https://aider.chat) is an AI pair-programming tool that works with multiple LLM providers. It supports a message flag that accepts the prompt directly.
+[Aider](https://aider.chat) is an AI pair-programming tool that works with multiple LLM providers.
 
-```toml
-[agent]
-command = "bash"
-args = ["-c", "aider --yes-always --no-auto-commits --message \"$(cat -)\""]
-ralph = "RALPH.md"
+```markdown
+---
+agent: bash -c 'aider --yes-always --no-auto-commits --message "$(cat -)"'
+---
 ```
 
 | Flag | Purpose |
@@ -100,26 +86,24 @@ ralph = "RALPH.md"
 | `--message "..."` | Pass the prompt as a message instead of stdin |
 
 !!! note "Why the bash wrapper?"
-    Aider doesn't natively read prompts from stdin. The `bash -c` wrapper reads stdin with `cat -` and passes it as a `--message` argument. This is a common pattern for adapting tools that don't support piped input directly.
+    Aider doesn't natively read prompts from stdin. The `bash -c` wrapper reads stdin with `cat -` and passes it as a `--message` argument.
 
 ### Aider with a specific model
 
-```toml
-[agent]
-command = "bash"
-args = ["-c", "aider --yes-always --no-auto-commits --model claude-sonnet-4-6 --message \"$(cat -)\""]
-ralph = "RALPH.md"
+```markdown
+---
+agent: bash -c 'aider --yes-always --no-auto-commits --model claude-sonnet-4-6 --message "$(cat -)"'
+---
 ```
 
 ## Codex CLI
 
 [OpenAI Codex CLI](https://github.com/openai/codex) can be configured to run non-interactively.
 
-```toml
-[agent]
-command = "bash"
-args = ["-c", "codex --approval-mode full-auto \"$(cat -)\""]
-ralph = "RALPH.md"
+```markdown
+---
+agent: bash -c 'codex --approval-mode full-auto "$(cat -)"'
+---
 ```
 
 | Flag | Purpose |
@@ -140,11 +124,6 @@ set -e
 PROMPT=$(cat -)
 
 # Call your agent however it works
-# Examples:
-#   curl an API, save response, apply changes
-#   call a local LLM with the prompt
-#   pipe to any tool that accepts text input
-
 my-custom-agent --input "$PROMPT" --auto-approve
 ```
 
@@ -152,13 +131,14 @@ my-custom-agent --input "$PROMPT" --auto-approve
 chmod +x ralph-agent.sh
 ```
 
-**`ralph.toml`**
+**`my-ralph/RALPH.md`**
 
-```toml
-[agent]
-command = "./ralph-agent.sh"
-args = []
-ralph = "RALPH.md"
+```markdown
+---
+agent: ./ralph-agent.sh
+---
+
+Your prompt here.
 ```
 
 ## Testing your setup
@@ -166,13 +146,13 @@ ralph = "RALPH.md"
 Verify the agent works outside of ralphify first:
 
 ```bash
-echo "Say hello" | <your-command> <your-args>
+echo "Say hello" | <your-agent-command>
 ```
 
 Then test through ralphify with a single iteration:
 
 ```bash
-ralph run -n 1 --log-dir ralph_logs
+ralph run my-ralph -n 1 --log-dir ralph_logs
 ```
 
 !!! tip "Non-Claude-Code agents"
@@ -184,10 +164,10 @@ Ralphify uses two different execution modes depending on the agent:
 
 ### Streaming mode (Claude Code)
 
-When the agent command is `claude`, ralphify spawns the process with `Popen` and reads its JSON output line by line. This enables:
+When the agent command starts with `claude`, ralphify spawns the process with `Popen` and reads its JSON output line by line. This enables:
 
 - **Live activity tracking** — the terminal shows what the agent is doing in real time
-- **Result text extraction** — the agent's final response is captured in `result_text` (available via the [event system](api.md#event-system))
+- **Result text extraction** — the agent's final response is captured
 - **Verbose logging** — with `--log-dir`, logs include the agent's internal tool calls and reasoning
 
 ### Blocking mode (all other agents)
@@ -197,7 +177,7 @@ For non-Claude agents, ralphify uses `subprocess.run` and waits for the process 
 - **Without `--log-dir`** — agent output streams directly to your terminal in real time
 - **With `--log-dir`** — output is captured, written to a log file, then replayed to the terminal after the iteration completes
 
-Both modes support all ralphify features (checks, contexts, timeouts, iteration tracking). The difference is only in how output is handled during each iteration.
+Both modes support all ralphify features (commands, timeouts, iteration tracking). The difference is only in how output is handled during each iteration.
 
 ## Adapting other tools
 
@@ -209,4 +189,4 @@ bash -c '<tool> <auto-approve-flag> --message "$(cat -)"'
 
 The `cat -` reads the piped prompt from stdin and passes it as a command-line argument. This works for any tool that accepts a prompt via a flag (like `--message`, `--input`, `--prompt`).
 
-If the tool has no way to accept a prompt non-interactively, a [custom wrapper script](#custom-wrapper-script) is the escape hatch — you can use the prompt text however the tool needs it (write to a file, post to an API, etc.).
+If the tool has no way to accept a prompt non-interactively, a [custom wrapper script](#custom-wrapper-script) is the escape hatch — you can use the prompt text however the tool needs it.

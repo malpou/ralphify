@@ -53,8 +53,6 @@ class TestRunManagerStartRun:
         manager.start_run(run_id)
 
         assert managed.thread is not None
-        assert managed.thread.is_alive() or managed.thread.is_alive() is False
-        # Wait for the thread to finish (max 1 iteration)
         managed.thread.join(timeout=5)
         assert managed.state.status == RunStatus.COMPLETED
 
@@ -83,7 +81,6 @@ class TestRunManagerStartRun:
         managed.thread.join(timeout=5)
 
         events = drain_events(managed.emitter)
-
         types = [e.type for e in events]
         assert EventType.RUN_STARTED in types
         assert EventType.RUN_STOPPED in types
@@ -98,7 +95,6 @@ class TestRunManagerStopRun:
         run_id = managed.state.run_id
 
         manager.start_run(run_id)
-        # Give the thread a moment to start
         time.sleep(0.05)
 
         manager.stop_run(run_id)
@@ -111,7 +107,6 @@ class TestRunManagerStopRun:
 class TestRunManagerPauseResume:
     @patch(MOCK_SUBPROCESS)
     def test_pause_and_resume(self, mock_run, tmp_path):
-        """Pause after the first iteration and verify the run completes after resume."""
         pause_done = threading.Event()
         resume_allowed = threading.Event()
         call_count = 0
@@ -120,7 +115,6 @@ class TestRunManagerPauseResume:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                # Signal the test to pause, then wait for it to resume
                 pause_done.set()
                 resume_allowed.wait(timeout=5)
             return subprocess.CompletedProcess(args=args, returncode=0)
@@ -134,12 +128,10 @@ class TestRunManagerPauseResume:
 
         manager.start_run(run_id)
 
-        # Wait until first iteration is in progress, then pause
         pause_done.wait(timeout=5)
         manager.pause_run(run_id)
         assert managed.state.status == RunStatus.PAUSED
 
-        # Let the first subprocess call finish, then resume
         resume_allowed.set()
         time.sleep(0.05)
         manager.resume_run(run_id)
@@ -211,7 +203,6 @@ class TestFanoutEmitter:
         assert managed.thread is not None
         managed.thread.join(timeout=5)
 
-        # Both the primary emitter and the extra listener should have events
         primary_events = drain_events(managed.emitter)
         extra_events = drain_events(extra)
 

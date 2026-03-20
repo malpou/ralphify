@@ -1,5 +1,5 @@
 ---
-description: Ralphify is a minimal CLI harness for autonomous AI coding loops. Pipe a prompt to an AI agent, validate with checks, and repeat — with a self-healing feedback loop.
+description: Ralphify is a minimal CLI harness for autonomous AI coding loops. Run commands, assemble a prompt, pipe it to an AI agent, and repeat.
 hide:
   - toc
 ---
@@ -12,7 +12,7 @@ hide:
 <strong>Put your AI coding agent in a <code>while True</code> loop and let it ship.</strong>
 </p>
 
-Ralphify is a minimal CLI harness for autonomous AI coding loops, inspired by the [Ralph Wiggum technique](https://ghuntley.com/ralph/). It pipes a prompt to an AI coding agent, validates the work with checks, and repeats — each iteration starts with a fresh context window.
+Ralphify is a minimal CLI harness for autonomous AI coding loops, inspired by the [Ralph Wiggum technique](https://ghuntley.com/ralph/). It runs commands, assembles a prompt with the output, pipes it to an AI coding agent, and repeats — each iteration starts with a fresh context window.
 
 [Get Started](getting-started.md){ .md-button .md-button--primary }
 [View Cookbook](cookbook.md){ .md-button }
@@ -39,42 +39,69 @@ Ralphify is a minimal CLI harness for autonomous AI coding loops, inspired by th
     pip install ralphify
     ```
 
-## Two commands to start
+## Create a ralph and run it
 
-```bash
-ralph init      # Creates ralph.toml + RALPH.md
-ralph run       # Starts the loop (Ctrl+C to stop)
+A ralph is just a directory with a `RALPH.md` file:
+
+```
+my-ralph/
+└── RALPH.md
 ```
 
-`ralph init` creates a config file and a starter prompt. `ralph run` reads the prompt, pipes it to the agent, waits for it to finish, and does it again. Edit `RALPH.md` while the loop is running — changes take effect on the next iteration.
+**`my-ralph/RALPH.md`**
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
+  - name: git-log
+    run: git log --oneline -10
+---
+
+# Prompt
+
+{{ commands.git-log }}
+
+You are an autonomous coding agent running in a loop. Each iteration
+starts with a fresh context. Your progress lives in the code and git.
+
+Read TODO.md for the current task list. Pick the top uncompleted task,
+implement it fully, then mark it done.
+
+## Rules
+
+- One task per iteration
+- No placeholder code — full, working implementations only
+- Run tests before committing
+- Commit with a descriptive message like `feat: add X` or `fix: resolve Y`
+- Mark the completed task in TODO.md
+```
+
+```bash
+ralph run my-ralph         # Start the loop (Ctrl+C to stop)
+ralph run my-ralph -n 3    # Run 3 iterations
+```
 
 ### What it looks like
 
 ```
-$ ralph run -n 3 --log-dir ralph_logs
+$ ralph run my-ralph -n 3 --log-dir ralph_logs
 
 ── Iteration 1 ──
 ✓ Iteration 1 completed (52.3s) → ralph_logs/001_20250115-142301.log
-  Checks: 2 passed
-    ✓ lint
-    ✓ tests
 
 ── Iteration 2 ──
 ✗ Iteration 2 failed with exit code 1 (23.1s)
-  Checks: 1 passed, 1 failed
-    ✓ lint
-    ✗ tests (exit 1)
 
 ── Iteration 3 ──
 ✓ Iteration 3 completed (41.7s) → ralph_logs/003_20250115-143012.log
-  Checks: 2 passed
-    ✓ lint
-    ✓ tests
 
 Done: 3 iteration(s) — 2 succeeded, 1 failed
 ```
 
-Iteration 2 broke a test. Iteration 3 automatically received the failure output and fixed it — that's the self-healing loop in action.
+Edit `RALPH.md` while the loop is running — changes take effect on the next iteration.
 
 ---
 
@@ -90,11 +117,11 @@ A single agent conversation fills up its context window, slows down, and eventua
 
     Each iteration starts with a clean context window. No conversation bloat, no hallucinated memories, no degradation over time. The agent reads the current state of the codebase every loop.
 
--   :material-shield-check-outline:{ .lg .middle } **Self-healing feedback**
+-   :material-shield-check-outline:{ .lg .middle } **Commands as feedback**
 
     ---
 
-    Checks validate the agent's work after each iteration. When something breaks, the failure output feeds into the next iteration automatically — the agent fixes its own mistakes without you stepping in.
+    Commands run each iteration and their output feeds into the prompt. When tests fail, the agent sees the failure output and fixes it in the next iteration — a self-healing feedback loop.
 
 -   :material-pencil-outline:{ .lg .middle } **Steer while it runs**
 
@@ -112,40 +139,6 @@ A single agent conversation fills up its context window, slows down, and eventua
 
 ---
 
-## Three primitives
-
-Ralphify extends the basic loop with three building blocks that live in the `.ralphify/` directory:
-
-<div class="grid cards" markdown>
-
--   :material-check-circle-outline:{ .lg .middle } **Checks**
-
-    ---
-
-    Run after each iteration to validate the agent's work — tests, linters, type checks. Failed check output feeds into the next iteration so the agent can fix its own mistakes.
-
-    [:octicons-arrow-right-24: Learn more](primitives.md#checks)
-
--   :material-database-outline:{ .lg .middle } **Contexts**
-
-    ---
-
-    Inject dynamic or static data into the prompt before each iteration — recent git history, current test status, reusable rules, or API responses. The agent always sees fresh information.
-
-    [:octicons-arrow-right-24: Learn more](primitives.md#contexts)
-
--   :material-text-box-multiple-outline:{ .lg .middle } **Ralphs**
-
-    ---
-
-    Named, task-focused ralphs you can switch between without editing your root `RALPH.md`. Keep a `docs` ralph, a `refactor` ralph, and a `bug-fix` ralph — select the one you need at run time with `ralph run docs`.
-
-    [:octicons-arrow-right-24: Learn more](primitives.md#ralphs)
-
-</div>
-
----
-
 ## Requirements
 
 - Python 3.11+
@@ -157,5 +150,5 @@ Ralphify extends the basic loop with three building blocks that live in the `.ra
 
 - **[Getting Started](getting-started.md)** — from install to a running loop in 10 minutes
 - **[Writing Prompts](writing-prompts.md)** — patterns for effective autonomous loop prompts
-- **[Cookbook](cookbook.md)** — copy-pasteable setups for Python, TypeScript, bug fixing, and more
+- **[Cookbook](cookbook.md)** — copy-pasteable setups for Python, TypeScript, Rust, and more
 - **[Python API](api.md)** — embed the loop in your own automation

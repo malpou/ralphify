@@ -1,3 +1,5 @@
+"""Tests for skill installation and agent detection."""
+
 from pathlib import Path
 from unittest.mock import patch
 
@@ -24,16 +26,7 @@ class TestReadBundledSkill:
 
 
 class TestDetectAgent:
-    def test_from_toml(self, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / "ralph.toml").write_text(
-            '[agent]\ncommand = "claude"\nargs = []\nralph = "RALPH.md"\n'
-        )
-        with patch("shutil.which", return_value="/usr/bin/claude"):
-            agent = detect_agent()
-        assert agent == DetectedAgent("claude", "/usr/bin/claude")
-
-    def test_from_path_when_no_toml(self, tmp_path, monkeypatch):
+    def test_from_path_claude(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
 
         def fake_which(cmd):
@@ -62,21 +55,6 @@ class TestDetectAgent:
         with patch("shutil.which", return_value=None):
             with pytest.raises(RuntimeError, match="No agent found"):
                 detect_agent()
-
-    def test_falls_back_to_path_when_toml_command_not_found(self, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        (tmp_path / "ralph.toml").write_text(
-            '[agent]\ncommand = "missing-agent"\nargs = []\nralph = "RALPH.md"\n'
-        )
-
-        def fake_which(cmd):
-            if cmd == "claude":
-                return "/usr/bin/claude"
-            return None
-
-        with patch("shutil.which", side_effect=fake_which):
-            agent = detect_agent()
-        assert agent.name == "claude"
 
 
 class TestInstallSkill:

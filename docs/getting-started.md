@@ -1,10 +1,10 @@
 ---
-description: Install ralphify, set up your first autonomous coding loop with checks and contexts, and run a self-healing AI agent in 10 minutes.
+description: Install ralphify, create your first ralph with commands and placeholders, and run a productive autonomous AI coding loop in 10 minutes.
 ---
 
 # Getting Started
 
-This tutorial walks through setting up ralphify on a project, adding checks and contexts, and running a productive autonomous loop. By the end, you'll have a self-healing coding loop that validates its own work.
+This tutorial walks through setting up ralphify, creating a ralph with commands, and running a productive autonomous loop. By the end, you'll have a self-healing coding loop that validates its own work.
 
 ## Prerequisites
 
@@ -24,38 +24,22 @@ Verify it's working:
 ralph --version
 ```
 
-## Step 2: Initialize your project
+## Step 2: Create a ralph directory
 
-Navigate to your project and run:
+A ralph is a directory with a `RALPH.md` file. Create one in your project:
 
 ```bash
-ralph init
+mkdir my-ralph
 ```
 
-This creates two files:
+## Step 3: Write the RALPH.md
 
-**`ralph.toml`** — configuration for the loop:
-
-```toml
-[agent]
-command = "claude"
-args = ["-p", "--dangerously-skip-permissions"]
-ralph = "RALPH.md"
-```
-
-!!! info "What does `--dangerously-skip-permissions` do?"
-    Claude Code normally asks for your approval before running shell commands, editing files, or making git commits. The `--dangerously-skip-permissions` flag disables these interactive prompts so the agent can work autonomously without waiting for input. The `-p` flag enables non-interactive ("print") mode, which reads the prompt from stdin instead of opening a chat session.
-
-    This is safe to use when ralphify is the only thing running the agent, because **checks** act as your guardrails — they validate the agent's work after each iteration and feed failures back for the agent to fix.
-
-**`RALPH.md`** — the prompt that gets piped to the agent each iteration. The default is a generic starting point — you'll customize it next.
-
-## Step 3: Write your ralph
-
-Replace the contents of `RALPH.md` with a prompt tailored to your project. Here's an example for a Python project with a TODO list:
+Create `my-ralph/RALPH.md` with the agent field — this is the only required frontmatter:
 
 ```markdown
-# Prompt
+---
+agent: claude -p --dangerously-skip-permissions
+---
 
 You are an autonomous coding agent running in a loop. Each iteration
 starts with a fresh context. Your progress lives in the code and git.
@@ -72,12 +56,15 @@ implement it fully, then mark it done.
 - Mark the completed task in TODO.md
 ```
 
+!!! info "What does `--dangerously-skip-permissions` do?"
+    Claude Code normally asks for your approval before running shell commands, editing files, or making git commits. The `--dangerously-skip-permissions` flag disables these interactive prompts so the agent can work autonomously without waiting for input. The `-p` flag enables non-interactive ("print") mode, which reads the prompt from stdin instead of opening a chat session.
+
 ## Step 4: Do a test run
 
-Before setting up checks and contexts, verify the basic loop works:
+Verify the basic loop works before adding commands:
 
 ```bash
-ralph run -n 1 --log-dir ralph_logs
+ralph run my-ralph -n 1 --log-dir ralph_logs
 ```
 
 This runs a single iteration and saves the output to `ralph_logs/`. Review the log to see what the agent did:
@@ -88,94 +75,25 @@ cat ralph_logs/001_*.log
 ```
 
 !!! tip "Add `ralph_logs/` to `.gitignore`"
-    Log files are useful for debugging but shouldn't be committed. Add them to your `.gitignore`:
+    Log files are useful for debugging but shouldn't be committed:
 
     ```bash
     echo "ralph_logs/" >> .gitignore
     ```
 
-If the agent produced useful work, you're ready to add guardrails.
+If the agent produced useful work, you're ready to add commands.
 
-## Step 5: Add a test check
+## Step 5: Add a test command
 
-Checks run **after** each iteration to validate the agent's work. If a check fails, its output is fed into the next iteration so the agent can fix the problem.
-
-Create a check that runs your test suite:
-
-```bash
-mkdir -p .ralphify/checks/tests
-```
-
-Create `.ralphify/checks/tests/CHECK.md`:
+Commands run each iteration and their output is available in the prompt via placeholders. Add a test command to your `RALPH.md` frontmatter:
 
 ```markdown
 ---
-command: uv run pytest -x
-timeout: 120
-enabled: true
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
 ---
-Fix all failing tests. Do not skip or delete tests.
-Do not add `# type: ignore` or `# noqa` comments.
-```
-
-The text below the frontmatter is the **failure instruction** — it gets included in the prompt when the check fails, telling the agent how to handle the failure.
-
-## Step 6: Add a lint check
-
-Add a second check for linting:
-
-```bash
-mkdir -p .ralphify/checks/lint
-```
-
-Create `.ralphify/checks/lint/CHECK.md`:
-
-```markdown
----
-command: uv run ruff check .
-timeout: 60
-enabled: true
----
-Fix all lint errors. Do not suppress warnings with noqa comments.
-```
-
-## Step 7: Add a context
-
-Contexts inject dynamic data into the prompt before each iteration. A useful default is recent git history — it helps the agent understand what's already been done.
-
-```bash
-mkdir -p .ralphify/contexts/git-log
-```
-
-Create `.ralphify/contexts/git-log/CONTEXT.md`:
-
-```markdown
----
-command: git log --oneline -10
-timeout: 10
-enabled: true
----
-## Recent commits
-```
-
-The command runs each iteration and its output is appended to the prompt. The body text ("## Recent commits") appears above the command output as a label.
-
-!!! tip "Use `ralph new` for AI-guided setup"
-    Instead of creating primitive files manually, you can run `ralph new` to launch an AI-guided session that creates a complete ralph — prompt, checks, and contexts — via conversation with your agent.
-
-### Declare your primitives and place the context
-
-Checks and contexts must be **declared** in your ralph file's frontmatter before they'll run. Now that you've created all three primitives, update `RALPH.md` to declare them and place the context:
-
-```markdown
----
-checks: [tests, lint]
-contexts: [git-log]
----
-
-# Prompt
-
-{{ contexts.git-log }}
 
 You are an autonomous coding agent running in a loop. Each iteration
 starts with a fresh context. Your progress lives in the code and git.
@@ -187,51 +105,126 @@ implement it fully, then mark it done.
 
 - One task per iteration
 - No placeholder code — full, working implementations only
-- Run `uv run pytest -x` before committing
+- Run tests before committing
 - Commit with a descriptive message like `feat: add X` or `fix: resolve Y`
 - Mark the completed task in TODO.md
 ```
 
-The `checks` and `contexts` fields in the frontmatter tell ralphify which global primitives to use. The `{{ contexts.git-log }}` placeholder controls where the context output appears in the prompt — contexts not referenced by a placeholder are excluded.
+The `tests` command runs `uv run pytest -x` each iteration. Its output is available via `{{ commands.tests }}` — but you don't have to use the placeholder if you just want the command to run.
+
+## Step 6: Add the command output to the prompt
+
+Place the `{{ commands.tests }}` placeholder where you want the test output to appear:
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
+---
+
+# Prompt
+
+## Test results
+
+{{ commands.tests }}
+
+You are an autonomous coding agent running in a loop. Each iteration
+starts with a fresh context. Your progress lives in the code and git.
+
+Read TODO.md for the current task list. Pick the top uncompleted task,
+implement it fully, then mark it done.
+
+If tests are failing, fix them before starting new work.
+
+## Rules
+
+- One task per iteration
+- No placeholder code — full, working implementations only
+- Commit with a descriptive message like `feat: add X` or `fix: resolve Y`
+- Mark the completed task in TODO.md
+```
+
+Now each iteration, the agent sees the current test output. If tests fail, the agent fixes them — that's the self-healing loop.
+
+## Step 7: Add more commands
+
+Add a lint command and a git log for context:
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
+  - name: lint
+    run: uv run ruff check .
+  - name: git-log
+    run: git log --oneline -10
+---
+
+# Prompt
+
+## Recent commits
+
+{{ commands.git-log }}
+
+## Test results
+
+{{ commands.tests }}
+
+## Lint results
+
+{{ commands.lint }}
+
+You are an autonomous coding agent running in a loop. Each iteration
+starts with a fresh context. Your progress lives in the code and git.
+
+Read TODO.md for the current task list. Pick the top uncompleted task,
+implement it fully, then mark it done.
+
+If tests or lint are failing, fix them before starting new work.
+
+## Rules
+
+- One task per iteration
+- No placeholder code — full, working implementations only
+- Commit with a descriptive message like `feat: add X` or `fix: resolve Y`
+- Mark the completed task in TODO.md
+```
 
 ## Step 8: Run the loop
 
-Start with a few iterations to verify things work as expected:
+Start with a few iterations to verify everything works:
 
 ```bash
-ralph run -n 3 --log-dir ralph_logs
+ralph run my-ralph -n 3 --log-dir ralph_logs
 ```
 
-Watch the output. After each iteration, you'll see check results:
+Watch the output. Each iteration runs the commands, assembles the prompt with the command output, and pipes it to the agent:
 
 ```
 ── Iteration 1 ──
 ✓ Iteration 1 completed (45.2s) → ralph_logs/001_20250115-142301.log
-  Checks: 2 passed
-    ✓ lint
-    ✓ tests
-```
 
-If a check fails, the next iteration automatically gets the failure details:
-
-```
 ── Iteration 2 ──
 ✗ Iteration 2 failed with exit code 1 (23.1s)
-  Checks: 1 passed, 1 failed
-    ✓ lint
-    ✗ tests (exit 1)
 
 ── Iteration 3 ──
+✓ Iteration 3 completed (38.5s) → ralph_logs/003_20250115-142812.log
 ```
 
-The agent in iteration 3 receives the test failure output and the failure instruction ("Fix all failing tests..."), so it can fix the problem.
+If the agent breaks a test, the next iteration sees the failure output via `{{ commands.tests }}` and fixes it automatically.
 
 Once you're confident the loop works, drop the `-n 3` to let it run indefinitely. Press `Ctrl+C` to stop.
+
+!!! tip "Use `ralph new` for AI-guided setup"
+    Instead of creating ralph directories manually, you can run `ralph new my-task` to launch an AI-guided session that creates a complete ralph via conversation with your agent.
 
 ## Next steps
 
 - [Writing Prompts](writing-prompts.md) — patterns for writing effective autonomous loop prompts
-- [Cookbook](cookbook.md) — copy-pasteable setups for documentation and test coverage loops
+- [Cookbook](cookbook.md) — copy-pasteable setups for Python, TypeScript, Rust, and more
 - [How it Works](how-it-works.md) — what happens inside each iteration
-- [Primitives](primitives.md) — full reference for checks, contexts, and named ralphs
 - [CLI Reference](cli.md) — all commands and options

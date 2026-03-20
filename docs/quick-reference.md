@@ -1,5 +1,5 @@
 ---
-description: Condensed reference for ralphify commands, directory structure, frontmatter fields, and placeholder syntax — the page you bookmark and come back to.
+description: Condensed reference for ralphify commands, RALPH.md format, placeholder syntax, and common patterns — the page you bookmark and come back to.
 ---
 
 # Quick Reference
@@ -9,219 +9,163 @@ Everything you need at a glance. Bookmark this page.
 ## CLI commands
 
 ```bash
-ralph init                     # Create ralph.toml + RALPH.md
-ralph init --force             # Overwrite existing ralph.toml
+ralph run my-ralph                 # Run loop forever (Ctrl+C to stop)
+ralph run my-ralph -n 5            # Run 5 iterations
+ralph run my-ralph -n 1 --log-dir logs  # Single iteration with output capture
+ralph run my-ralph --stop-on-error # Stop if agent exits non-zero
+ralph run my-ralph --delay 10      # Wait 10s between iterations
+ralph run my-ralph --timeout 300   # Kill agent after 5 min per iteration
+ralph run my-ralph -- --dir ./src  # Pass user args to the ralph
 
-ralph run                      # Run loop forever (Ctrl+C to stop)
-ralph run docs                 # Use named ralph from .ralphify/ralphs/docs/
-ralph run -n 5                 # Run 5 iterations
-ralph run -n 1 --log-dir logs  # Single iteration with output capture
-ralph run --stop-on-error      # Stop if agent exits non-zero
-ralph run --delay 10           # Wait 10s between iterations
-ralph run --timeout 300        # Kill agent after 5 min per iteration
-ralph run research --dir ./src # Pass user args to the ralph
+ralph new                          # AI-guided ralph creation
+ralph new docs                     # AI-guided creation with name pre-filled
 
-ralph new                      # AI-guided ralph creation
-ralph new docs                 # AI-guided creation with name pre-filled
-
-ralph --version                # Show version
+ralph --version                    # Show version
 ```
 
 ## Directory structure
 
 ```
-project-root/
-├── ralph.toml                          # Agent configuration
-├── RALPH.md                            # Root prompt (or use named ralphs)
-└── .ralphify/
-    ├── checks/                         # Global checks
-    │   ├── lint/CHECK.md
-    │   └── tests/CHECK.md
-    ├── contexts/                       # Global contexts
-    │   └── git-log/CONTEXT.md
-    └── ralphs/                         # Named ralphs
-        └── docs/
-            ├── RALPH.md                # Ralph-specific prompt
-            ├── checks/                 # Ralph-scoped checks (auto-included)
-            │   └── docs-build/CHECK.md
-            └── contexts/              # Ralph-scoped contexts (auto-included)
-                └── doc-coverage/
-                    ├── CONTEXT.md
-                    └── run.sh          # Script for shell features
+my-ralph/
+└── RALPH.md              # Prompt + configuration (required)
 ```
 
-## Configuration
+That's it. A ralph is a directory with a `RALPH.md` file.
 
-**`ralph.toml`**
-
-```toml
-[agent]
-command = "claude"
-args = ["-p", "--dangerously-skip-permissions"]
-ralph = "RALPH.md"              # File path or named ralph
-```
-
-## Primitive frontmatter
-
-### CHECK.md
+## RALPH.md format
 
 ```markdown
 ---
-command: uv run pytest -x       # Command to run (shlex-parsed, no shell features)
-timeout: 120                    # Seconds before kill (default: 60)
-enabled: true                   # Set false to skip (default: true)
+agent: claude -p --dangerously-skip-permissions    # Required: agent command
+commands:                                           # Optional: run each iteration
+  - name: tests
+    run: uv run pytest -x
+  - name: lint
+    run: uv run ruff check .
+  - name: git-log
+    run: git log --oneline -10
+args: [dir, focus]                                  # Optional: declared user arguments
 ---
-Failure instruction text — included in prompt when check fails.
+
+# Prompt body
+
+{{ commands.git-log }}
+
+{{ commands.tests }}
+
+{{ commands.lint }}
+
+Your instructions here. Use {{ args.dir }} for user arguments.
 ```
 
-### CONTEXT.md
+### Frontmatter fields
 
-```markdown
----
-command: git log --oneline -10  # Command whose stdout is captured
-timeout: 30                     # Seconds before kill (default: 30)
-enabled: true                   # Set false to skip (default: true)
----
-Static header text — appears above command output in the prompt.
-```
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `agent` | string | yes | Full agent command (piped via stdin) |
+| `commands` | list | no | Commands to run each iteration |
+| `args` | list | no | User argument names |
 
-### RALPH.md (named ralph)
+### Command fields
 
-```markdown
----
-description: What this ralph does
-checks: [tests, lint]           # Global checks to include
-contexts: [git-log]             # Global contexts to include
-args: [dir, focus]              # Positional arg names (for positional CLI args)
-enabled: true                   # Set false to disable (default: true)
----
-Prompt text here. Use {{ contexts.git-log }} for placement.
-```
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | Identifier for `{{ commands.<name> }}` |
+| `run` | string | Shell command to execute |
 
 ## Placeholders
 
-### Context placeholders
+### Command placeholders
 
 ```markdown
-{{ contexts.git-log }}          # Replaced with git-log context output
-{{ contexts.test-status }}      # Replaced with test-status context output
+{{ commands.tests }}              # Replaced with test command output
+{{ commands.git-log }}            # Replaced with git-log command output
 ```
 
-- Each context must be referenced by name — unreferenced contexts are excluded
-- Unmatched placeholders resolve to empty string (no raw `{{ }}` in output)
-- Must be `contexts` (plural) — `{{ context.name }}` won't resolve
+- Output includes stdout + stderr regardless of exit code
+- Unmatched placeholders resolve to empty string
+- Must be `commands` (plural)
 
 ### User argument placeholders
 
 ```markdown
-{{ args.dir }}                 # Replaced with --dir value from CLI
-{{ args.focus }}               # Replaced with --focus value from CLI
+{{ args.dir }}                   # Replaced with --dir value from CLI
+{{ args.focus }}                 # Replaced with --focus value from CLI
 ```
 
-- Pass via `ralph run <name> --dir ./src --focus "perf"` (named flags)
-- Or positionally: `ralph run <name> ./src "perf"` (requires `args:` in frontmatter)
+- Pass via `ralph run my-ralph -- --dir ./src --focus "perf"` (named flags)
+- Or positionally: `ralph run my-ralph -- ./src "perf"` (requires `args:` in frontmatter)
 - Missing args resolve to empty string
-- Scripts receive them as `RALPH_ARG_<KEY>` env vars (uppercase, hyphens → underscores)
 
-## Global vs. ralph-scoped primitives
+## The loop
 
-| Type | Location | Inclusion rule |
-|---|---|---|
-| Global check | `.ralphify/checks/<name>/` | Must be declared in ralph frontmatter: `checks: [name]` |
-| Global context | `.ralphify/contexts/<name>/` | Must be declared in ralph frontmatter: `contexts: [name]` |
-| Ralph-scoped check | `.ralphify/ralphs/<ralph>/checks/<name>/` | Auto-included when that ralph runs |
-| Ralph-scoped context | `.ralphify/ralphs/<ralph>/contexts/<name>/` | Auto-included when that ralph runs |
+Each iteration:
 
-If a ralph-scoped primitive has the same name as a global one, the **local version wins**. A disabled local primitive suppresses the global one.
-
-## Scripts vs. commands
-
-Commands in frontmatter are parsed with `shlex.split()` — **no shell features** (pipes, redirections, `&&`, `$VAR`).
-
-For shell features, use a script:
-
-```bash
-# .ralphify/checks/my-check/run.sh
-#!/bin/bash
-uv run pytest --tb=short -q 2>&1 | tail -20
-```
-
-```bash
-chmod +x .ralphify/checks/my-check/run.sh
-```
-
-If both a `command` and a `run.*` script exist, the **script wins**. Any `run.*` filename works (`run.sh`, `run.py`, `run.rb`, etc.).
-
-## Execution order
-
-Primitives run in **alphabetical order** by directory name. Use number prefixes to control order:
-
-```
-.ralphify/checks/
-├── 01-lint/CHECK.md        # First
-├── 02-typecheck/CHECK.md   # Second
-└── 03-tests/CHECK.md       # Third
-```
-
-## Environment variables
-
-| Variable | Value | When set |
-|---|---|---|
-| `RALPH_NAME` | Name of the current ralph (e.g. `docs`) | Only when running a named ralph |
-| `RALPH_ARG_<KEY>` | User argument value (e.g. `RALPH_ARG_DIR`) | When user passes `--key value` to `ralph run` |
-
-## Check failure injection
-
-When checks fail, the next iteration's prompt gets this appended:
-
-````markdown
-## Check Failures
-
-The following checks failed after the last iteration. Fix these issues:
-
-### tests
-**Exit code:** 1
-
-```
-FAILED tests/test_foo.py::test_bar - AssertionError
-```
-
-Your failure instruction text from CHECK.md body.
-````
+1. Re-read `RALPH.md` from disk
+2. Run all commands in order, capture output
+3. Resolve `{{ commands.* }}` and `{{ args.* }}` placeholders
+4. Pipe assembled prompt to agent via stdin
+5. Wait for agent to exit
+6. Repeat
 
 ## Output limits
 
-- Check and context output is truncated to **5,000 characters**
-- The assembled prompt is the ralph body + resolved contexts + check failures
+- Command output is truncated to **5,000 characters**
 - Everything is re-read from disk every iteration — edit files while the loop runs
 
 ## Common patterns
 
-### Minimal setup
+### Minimal ralph
 
-```bash
-ralph init && ralph run
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+---
+
+Read TODO.md and implement the next task. Commit when done.
 ```
 
-### Full setup with checks
+### Self-healing with test feedback
 
-```bash
-ralph init
-mkdir -p .ralphify/checks/tests .ralphify/contexts/git-log
-# Create CHECK.md and CONTEXT.md files
-# Add frontmatter to RALPH.md: checks: [tests], contexts: [git-log]
-ralph run
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
+---
+
+{{ commands.tests }}
+
+Fix failing tests before starting new work.
+Read TODO.md and implement the next task.
 ```
 
-### Run on a branch
+### Parameterized ralph
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+args: [dir, focus]
+---
+
+Research the codebase at {{ args.dir }}.
+Focus area: {{ args.focus }}.
+```
 
 ```bash
-git checkout -b feature && ralph run
+ralph run research -- --dir ./api --focus "error handling"
 ```
 
 ### Debug a single iteration
 
 ```bash
-ralph run -n 1 --log-dir ralph_logs
+ralph run my-ralph -n 1 --log-dir ralph_logs
 cat ralph_logs/001_*.log
+```
+
+### Run on a branch
+
+```bash
+git checkout -b feature && ralph run my-ralph
 ```

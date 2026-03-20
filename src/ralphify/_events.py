@@ -2,16 +2,6 @@
 
 The run engine emits structured events during execution so that different
 frontends can observe progress without coupling to the engine internals.
-
-- **CLI mode** renders events to the terminal via
-  :class:`~ralphify._console_emitter.ConsoleEmitter`.
-- **Programmatic mode** pushes events through a :class:`QueueEmitter`
-  for async consumption by external orchestration code.
-- **Tests** use :class:`NullEmitter` to silently discard events.
-
-To add a new event type, add a member to :class:`EventType` and handle it
-in :class:`~ralphify._console_emitter.ConsoleEmitter` (terminal rendering)
-and any custom emitters that need to react to it.
 """
 
 from __future__ import annotations
@@ -26,7 +16,7 @@ from typing import Any, Protocol, runtime_checkable
 class EventType(Enum):
     """All event types emitted by the run loop.
 
-    Events fall into four groups:
+    Events fall into three groups:
 
     **Run lifecycle** — emitted once per run start/stop/pause/resume:
     ``RUN_STARTED``, ``RUN_STOPPED``, ``RUN_PAUSED``, ``RUN_RESUMED``.
@@ -35,75 +25,39 @@ class EventType(Enum):
     ``ITERATION_STARTED``, ``ITERATION_COMPLETED``, ``ITERATION_FAILED``,
     ``ITERATION_TIMED_OUT``.
 
-    **Checks** — emitted during the post-iteration validation phase:
-    ``CHECKS_STARTED``, ``CHECK_PASSED``, ``CHECK_FAILED``,
-    ``CHECKS_COMPLETED``.
-
-    **Prompt assembly** — emitted during prompt construction:
-    ``CONTEXTS_RESOLVED``, ``PROMPT_ASSEMBLED``.
-
-    Each member's value is the string used in :meth:`Event.to_dict`
-    serialization.
+    **Commands** — emitted during command execution:
+    ``COMMANDS_STARTED``, ``COMMANDS_COMPLETED``.
     """
 
     # ── Run lifecycle ───────────────────────────────────────────
-    # Data: checks/contexts (int counts), max_iterations,
-    #       timeout, delay, ralph_name
     RUN_STARTED = "run_started"
-    # Data: reason ("completed" | "user_requested" | "error"),
-    #       total, completed, failed, timed_out
     RUN_STOPPED = "run_stopped"
-    # Data: (none)
     RUN_PAUSED = "run_paused"
-    # Data: (none)
     RUN_RESUMED = "run_resumed"
 
     # ── Iteration lifecycle ─────────────────────────────────────
-    # Data: iteration (int)
     ITERATION_STARTED = "iteration_started"
-    # Data: iteration, returncode, duration (seconds), duration_formatted,
-    #       detail, log_file
     ITERATION_COMPLETED = "iteration_completed"
-    # Data: same as ITERATION_COMPLETED
     ITERATION_FAILED = "iteration_failed"
-    # Data: same as ITERATION_COMPLETED (returncode is None, timed_out is True)
     ITERATION_TIMED_OUT = "iteration_timed_out"
 
-    # ── Checks ──────────────────────────────────────────────────
-    # Data: iteration, count (int)
-    CHECKS_STARTED = "checks_started"
-    # Data: iteration, passed, failed, results (list of per-check dicts)
-    CHECKS_COMPLETED = "checks_completed"
-    # Data: iteration, name, passed (True), exit_code, timed_out
-    CHECK_PASSED = "check_passed"
-    # Data: iteration, name, passed (False), exit_code, timed_out
-    CHECK_FAILED = "check_failed"
+    # ── Commands ────────────────────────────────────────────────
+    COMMANDS_STARTED = "commands_started"
+    COMMANDS_COMPLETED = "commands_completed"
 
     # ── Prompt assembly ─────────────────────────────────────────
-    # Data: iteration, count (int — number of contexts resolved)
-    CONTEXTS_RESOLVED = "contexts_resolved"
-    # Data: iteration, prompt_length (int)
     PROMPT_ASSEMBLED = "prompt_assembled"
 
     # ── Agent activity (live streaming) ─────────────────────────
-    # Data: raw (dict — one stream-json line from the agent subprocess)
     AGENT_ACTIVITY = "agent_activity"
 
     # ── Other ───────────────────────────────────────────────────
-    # Data: checks, contexts (int counts)
-    PRIMITIVES_RELOADED = "primitives_reloaded"
-    # Data: message, level ("info" | "error"), traceback (optional)
     LOG_MESSAGE = "log_message"
 
 
 @dataclass
 class Event:
-    """A structured event emitted by the run loop.
-
-    Every event carries a *type* (:class:`EventType`), the *run_id* of the
-    run that produced it, an arbitrary *data* dict, and a UTC *timestamp*.
-    Use :meth:`to_dict` to serialize for JSON transport.
-    """
+    """A structured event emitted by the run loop."""
 
     type: EventType
     run_id: str
@@ -111,12 +65,7 @@ class Event:
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize this event to a JSON-compatible dict.
-
-        The ``type`` field is converted to its string value and
-        ``timestamp`` to an ISO 8601 string, making the result safe
-        for ``json.dumps``.
-        """
+        """Serialize this event to a JSON-compatible dict."""
         return {
             "type": self.type.value,
             "run_id": self.run_id,
@@ -127,60 +76,34 @@ class Event:
 
 @runtime_checkable
 class EventEmitter(Protocol):
-    """Protocol for objects that receive run-loop events.
+    """Protocol for objects that receive run-loop events."""
 
-    Implement this single-method protocol to observe run-loop progress.
-    The engine calls :meth:`emit` synchronously from the loop thread, so
-    implementations must not block for extended periods.
-    """
-
-    def emit(self, event: Event) -> None:
-        """Handle a single event from the run loop."""
-        ...
+    def emit(self, event: Event) -> None: ...
 
 
 class NullEmitter:
-    """Discards all events silently.
-
-    Use this when you need the engine to run without any output — in tests,
-    in batch scripts where you only care about the final ``RunState``, or
-    as a default when no emitter is provided.
-    """
+    """Discards all events silently."""
 
     def emit(self, event: Event) -> None:
-        """No-op — silently discard the event."""
+        pass
 
 
 class QueueEmitter:
-    """Pushes events into a :class:`queue.Queue` for async consumption.
-
-    The engine thread pushes events into the queue, and external code
-    drains it to process events asynchronously — for example, logging,
-    forwarding to a web interface, or triggering downstream workflows.
-    """
+    """Pushes events into a :class:`queue.Queue` for async consumption."""
 
     def __init__(self, q: queue.Queue[Event] | None = None) -> None:
-        """Create an emitter backed by *q*, or a new unbounded queue."""
         self.queue: queue.Queue[Event] = q or queue.Queue()
 
     def emit(self, event: Event) -> None:
-        """Enqueue *event* for later consumption."""
         self.queue.put(event)
 
 
 class FanoutEmitter:
-    """Broadcasts events to multiple emitters.
-
-    Used by :class:`~ralphify.manager.RunManager` to send each event to
-    a :class:`QueueEmitter` and any additional listeners registered via
-    :meth:`~ralphify.manager.ManagedRun.add_listener`.
-    """
+    """Broadcasts events to multiple emitters."""
 
     def __init__(self, emitters: list[EventEmitter]) -> None:
-        """Create a fanout that delegates to each emitter in *emitters*."""
         self._emitters = emitters
 
     def emit(self, event: Event) -> None:
-        """Forward *event* to every registered emitter in order."""
         for e in self._emitters:
             e.emit(event)

@@ -1,7 +1,7 @@
 """Shared pytest fixtures and helpers for ralphify tests."""
 
 import subprocess
-from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
@@ -10,13 +10,7 @@ from ralphify._run_types import RunConfig, RunState
 
 @pytest.fixture(autouse=True)
 def _disable_streaming(monkeypatch):
-    """Disable the Popen-based streaming path in all tests.
-
-    Tests mock ``subprocess.run`` to avoid real process execution.  The
-    streaming code path uses ``subprocess.Popen`` instead, which would
-    bypass those mocks.  Forcing ``_supports_stream_json`` to return
-    ``False`` ensures all tests go through the ``subprocess.run`` path.
-    """
+    """Disable the Popen-based streaming path in all tests."""
     monkeypatch.setattr("ralphify._agent._supports_stream_json", lambda cmd: False)
 
 
@@ -25,23 +19,42 @@ def _disable_streaming(monkeypatch):
 MOCK_SUBPROCESS = "ralphify._agent.subprocess.run"
 """Patch target for subprocess.run inside the agent module."""
 
+MOCK_RUNNER_SUBPROCESS = "ralphify._runner.subprocess.run"
+"""Patch target for subprocess.run inside the runner module."""
+
 
 # ── Shared helpers ─────────────────────────────────────────────────────
 
 
+def make_ralph_dir(tmp_path, ralph_md_content="test prompt", frontmatter=None):
+    """Create a ralph directory with RALPH.md and return the directory path."""
+    ralph_dir = tmp_path / "my-ralph"
+    ralph_dir.mkdir(exist_ok=True)
+    if frontmatter:
+        content = f"---\n{frontmatter}\n---\n\n{ralph_md_content}"
+    else:
+        content = ralph_md_content
+    (ralph_dir / "RALPH.md").write_text(content)
+    return ralph_dir
+
+
 def make_config(tmp_path, **overrides):
-    """Create a RunConfig pointing at a temp directory with RALPH.md."""
-    prompt_path = tmp_path / "RALPH.md"
-    if not prompt_path.exists():
-        prompt_path.write_text("test prompt")
-    config = RunConfig(
-        command="echo",
-        args=[],
-        ralph_file=str(prompt_path),
+    """Create a RunConfig pointing at a temp ralph directory."""
+    ralph_dir = tmp_path / "my-ralph"
+    ralph_dir.mkdir(exist_ok=True)
+    ralph_file = ralph_dir / "RALPH.md"
+    if not ralph_file.exists():
+        ralph_file.write_text("test prompt")
+
+    defaults = dict(
+        agent="echo",
+        ralph_dir=ralph_dir,
+        ralph_file=ralph_file,
         max_iterations=1,
         project_root=tmp_path,
     )
-    return replace(config, **overrides) if overrides else config
+    defaults.update(overrides)
+    return RunConfig(**defaults)
 
 
 def make_state():

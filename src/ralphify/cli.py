@@ -1,14 +1,14 @@
-"""CLI commands for ralphify — init, run, and scaffold new primitives.
+"""CLI commands for ralphify — run and scaffold ralphs.
 
-This is the main module.  The ``run`` command delegates to the engine module
-for the core autonomous loop.  Terminal rendering of events is handled by
+The ``run`` command delegates to the engine module for the core autonomous
+loop.  Terminal rendering of events is handled by
 :class:`~ralphify._console_emitter.ConsoleEmitter`.
 """
 
 import os
+import shlex
 import shutil
 import sys
-import tomllib
 import uuid
 from pathlib import Path
 from typing import NoReturn
@@ -18,15 +18,9 @@ from rich.console import Console
 
 from ralphify import __version__
 from ralphify._console_emitter import ConsoleEmitter
-from ralphify._frontmatter import CONFIG_FILENAME, parse_frontmatter
-from ralphify._run_types import RunConfig, RunState
+from ralphify._frontmatter import RALPH_MARKER, parse_frontmatter
+from ralphify._run_types import Command, RunConfig, RunState
 from ralphify.engine import run_loop
-from ralphify.ralphs import resolve_ralph_source
-from ralphify.detector import detect_project
-from ralphify._templates import (
-    ROOT_RALPH_TEMPLATE,
-    RALPH_TOML_TEMPLATE,
-)
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -57,12 +51,12 @@ TAGLINE = "Stop stressing over not having an agent running. Ralph is always runn
 
 
 BANNER_COLORS = [
-    "#8B6CF0",  # light violet
-    "#A78BF5",  # soft violet
-    "#D4A0E0",  # pink-violet transition
-    "#E8956B",  # warm transition
-    "#E87B4A",  # orange accent
-    "#E06030",  # deep orange
+    "#8B6CF0",
+    "#A78BF5",
+    "#D4A0E0",
+    "#E8956B",
+    "#E87B4A",
+    "#E06030",
 ]
 
 
@@ -103,42 +97,6 @@ def main_callback(
         raise typer.Exit()
 
 
-def _load_config() -> dict:
-    """Load and return the ralph.toml config, exiting if not found."""
-    config_path = Path(CONFIG_FILENAME)
-    if not config_path.exists():
-        _exit_error(f"{CONFIG_FILENAME} not found. Run 'ralph init' first.")
-    with open(config_path, "rb") as f:
-        return tomllib.load(f)
-
-
-@app.command()
-def init(
-    force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing config."),
-) -> None:
-    """Initialize ralph config and prompt template."""
-    config_path = Path(CONFIG_FILENAME)
-    prompt_path = Path("RALPH.md")
-
-    project_type = detect_project()
-
-    if config_path.exists() and not force:
-        rprint(f"[yellow]{CONFIG_FILENAME} already exists. Use --force to overwrite.[/yellow]")
-        raise typer.Exit(1)
-
-    config_path.write_text(RALPH_TOML_TEMPLATE)
-    rprint(f"[green]Created {CONFIG_FILENAME}[/green]")
-
-    if prompt_path.exists():
-        rprint("[dim]RALPH.md already exists, skipping.[/dim]")
-    else:
-        prompt_path.write_text(ROOT_RALPH_TEMPLATE)
-        rprint("[green]Created RALPH.md[/green]")
-
-    rprint(f"\nDetected project type: [bold]{project_type}[/bold]")
-    rprint("Edit RALPH.md to customize your agent's behavior.")
-
-
 @app.command()
 def new(
     name: str | None = typer.Argument(None, help="Name for the new ralph. If omitted, the agent will help you choose."),
@@ -168,8 +126,6 @@ def _parse_user_args(
 
     Supports ``--name value`` (named) and positional args mapped to
     *declared_names* from frontmatter ``args: [...]``.
-
-    Raises :class:`typer.BadParameter` on invalid input.
     """
     result: dict[str, str] = {}
     positional_index = 0
@@ -183,7 +139,6 @@ def _parse_user_args(
             result[name] = raw_args[i + 1]
             i += 2
         else:
-            # Positional arg
             if not declared_names:
                 raise typer.BadParameter(
                     f"Positional argument '{token}' requires args declared in RALPH.md frontmatter. "
@@ -201,8 +156,7 @@ def _parse_user_args(
 
 
 def _build_run_config(
-    toml_config: dict,
-    ralph_arg: str | None,
+    ralph_path: str,
     max_iterations: int | None,
     stop_on_error: bool,
     delay: float,
@@ -210,65 +164,71 @@ def _build_run_config(
     timeout: float | None,
     extra_args: list[str] | None = None,
 ) -> RunConfig:
-    """Validate toml config, resolve the ralph source, and build a RunConfig.
+    """Read RALPH.md from the given path, validate, and build a RunConfig."""
+    path = Path(ralph_path)
 
-    Exits with an error message for invalid config, missing files, or
-    missing agent command.  Extracted from ``run()`` so the command body
-    reads as a clean three-step flow: load config → build config → run.
-    """
-    agent = toml_config.get("agent")
-    if not isinstance(agent, dict):
-        _exit_error(f"Missing [agent] section in {CONFIG_FILENAME}.")
-    command = agent.get("command")
-    if not command:
-        _exit_error(f"Missing 'command' in [agent] section of {CONFIG_FILENAME}.")
-    args = agent.get("args", [])
+    # Resolve ralph directory and RALPH.md file
+    if path.is_dir():
+        ralph_dir = path
+        ralph_file = path / RALPH_MARKER
+    elif path.is_file() and path.name == RALPH_MARKER:
+        ralph_dir = path.parent
+        ralph_file = path
+    else:
+        _exit_error(f"'{ralph_path}' is not a directory or RALPH.md file.")
 
-    try:
-        source = resolve_ralph_source(
-            ralph_arg=ralph_arg,
-            toml_ralph=agent.get("ralph", "RALPH.md"),
-        )
-    except ValueError as e:
-        _exit_error(str(e))
+    if not ralph_file.exists():
+        _exit_error(f"RALPH.md not found at '{ralph_file}'.")
 
-    try:
-        ralph_text = Path(source.file_path).read_text()
-    except FileNotFoundError:
-        _exit_error(f"Prompt file '{source.file_path}' not found.")
+    ralph_text = ralph_file.read_text()
+    fm, _ = parse_frontmatter(ralph_text)
 
-    if not shutil.which(command):
-        _exit_error(f"Agent command '{command}' not found on PATH.")
+    # Validate required agent field
+    agent = fm.get("agent")
+    if not agent:
+        _exit_error("Missing 'agent' field in RALPH.md frontmatter.")
 
-    # Extract declared global primitive dependencies from ralph frontmatter
-    ralph_fm, _ = parse_frontmatter(ralph_text)
+    # Validate agent command exists
+    agent_binary = shlex.split(agent)[0]
+    if not shutil.which(agent_binary):
+        _exit_error(f"Agent command '{agent_binary}' not found on PATH.")
 
-    # Parse user args against declared arg names from frontmatter
-    declared_names = ralph_fm.get("args")
+    # Parse commands from frontmatter
+    commands: list[Command] = []
+    for cmd_def in fm.get("commands", []):
+        if not isinstance(cmd_def, dict) or "name" not in cmd_def or "run" not in cmd_def:
+            _exit_error("Each command must have 'name' and 'run' fields.")
+        commands.append(Command(
+            name=cmd_def["name"],
+            run=cmd_def["run"],
+            timeout=cmd_def.get("timeout", 60),
+        ))
+
+    # Parse user args
+    declared_names = fm.get("args")
     ralph_args: dict[str, str] = {}
     if extra_args:
         ralph_args = _parse_user_args(extra_args, declared_names)
 
     return RunConfig(
-        command=command,
-        args=args,
-        ralph_file=source.file_path,
-        ralph_name=source.ralph_name,
+        agent=agent,
+        ralph_dir=ralph_dir.resolve(),
+        ralph_file=ralph_file.resolve(),
+        commands=commands,
+        args=ralph_args,
         max_iterations=max_iterations,
         delay=delay,
         timeout=timeout,
         stop_on_error=stop_on_error,
         log_dir=log_dir,
-        global_checks=ralph_fm.get("checks"),
-        global_contexts=ralph_fm.get("contexts"),
-        ralph_args=ralph_args,
+        project_root=Path.cwd(),
     )
 
 
 @app.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True})
 def run(
     ctx: typer.Context,
-    ralph: str | None = typer.Argument(None, help="Named ralph from .ralphify/ralphs/."),
+    path: str = typer.Argument(..., help="Path to the ralph directory (containing RALPH.md)."),
     n: int | None = typer.Option(None, "-n", help="Max number of iterations. Infinite if not set."),
     stop_on_error: bool = typer.Option(False, "--stop-on-error", "-s", help="Stop if the agent exits with non-zero."),
     delay: float = typer.Option(0, "--delay", "-d", help="Seconds to wait between iterations."),
@@ -277,25 +237,17 @@ def run(
 ) -> None:
     """Run the autonomous coding loop.
 
-    Each iteration: read RALPH.md, resolve context placeholders, append
-    any check failures from the previous iteration, pipe the assembled
-    prompt to the agent, then run checks.
-    Repeat until *n* iterations or Ctrl+C.
+    Each iteration: run commands, assemble prompt with command output,
+    pipe to agent, repeat until *n* iterations or Ctrl+C.
 
-    Extra flags (--name value) and positional args are passed as user
-    arguments to the ralph template.  Use {{ args.name }} placeholders
-    in RALPH.md to reference them.
+    Extra flags (--name value) and positional args after the path are
+    passed as user arguments.  Use {{ args.name }} placeholders in
+    RALPH.md to reference them.
     """
-    # When ignore_unknown_options is True, Click may capture a --flag as
-    # the ralph positional argument.  Detect this and move it back to extra args.
     extra = list(ctx.args)
-    if ralph and ralph.startswith("--"):
-        extra = [ralph] + extra
-        ralph = None
 
-    toml_config = _load_config()
     config = _build_run_config(
-        toml_config, ralph, n, stop_on_error, delay, log_dir, timeout,
+        path, n, stop_on_error, delay, log_dir, timeout,
         extra_args=extra or None,
     )
 
@@ -306,5 +258,3 @@ def run(
     emitter = ConsoleEmitter(_console)
 
     run_loop(config, state, emitter)
-
-

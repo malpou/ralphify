@@ -5,12 +5,15 @@ public library API for programmatic use.
 
 Quick start::
 
-    from ralphify import run_loop, RunConfig, RunState, QueueEmitter
+    from ralphify import run_loop, RunConfig, RunState, Command
 
-    config = RunConfig(command="claude", args=["-p"], ralph_file="RALPH.md")
+    config = RunConfig(
+        agent="claude -p --dangerously-skip-permissions",
+        ralph_dir=Path("."),
+        ralph_file=Path("RALPH.md"),
+    )
     state = RunState(run_id="my-run")
-    emitter = QueueEmitter()
-    run_loop(config, state, emitter)
+    run_loop(config, state)
 """
 
 from importlib.metadata import PackageNotFoundError, version
@@ -21,7 +24,7 @@ except PackageNotFoundError:
     __version__ = "0.0.0"
 
 from ralphify.engine import run_loop
-from ralphify._run_types import RunConfig, RunState, RunStatus
+from ralphify._run_types import Command, RunConfig, RunState, RunStatus
 from ralphify._events import (
     Event,
     EventEmitter,
@@ -31,40 +34,26 @@ from ralphify._events import (
     QueueEmitter,
 )
 from ralphify.manager import ManagedRun, RunManager
-from ralphify.checks import discover_checks, run_all_checks
-from ralphify.contexts import discover_contexts, run_all_contexts
-from ralphify.ralphs import discover_ralphs, resolve_ralph_name
 
 
 def main():
     """Entry point for the ``ralph`` CLI (called by the console script)."""
-    from ralphify.cli import app  # noqa: PLC0415 — lazy to avoid loading typer/rich for library users
+    from ralphify.cli import app
     app()
 
 __all__ = [
-    # Version
     "__version__",
-    # Engine
     "run_loop",
-    # Run types
+    "Command",
     "RunConfig",
     "RunState",
     "RunStatus",
-    # Events
     "Event",
     "EventEmitter",
     "EventType",
     "FanoutEmitter",
     "NullEmitter",
     "QueueEmitter",
-    # Manager
     "ManagedRun",
     "RunManager",
-    # Primitives
-    "discover_checks",
-    "run_all_checks",
-    "discover_contexts",
-    "run_all_contexts",
-    "discover_ralphs",
-    "resolve_ralph_name",
 ]

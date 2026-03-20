@@ -1,9 +1,7 @@
 """Rich console renderer for run-loop events.
 
 The ``ConsoleEmitter`` translates structured :class:`Event` objects into
-Rich-formatted terminal output.  It is wired into the ``run`` command
-in ``cli.py`` and handles the subset of event types that are meaningful
-for interactive CLI sessions.
+Rich-formatted terminal output.
 """
 
 from __future__ import annotations
@@ -19,7 +17,6 @@ from rich.text import Text
 from ralphify._events import Event, EventType
 from ralphify._output import format_duration
 
-# Status icons shared by iteration and check result rendering.
 _ICON_SUCCESS = "\u2713"  # ✓
 _ICON_FAILURE = "\u2717"  # ✗
 _ICON_TIMEOUT = "\u23f1"  # ⏱
@@ -42,7 +39,7 @@ class _IterationSpinner:
 
 
 class ConsoleEmitter:
-    """Renders engine events to the Rich console, reproducing original CLI output."""
+    """Renders engine events to the Rich console."""
 
     def __init__(self, console: Console) -> None:
         self._console = console
@@ -54,18 +51,12 @@ class ConsoleEmitter:
             EventType.ITERATION_COMPLETED: lambda d: self._on_iteration_ended(d, "green", _ICON_SUCCESS),
             EventType.ITERATION_FAILED: lambda d: self._on_iteration_ended(d, "red", _ICON_FAILURE),
             EventType.ITERATION_TIMED_OUT: lambda d: self._on_iteration_ended(d, "yellow", _ICON_TIMEOUT),
-            EventType.CHECKS_COMPLETED: self._on_checks_completed,
+            EventType.COMMANDS_COMPLETED: self._on_commands_completed,
             EventType.LOG_MESSAGE: self._on_log_message,
             EventType.RUN_STOPPED: self._on_run_stopped,
         }
 
     def emit(self, event: Event) -> None:
-        """Dispatch an engine event to the appropriate Rich renderer.
-
-        Implements the :class:`~ralphify._events.EventEmitter` protocol.
-        Only event types registered in ``_handlers`` produce terminal output;
-        all others are silently ignored.
-        """
         handler = self._handlers.get(event.type)
         if handler:
             handler(event.data)
@@ -73,10 +64,8 @@ class ConsoleEmitter:
     def _on_run_started(self, data: dict) -> None:
         if data.get("timeout"):
             self._rprint(f"[dim]Timeout: {format_duration(data['timeout'])} per iteration[/dim]")
-        if data.get("checks"):
-            self._rprint(f"[dim]Checks: {data['checks']} enabled[/dim]")
-        if data.get("contexts"):
-            self._rprint(f"[dim]Contexts: {data['contexts']} enabled[/dim]")
+        if data.get("commands"):
+            self._rprint(f"[dim]Commands: {data['commands']} configured[/dim]")
 
     def _start_live(self) -> None:
         spinner = _IterationSpinner()
@@ -107,20 +96,16 @@ class ConsoleEmitter:
         if data.get("result_text"):
             self._rprint(f"  [dim]{data['result_text']}[/dim]")
 
-    def _on_checks_completed(self, data: dict) -> None:
-        parts = []
-        if data["passed"]:
-            parts.append(f"{data['passed']} passed")
-        if data["failed"]:
-            parts.append(f"{data['failed']} failed")
-        self._rprint(f"  [bold]Checks:[/bold] {', '.join(parts)}")
-        for r in data["results"]:
-            if r["passed"]:
-                self._rprint(f"    [green]{_ICON_SUCCESS}[/green] {r['name']}")
-            elif r["timed_out"]:
-                self._rprint(f"    [yellow]{_ICON_TIMEOUT}[/yellow] {r['name']} (timed out)")
-            else:
-                self._rprint(f"    [red]{_ICON_FAILURE}[/red] {r['name']} (exit {r['exit_code']})")
+    def _on_commands_completed(self, data: dict) -> None:
+        passed = data.get("passed", 0)
+        failed = data.get("failed", 0)
+        if passed or failed:
+            parts = []
+            if passed:
+                parts.append(f"{passed} passed")
+            if failed:
+                parts.append(f"{failed} failed")
+            self._rprint(f"  [bold]Commands:[/bold] {', '.join(parts)}")
 
     def _on_log_message(self, data: dict) -> None:
         msg = data.get("message", "")
@@ -150,4 +135,3 @@ class ConsoleEmitter:
         if timed_out_count:
             detail += f" ({timed_out_count} timed out)"
         self._rprint(f"\n[green]Done: {total} iteration(s) {_ICON_DASH} {detail}[/green]")
-

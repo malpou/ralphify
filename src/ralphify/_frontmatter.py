@@ -1,99 +1,58 @@
-"""Parse YAML frontmatter from primitive markdown files.
+"""Parse YAML frontmatter from RALPH.md files.
 
-All primitive types (checks, contexts, ralphs) store their
-configuration in markdown files with ``---``-delimited frontmatter.
-This module provides the shared parsing logic.
+A ralph is a directory containing a ``RALPH.md`` file.  The frontmatter
+configures the agent command, commands to run, and accepted arguments.
+The body is the prompt template.
 
 HTML comments in the body are stripped so users can leave notes that
 don't leak into the assembled prompt.
-
-Directory scanning and primitive discovery live in :mod:`_discovery`.
 """
 
 import re
-from collections.abc import Callable
+
+import yaml
 
 
-# Single source of truth for well-known filenames.
-# Every module that needs a marker or config name should import from here.
-CHECK_MARKER = "CHECK.md"
-CONTEXT_MARKER = "CONTEXT.md"
+# Single source of truth for the ralph marker filename.
 RALPH_MARKER = "RALPH.md"
-CONFIG_FILENAME = "ralph.toml"
-PRIMITIVES_DIR = ".ralphify"
 
 # Pre-compiled pattern to strip HTML comments from body text.
 _HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
-# Type coercion for known frontmatter fields.
-# To add a new typed field, add an entry here — no other changes needed.
 
-
-def _parse_list_value(v: str) -> list[str]:
-    """Parse ``[a, b, c]`` into ``['a', 'b', 'c']``."""
-    v = v.strip()
-    if v.startswith("[") and v.endswith("]"):
-        v = v[1:-1]
-    return [item.strip() for item in v.split(",") if item.strip()]
-
-
-_FIELD_COERCIONS: dict[str, Callable[[str], object]] = {
-    "timeout": int,
-    "enabled": lambda v: v.lower() in ("true", "yes", "1"),
-    "checks": _parse_list_value,
-    "contexts": _parse_list_value,
-    "args": _parse_list_value,
-}
-
-
-def _parse_kv_lines(lines: list[str]) -> dict:
-    """Parse flat ``key: value`` lines with type coercion for known fields."""
-    result: dict = {}
-    for line in lines:
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if ":" not in line:
-            continue
-        key, _, value = line.partition(":")
-        key = key.strip()
-        value = value.strip()
-        coerce = _FIELD_COERCIONS.get(key)
-        result[key] = coerce(value) if coerce else value
-    return result
-
-
-def _extract_frontmatter_block(text: str) -> tuple[list[str], str]:
-    """Split text into frontmatter lines and body at ``---`` delimiters.
+def _extract_frontmatter_block(text: str) -> tuple[str, str]:
+    """Split text into raw YAML frontmatter and body at ``---`` delimiters.
 
     The opening ``---`` must be the very first line (standard YAML
-    frontmatter convention).  Returns ``([], text)`` when no valid
+    frontmatter convention).  Returns ``("", text)`` when no valid
     frontmatter block is found.
     """
     lines = text.split("\n")
     if not lines or lines[0].strip() != "---":
-        return [], text
+        return "", text
 
     for i, line in enumerate(lines[1:], start=1):
         if line.strip() == "---":
-            fm_lines = lines[1:i]
+            fm_raw = "\n".join(lines[1:i])
             body = "\n".join(lines[i + 1 :]).strip()
-            return fm_lines, body
-    return [], text
+            return fm_raw, body
+    return "", text
 
 
 def parse_frontmatter(text: str) -> tuple[dict, str]:
-    """Parse a markdown file with optional YAML-like frontmatter.
+    """Parse a RALPH.md file with YAML frontmatter.
 
     Frontmatter is delimited by ``---`` lines at the start of the file.
-    Only flat ``key: value`` pairs are supported.  The ``timeout`` field
-    is coerced to ``int`` and ``enabled`` to ``bool``.  HTML comments are
+    Full YAML is supported (nested lists, dicts).  HTML comments are
     stripped from the body so they don't leak into the assembled prompt.
 
     Returns ``(frontmatter_dict, body_text)``.
     """
-    fm_lines, body = _extract_frontmatter_block(text)
-    frontmatter = _parse_kv_lines(fm_lines)
+    fm_raw, body = _extract_frontmatter_block(text)
+    if fm_raw:
+        frontmatter = yaml.safe_load(fm_raw) or {}
+    else:
+        frontmatter = {}
     body = _HTML_COMMENT_RE.sub("", body).strip()
     return frontmatter, body
 
@@ -107,11 +66,8 @@ def serialize_frontmatter(frontmatter: dict, body: str) -> str:
     parts: list[str] = []
     if frontmatter:
         parts.append("---")
-        for key, value in frontmatter.items():
-            if isinstance(value, list):
-                parts.append(f"{key}: [{', '.join(value)}]")
-            else:
-                parts.append(f"{key}: {value}")
+        fm_text = yaml.dump(frontmatter, default_flow_style=False, sort_keys=False).strip()
+        parts.append(fm_text)
         parts.append("---")
         parts.append("")
     parts.append(body)

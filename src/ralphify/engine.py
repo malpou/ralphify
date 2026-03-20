@@ -4,34 +4,25 @@ The core ``run_loop`` function is the autonomous agent loop.  It accepts
 a ``RunConfig``, ``RunState``, and ``EventEmitter``, making it reusable
 from both CLI and UI contexts.
 
-Run data types (``RunStatus``, ``RunConfig``, ``RunState``) live in
-``_run_types.py`` so modules that only need types don't import the engine.
-
-Agent subprocess execution (streaming and blocking modes, log writing) is
-in ``_agent.py`` so this module can focus on orchestration.
+The v2 loop is simplified: run commands → assemble prompt → pipe to agent → repeat.
 """
 
 from __future__ import annotations
 
+import shlex
 import time
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any
+
 from ralphify._agent import execute_agent
 from ralphify._events import Event, EventEmitter, EventType, NullEmitter
 from ralphify._frontmatter import parse_frontmatter
 from ralphify._output import format_duration
-from ralphify._run_types import RunConfig, RunState, RunStatus
-from ralphify.checks import Check, discover_enabled_checks, format_check_failures, run_all_checks, validate_check_scripts
-from ralphify.contexts import (
-    Context,
-    ContextResult,
-    discover_enabled_contexts,
-    resolve_contexts,
-    run_all_contexts,
-)
-from ralphify.resolver import resolve_args
+from ralphify._run_types import Command, RunConfig, RunState, RunStatus
+from ralphify._runner import run_command
+from ralphify.resolver import resolve_args, resolve_commands
 
 
 # Maps terminal run status to the reason string emitted in RUN_STOPPED events.
@@ -41,53 +32,8 @@ _STATUS_REASONS: dict[RunStatus, str] = {
 }
 
 
-class EnabledPrimitives(NamedTuple):
-    """The enabled checks and contexts for a project."""
-
-    checks: list[Check]
-    contexts: list[Context]
-
-
-def _resolve_ralph_dir(config: RunConfig) -> Path | None:
-    """Return the ralph directory when running a named ralph.
-
-    Returns ``None`` for ad-hoc prompt text (``-p``), which has no
-    directory to scan for local primitives.
-    """
-    if config.ralph_name and not config.prompt_text:
-        return Path(config.ralph_file).parent
-    return None
-
-
-def _discover_enabled_primitives(
-    root: Path,
-    ralph_dir: Path | None = None,
-    global_checks: list[str] | None = None,
-    global_contexts: list[str] | None = None,
-) -> EnabledPrimitives:
-    """Discover all primitives and return only the enabled ones.
-
-    Global primitives are only included when explicitly requested via
-    *global_checks* / *global_contexts* name lists.  When ``None``, no
-    globals are selected (the library model).
-
-    When *ralph_dir* is set, ralph-scoped primitives are merged with
-    selected globals (local wins on name collisions).  Enabled filtering
-    happens **after** the merge so a disabled local primitive can
-    suppress a global one with the same name.
-    """
-    return EnabledPrimitives(
-        checks=discover_enabled_checks(root, ralph_dir, global_names=global_checks),
-        contexts=discover_enabled_contexts(root, ralph_dir, global_names=global_contexts),
-    )
-
-
 class _BoundEmitter:
-    """Wraps an EventEmitter with a fixed run_id for concise emission.
-
-    Engine-internal helper so every call site doesn't have to repeat
-    ``Event(type=..., run_id=state.run_id, data={...})``.
-    """
+    """Wraps an EventEmitter with a fixed run_id for concise emission."""
 
     def __init__(self, emitter: EventEmitter, run_id: str) -> None:
         self._emitter = emitter
@@ -102,11 +48,7 @@ class _BoundEmitter:
 
 
 def _wait_for_resume(state: RunState, emit: _BoundEmitter) -> bool:
-    """Block until the run is resumed or a stop is requested.
-
-    Returns ``True`` if the run should continue, ``False`` if a stop was
-    requested while paused.
-    """
+    """Block until the run is resumed or a stop is requested."""
     emit(EventType.RUN_PAUSED)
     while not state.wait_for_unpause(timeout=0.25):
         if state.stop_requested:
@@ -118,49 +60,61 @@ def _wait_for_resume(state: RunState, emit: _BoundEmitter) -> bool:
     return True
 
 
-def _handle_control_signals(
-    state: RunState,
-    emit: _BoundEmitter,
-) -> bool:
-    """Handle stop and pause requests at the top of each iteration.
-
-    Returns ``True`` if the loop should continue, ``False`` if it
-    should exit.  This is purely about control flow — primitive
-    re-discovery is handled separately in the loop body.
-    """
+def _handle_control_signals(state: RunState, emit: _BoundEmitter) -> bool:
+    """Handle stop and pause requests at the top of each iteration."""
     if state.stop_requested:
         state.status = RunStatus.STOPPED
         return False
-
     if state.paused:
         if not _wait_for_resume(state, emit):
             return False
-
     return True
+
+
+def _run_commands(
+    commands: list[Command],
+    ralph_dir: Path,
+    project_root: Path,
+    timeout: int = 60,
+) -> dict[str, str]:
+    """Execute all commands and return a dict of name→output.
+
+    Commands with paths starting with ``./`` run relative to the ralph
+    directory.  Other commands run from the project root.
+    """
+    results: dict[str, str] = {}
+    for cmd in commands:
+        run_str = cmd.run
+        # Determine working directory: if the command starts with ./ it's
+        # relative to the ralph directory, otherwise use project root.
+        if run_str.startswith("./"):
+            cwd = ralph_dir
+        else:
+            cwd = project_root
+        result = run_command(
+            script=None,
+            command=run_str,
+            cwd=cwd,
+            timeout=cmd.timeout or timeout,
+        )
+        results[cmd.name] = result.output
+    return results
 
 
 def _assemble_prompt(
     config: RunConfig,
-    context_results: list[ContextResult],
-    check_failures_text: str,
+    command_outputs: dict[str, str],
 ) -> str:
     """Build the full prompt for one iteration.
 
-    Reads the prompt source (from disk or ``config.prompt_text``),
-    resolves user args, resolves pre-computed context results, and
-    appends any check-failure feedback from the previous iteration.
-    Event emission is handled by the caller.
+    Reads the RALPH.md body, resolves user args and command output
+    placeholders.
     """
-    if config.prompt_text:
-        prompt = config.prompt_text
-    else:
-        raw = Path(config.ralph_file).read_text()
-        _, prompt = parse_frontmatter(raw)
-    prompt = resolve_args(prompt, config.ralph_args)
-    if context_results:
-        prompt = resolve_contexts(prompt, context_results)
-    if check_failures_text:
-        prompt = prompt + "\n\n" + check_failures_text
+    raw = config.ralph_file.read_text()
+    _, prompt = parse_frontmatter(raw)
+    prompt = resolve_args(prompt, config.args)
+    if command_outputs:
+        prompt = resolve_commands(prompt, command_outputs)
     return prompt
 
 
@@ -174,11 +128,8 @@ def _run_agent_phase(
     """Run the agent subprocess, update state counters, and emit the result event.
 
     Returns the process return code, or ``None`` if the process timed out.
-
-    Delegates to :func:`~ralphify._agent.execute_agent`, which auto-selects
-    streaming or blocking mode based on the agent command.
     """
-    cmd = [config.command] + config.args
+    cmd = shlex.split(config.agent)
 
     try:
         agent = execute_agent(
@@ -187,8 +138,8 @@ def _run_agent_phase(
         )
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Agent command not found: {config.command!r}. "
-            f"Check the [agent] command in ralph.toml."
+            f"Agent command not found: {config.agent!r}. "
+            f"Check the 'agent' field in your RALPH.md frontmatter."
         )
 
     duration = format_duration(agent.elapsed)
@@ -218,132 +169,51 @@ def _run_agent_phase(
     return agent.returncode
 
 
-def _run_checks_phase(
-    enabled_checks: list[Check],
-    project_root: Path,
-    state: RunState,
-    emit: _BoundEmitter,
-    ralph_name: str | None = None,
-    user_args: dict[str, str] | None = None,
-) -> str:
-    """Execute all checks, emit per-check and summary events.
-
-    Returns the formatted check-failure text to feed back into the next
-    iteration's prompt (empty string when all checks pass).
-    """
-    iteration = state.iteration
-
-    emit(EventType.CHECKS_STARTED, {"iteration": iteration, "count": len(enabled_checks)})
-
-    check_results = run_all_checks(enabled_checks, project_root, ralph_name, user_args=user_args)
-
-    # Build per-result event data once; reused for both per-check and summary events.
-    results_data: list[dict] = []
-    passed = 0
-    for cr in check_results:
-        event_data = cr.to_event_data()
-        results_data.append(event_data)
-        if cr.passed:
-            passed += 1
-        emit(
-            EventType.CHECK_PASSED if cr.passed else EventType.CHECK_FAILED,
-            {"iteration": iteration, **event_data},
-        )
-
-    emit(EventType.CHECKS_COMPLETED, {
-        "iteration": iteration,
-        "passed": passed,
-        "failed": len(check_results) - passed,
-        "results": results_data,
-    })
-
-    return format_check_failures(check_results)
-
-
 def _run_iteration(
     config: RunConfig,
     state: RunState,
-    primitives: EnabledPrimitives,
     log_path_dir: Path | None,
-    check_failures_text: str,
     emit: _BoundEmitter,
-) -> tuple[str, bool]:
+) -> bool:
     """Execute one iteration of the agent loop.
 
-    Runs contexts, assembles the prompt, executes the agent, and runs
-    checks.  Returns ``(check_failures_text, should_continue)`` where
-    *check_failures_text* is the feedback for the next iteration and
-    *should_continue* is ``False`` when ``--stop-on-error`` triggers.
+    Returns ``True`` if the loop should continue, ``False`` when
+    ``--stop-on-error`` triggers.
     """
     iteration = state.iteration
 
     emit(EventType.ITERATION_STARTED, {"iteration": iteration})
 
-    # Run contexts (subprocess I/O)
-    context_results: list[ContextResult] = []
-    if primitives.contexts:
-        context_results = run_all_contexts(
-            primitives.contexts, config.project_root, config.ralph_name,
-            user_args=config.ralph_args or None,
+    # Run commands and collect outputs for placeholder resolution
+    command_outputs: dict[str, str] = {}
+    if config.commands:
+        emit(EventType.COMMANDS_STARTED, {"iteration": iteration, "count": len(config.commands)})
+        command_outputs = _run_commands(
+            config.commands, config.ralph_dir, config.project_root,
         )
-        emit(EventType.CONTEXTS_RESOLVED, {"iteration": iteration, "count": len(primitives.contexts)})
+        passed = sum(1 for _ in command_outputs.values())
+        emit(EventType.COMMANDS_COMPLETED, {
+            "iteration": iteration,
+            "passed": passed,
+            "failed": 0,
+        })
 
-    # Assemble prompt (pure text resolution)
-    prompt = _assemble_prompt(
-        config, context_results, check_failures_text,
-    )
+    # Assemble prompt
+    prompt = _assemble_prompt(config, command_outputs)
     emit(EventType.PROMPT_ASSEMBLED, {"iteration": iteration, "prompt_length": len(prompt)})
 
-    returncode = _run_agent_phase(
-        prompt, config, state, log_path_dir, emit,
-    )
+    # Run agent
+    returncode = _run_agent_phase(prompt, config, state, log_path_dir, emit)
 
     if returncode != 0 and config.stop_on_error:
         emit(EventType.LOG_MESSAGE, {"message": "Stopping due to --stop-on-error.", "level": "error"})
-        return check_failures_text, False
+        return False
 
-    if primitives.checks:
-        check_failures_text = _run_checks_phase(
-            primitives.checks, config.project_root, state, emit, config.ralph_name,
-            user_args=config.ralph_args or None,
-        )
-
-    return check_failures_text, True
-
-
-def _rediscover_primitives(
-    config: RunConfig,
-    ralph_dir: Path | None,
-    state: RunState,
-    emit: _BoundEmitter,
-) -> EnabledPrimitives:
-    """Discover primitives from disk, emitting a reload event if explicitly requested.
-
-    This is the single entry point for all primitive discovery in the engine —
-    both the initial discovery at run start and per-iteration re-discovery.
-    When no reload has been requested (e.g. on first call), discovery runs
-    silently without emitting an event.
-    """
-    explicit_reload = state.consume_reload_request()
-    primitives = _discover_enabled_primitives(
-        config.project_root, ralph_dir,
-        global_checks=config.global_checks,
-        global_contexts=config.global_contexts,
-    )
-    if explicit_reload:
-        emit(EventType.PRIMITIVES_RELOADED, {
-            "checks": len(primitives.checks),
-            "contexts": len(primitives.contexts),
-        })
-    return primitives
+    return True
 
 
 def _delay_if_needed(config: RunConfig, state: RunState, emit: _BoundEmitter) -> None:
-    """Sleep between iterations when a delay is configured.
-
-    Skips the delay after the final iteration (when max_iterations is
-    set and we've just completed the last one) to avoid a useless wait.
-    """
+    """Sleep between iterations when a delay is configured."""
     if config.delay > 0 and (
         config.max_iterations is None or state.iteration < config.max_iterations
     ):
@@ -358,12 +228,7 @@ def run_loop(
 ) -> None:
     """Execute the autonomous agent loop.
 
-    This is the core loop extracted from ``cli.py:run()``.  All terminal
-    output is replaced by ``emitter.emit()`` calls so the same logic can
-    drive both CLI and programmatic consumers.
-
-    Orchestration only — the work of each iteration is in
-    :func:`_run_iteration`.
+    Each iteration: run commands → assemble prompt → pipe to agent → repeat.
     """
     if emitter is None:
         emitter = NullEmitter()
@@ -377,34 +242,23 @@ def run_loop(
         log_path_dir = Path(config.log_dir)
         log_path_dir.mkdir(parents=True, exist_ok=True)
 
-    check_failures_text = ""
-    ralph_dir = _resolve_ralph_dir(config)
-    primitives = _rediscover_primitives(config, ralph_dir, state, emit)
-
     emit(EventType.RUN_STARTED, {
-        "checks": len(primitives.checks),
-        "contexts": len(primitives.contexts),
+        "commands": len(config.commands),
         "max_iterations": config.max_iterations,
         "timeout": config.timeout,
         "delay": config.delay,
-        "ralph_name": config.ralph_name,
     })
 
     try:
-        validate_check_scripts(primitives.checks)
         while True:
             if not _handle_control_signals(state, emit):
                 break
-
-            primitives = _rediscover_primitives(config, ralph_dir, state, emit)
 
             state.iteration += 1
             if config.max_iterations is not None and state.iteration > config.max_iterations:
                 break
 
-            check_failures_text, should_continue = _run_iteration(
-                config, state, primitives, log_path_dir, check_failures_text, emit,
-            )
+            should_continue = _run_iteration(config, state, log_path_dir, emit)
             if not should_continue:
                 break
 

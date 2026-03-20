@@ -4,13 +4,13 @@ description: How to write effective RALPH.md prompts for autonomous coding loops
 
 # Writing Prompts
 
-Your `RALPH.md` is the single most important file in a ralph loop. It's the only thing the agent reads each iteration — everything it does follows from what you write here. A good prompt turns an AI coding agent into a productive autonomous worker. A bad one produces noise.
+Your `RALPH.md` is the single most important file in a ralph loop. It defines the agent, the commands, and the prompt — everything the agent reads each iteration follows from what you write here. A good prompt turns an AI coding agent into a productive autonomous worker. A bad one produces noise.
 
 This guide covers the patterns that work, the mistakes that waste iterations, and how to tune your prompt while the loop is running.
 
-## The anatomy of a good prompt
+## The anatomy of a good RALPH.md
 
-Every effective ralph prompt has three parts:
+Every effective ralph has three parts in the prompt body:
 
 ### 1. Role and orientation
 
@@ -33,7 +33,7 @@ Point the agent at something concrete to work on. The most common mistake is bei
 | `Read PLAN.md and implement the next step` | For sequential multi-step work |
 | `Find the module with the lowest test coverage` | For coverage-driven testing |
 | `Read the codebase and find the biggest documentation gap` | For open-ended improvement |
-| `Fix the failing tests` | When checks feed failures back |
+| `Fix the failing tests shown above` | When commands feed failures back |
 
 The key is that the agent can **find work without you telling it what to do each time**. The task source is what makes the loop autonomous.
 
@@ -51,33 +51,90 @@ Constraints are more important than instructions. The agent knows how to code �
 - Do not modify existing tests to make them pass
 ```
 
-Rules prevent the agent from:
+## Using commands for dynamic data
 
-- Doing too much in one iteration (context window bloat, messy commits)
-- Leaving TODO comments instead of writing real code
-- Breaking things it shouldn't touch
-- Committing without validation
+Commands are what make the loop self-healing. Instead of static instructions, you inject live data into every iteration.
+
+### Test feedback loop
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
+---
+
+## Test results
+
+{{ commands.tests }}
+
+Fix any failing tests before starting new work.
+Then read TODO.md and implement the next task.
+```
+
+The agent sees the current test results every iteration. If it broke something in the last iteration, the failure output is right there in the prompt.
+
+### Multiple signals
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
+  - name: lint
+    run: uv run ruff check .
+  - name: git-log
+    run: git log --oneline -10
+  - name: coverage
+    run: uv run pytest --cov=src --cov-report=term-missing -q
+---
+
+## Recent commits
+
+{{ commands.git-log }}
+
+## Test results
+
+{{ commands.tests }}
+
+## Lint status
+
+{{ commands.lint }}
+
+## Coverage
+
+{{ commands.coverage }}
+```
+
+Pick the 2-3 most useful signals. Don't dump everything — each command's output eats into the agent's context window.
 
 ## Patterns that work
 
 ### The TODO-driven loop
 
-Maintain a `TODO.md` that the agent reads and updates each iteration. This gives you a clear task queue and visible progress.
+Maintain a `TODO.md` that the agent reads and updates each iteration.
 
 ```markdown
-# Prompt
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
+---
 
-You are an autonomous coding agent running in a loop. Each iteration
-starts with a fresh context. Your progress lives in the code and git.
+{{ commands.tests }}
 
 Read TODO.md for the current task list. Pick the top uncompleted task,
 implement it fully, then mark it done.
+
+If tests are failing, fix them before starting new work.
 
 ## Rules
 
 - One task per iteration
 - No placeholder code — full implementations only
-- Run `uv run pytest -x` before committing
 - Commit with a descriptive message
 - Mark the completed task in TODO.md
 ```
@@ -86,37 +143,46 @@ implement it fully, then mark it done.
 
 ### The self-healing loop
 
-Rely on [checks](primitives.md#checks) to define "done" and let failures guide the agent. The prompt focuses on the work; the checks handle quality.
+Rely on command output to define "done" and let failures guide the agent.
 
 ```markdown
 ---
-checks: [tests, lint, typecheck]
-contexts: [git-log]
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: uv run pytest -x
+  - name: lint
+    run: uv run ruff check .
+  - name: typecheck
+    run: uv run mypy src/
 ---
 
-# Prompt
+{{ commands.tests }}
 
-{{ contexts.git-log }}
+{{ commands.lint }}
 
-You are an autonomous coding agent. Read PLAN.md and implement the
-next incomplete step. If the previous iteration left failing checks,
-fix those first before moving on.
+{{ commands.typecheck }}
+
+Read PLAN.md and implement the next incomplete step. If any of the
+commands above show failures, fix those first before moving on.
 
 ## Rules
 
-- Fix check failures before starting new work
+- Fix command failures before starting new work
 - One step per iteration
 - Commit each completed step separately
 ```
 
-**Why it works:** Failed checks automatically inject their output into the next iteration. The agent sees exactly what broke and how to fix it. You don't need to write error-handling instructions for every possible failure — the checks do it for you.
+**Why it works:** Failed commands automatically show their output. The agent sees exactly what broke and fixes it. You don't need to write error-handling instructions for every possible failure.
 
 ### The edit-while-running loop
 
-The agent re-reads `RALPH.md` every iteration. This means you can steer the loop in real time by editing the prompt while it runs.
+The agent re-reads `RALPH.md` every iteration. You can steer the loop in real time.
 
 ```markdown
-# Prompt
+---
+agent: claude -p --dangerously-skip-permissions
+---
 
 You are an autonomous agent improving this project's documentation.
 
@@ -135,35 +201,33 @@ curl example and a description of the response format.
 
 **Why it works:** When the agent does something you don't want, you add a constraint. When you want it to shift focus, you edit the "Current focus" section. The next iteration picks up your changes immediately.
 
-### The context-rich loop
+### Parameterized ralphs
 
-Use [contexts](primitives.md#contexts) to give the agent situational awareness without bloating the prompt with static text.
+Use user arguments to make a ralph reusable across different projects or configurations:
 
 ```markdown
 ---
-checks: [tests]
-contexts: [git-log, test-status, open-issues]
+agent: claude -p --dangerously-skip-permissions
+args: [dir, focus]
 ---
 
-# Prompt
+Research the codebase at {{ args.dir }}.
 
-{{ contexts.git-log }}
-
-{{ contexts.test-status }}
-
-{{ contexts.open-issues }}
-
-You are an autonomous bug-fixing agent. Review the open issues and
-test failures above. Pick the most important one and fix it.
+Focus area: {{ args.focus }}
 
 ## Rules
 
-- One fix per iteration
-- Write a regression test for every bug fix
-- Commit with `fix: resolve #<issue-number>`
+- Read the code before making claims
+- Cite specific file paths and line numbers
+- Summarize findings in RESEARCH.md
 ```
 
-**Why it works:** The agent sees fresh data every iteration — what was recently committed, what tests are failing, what issues are open. It makes informed decisions about what to work on without you updating the prompt.
+Run the same ralph against different targets:
+
+```bash
+ralph run research -- --dir ./api --focus "error handling"
+ralph run research -- --dir ./frontend --focus "state management"
+```
 
 ## Anti-patterns to avoid
 
@@ -174,7 +238,7 @@ test failures above. Pick the most important one and fix it.
 Improve the codebase. Make things better.
 ```
 
-The agent doesn't know what "better" means to you. It might refactor code that works fine, add unnecessary abstractions, or reorganize files in ways that break your workflow. Always point at a concrete task source.
+The agent doesn't know what "better" means to you. Always point at a concrete task source.
 
 ### Too many tasks per iteration
 
@@ -184,7 +248,7 @@ Implement user authentication, add rate limiting, write tests for
 both, update the API docs, and deploy to staging.
 ```
 
-One iteration = one task. If the agent tries to do five things, it'll do all of them poorly. The context window fills up, the commit is a mess, and if something breaks you can't tell which change caused it.
+One iteration = one task. If the agent tries to do five things, it'll do all of them poorly.
 
 ### No validation step
 
@@ -193,20 +257,7 @@ One iteration = one task. If the agent tries to do five things, it'll do all of 
 Read TODO.md, implement the next task, and commit.
 ```
 
-Without "run tests before committing", the agent will commit broken code. Then the next iteration starts with a broken codebase, wastes time understanding what went wrong, and may make it worse. Always include a validation step, either in the prompt or via checks.
-
-### Instructions that fight the checks
-
-```markdown
-<!-- DON'T — the lint check already enforces this -->
----
-checks: [lint]
----
-Make sure all code passes ruff lint checks before committing.
-Run `ruff check .` and fix any issues.
-```
-
-If you have a lint check, you don't need lint instructions in the prompt. The check runs automatically, and its failure output tells the agent exactly what to fix. Duplicating the instruction wastes prompt space and can create contradictions if the check command differs from what the prompt says.
+Without "run tests before committing" or a test command, the agent will commit broken code. Always include validation, either in the prompt text or via commands.
 
 ### No commit instructions
 
@@ -215,11 +266,7 @@ If you have a lint check, you don't need lint instructions in the prompt. The ch
 Fix bugs from the issue tracker.
 ```
 
-Ralphify doesn't commit for the agent — the agent must do it. Without explicit commit instructions, some agents won't commit at all, and progress is lost when the next iteration starts fresh. Always include:
-
-```markdown
-- Commit with a descriptive message like `fix: resolve X that caused Y`
-```
+Ralphify doesn't commit for the agent — the agent must do it. Without explicit commit instructions, some agents won't commit at all, and progress is lost when the next iteration starts fresh.
 
 ## Tuning a running loop
 
@@ -255,40 +302,12 @@ Keep your prompt focused. A long prompt with every possible instruction eats int
 Rules of thumb:
 
 - **Core prompt:** 20-50 lines is the sweet spot. Enough to be specific, short enough to leave room for work.
-- **Contexts:** Use `{{ contexts.name }}` placeholders to inject only the data the agent needs. Don't dump everything — pick the 2-3 most useful signals.
+- **Commands:** Pick the 2-3 most useful signals. Don't add commands whose output the agent doesn't need.
 - **User args:** Use `{{ args.name }}` to make ralphs reusable — pass project-specific values from the CLI instead of hardcoding them in the prompt.
-- **Check failure output:** This is injected automatically and can be long. If your checks produce verbose output, consider using scripts that filter to the relevant lines.
-
-## Parameterized ralphs
-
-Use [user arguments](primitives.md#user-arguments) to make a ralph reusable across different projects or configurations:
-
-```markdown
----
-description: Research agent for any codebase
-args: [dir, focus]
----
-
-Research the codebase at {{ args.dir }}.
-
-Focus area: {{ args.focus }}
-
-## Rules
-
-- Read the code before making claims
-- Cite specific file paths and line numbers
-- Summarize findings in RESEARCH.md
-```
-
-Run the same ralph against different projects:
-
-```bash
-ralph run research --dir ./api --focus "error handling"
-ralph run research --dir ./frontend --focus "state management"
-```
+- **Command output:** Can be long. If your commands produce verbose output, consider using scripts that filter to the relevant lines.
 
 ## Next steps
 
 - [Getting Started](getting-started.md) — set up your first loop
-- [Primitives](primitives.md) — full reference for checks, contexts, and ralphs
 - [Cookbook](cookbook.md) — copy-pasteable setups for common use cases
+- [CLI Reference](cli.md) — all commands and options

@@ -8,29 +8,23 @@ Quick orientation guide for anyone working on this codebase — human contributo
 
 ## What this project is
 
-Ralphify is a CLI tool (`ralph`) that runs AI coding agents in autonomous loops. It reads a prompt file, pipes it to an agent command (e.g. `claude -p`), waits for it to finish, then repeats. Each iteration gets a fresh context window. Progress is tracked through git commits.
+Ralphify is a CLI tool (`ralph`) that runs AI coding agents in autonomous loops. It reads a RALPH.md file from a ralph directory, runs commands, assembles a prompt with the output, pipes it to an agent command via stdin, waits for it to finish, then repeats. Each iteration gets a fresh context window. Progress is tracked through git commits.
 
-The core loop is simple. The complexity lives in **prompt assembly** — resolving contexts and check failures into the prompt before each iteration.
+The core loop is simple. The complexity lives in **prompt assembly** — running commands and resolving placeholders into the prompt before each iteration.
 
 ## Directory structure
 
 ```
 src/ralphify/           # All source code
 ├── __init__.py         # Version detection + app entry point
-├── cli.py              # CLI commands (init, run, new) — delegates to engine for the loop
+├── cli.py              # CLI commands (run, new) — delegates to engine for the loop
 ├── engine.py           # Core run loop orchestration with structured event emission
 ├── manager.py          # Multi-run orchestration (concurrent runs via threads)
-├── checks.py           # Discover and run validation checks, format failures
-├── contexts.py         # Discover and run dynamic data contexts, resolve into prompt
-├── ralphs.py           # Named ralph discovery and resolution (resolve_ralph_source)
-├── resolver.py         # Template placeholder resolution (used by contexts)
-├── detector.py         # Auto-detect project type from manifest files
+├── resolver.py         # Template placeholder resolution ({{ commands.* }}, {{ args.* }})
 ├── _agent.py           # Run agent subprocesses (streaming + blocking modes, log writing)
-├── _run_types.py       # RunConfig, RunState, RunStatus — shared data types for the engine
-├── _runner.py          # Execute shell commands with timeout and capture output (checks/contexts)
-├── _frontmatter.py     # Parse YAML frontmatter from markdown primitives, marker/config constants
-├── _discovery.py       # Primitive protocol, directory scanning, merge_by_name, find_run_script
-├── _templates.py       # Scaffold templates for init and new commands
+├── _run_types.py       # RunConfig, RunState, RunStatus, Command — shared data types
+├── _runner.py          # Execute shell commands with timeout and capture output
+├── _frontmatter.py     # Parse YAML frontmatter from RALPH.md, marker constants
 ├── _skills.py          # Skill installation and agent detection for `ralph new`
 ├── _console_emitter.py # Rich console renderer for run-loop events (ConsoleEmitter)
 ├── _events.py          # Event types and emitter protocol (NullEmitter, QueueEmitter, FanoutEmitter)
@@ -49,47 +43,34 @@ docs/contributing/      # Contributor documentation (this section)
 
 ## Architecture: how the pieces connect
 
-The CLI entry point is `cli.py:run()`, which parses options, resolves the prompt source via `ralphs.py:resolve_ralph_source()`, and delegates to `engine.py:run_loop()` for the actual iteration cycle. The engine emits structured events via an `EventEmitter`, making the same loop reusable from both the CLI and any external orchestration layer (such as `manager.py`).
+The CLI entry point is `cli.py:run()`, which parses options, reads the ralph directory path, and delegates to `engine.py:run_loop()` for the actual iteration cycle. The engine emits structured events via an `EventEmitter`, making the same loop reusable from both the CLI and any external orchestration layer (such as `manager.py`).
 
 ```
-ralph run
+ralph run my-ralph
   │
   ├── cli.py:run() — parse options, print banner
-  │   ├── Load config from ralph.toml
-  │   ├── Resolve prompt via ralphs.resolve_ralph_source() (name > file path > toml)
+  │   ├── Read RALPH.md from the given directory
+  │   ├── Parse frontmatter (agent, commands, args)
   │   └── Build RunConfig and call engine.run_loop()
   │
   └── engine.py:run_loop(config, state, emitter)
-       ├── Discover checks, contexts from .ralphify/
        └── Loop:
-            ├── Read RALPH.md
-            ├── Run contexts → resolve {{ contexts.* }} placeholders
-            ├── Append check failures from previous iteration (if any)
+            ├── Re-read RALPH.md from disk
+            ├── Run commands → capture output
+            ├── Resolve {{ commands.* }} and {{ args.* }} placeholders
             ├── Pipe assembled prompt to agent command via subprocess
             ├── Emit iteration events (started, completed, failed, timed_out)
-            ├── Run checks → emit check events → format failures for next iteration
-            ├── Handle pause/resume/stop/reload requests via RunState
+            ├── Handle pause/resume/stop requests via RunState
             └── Repeat
 ```
 
-### The three primitives and the `Primitive` protocol
-
-All three primitive types follow the same pattern: a directory under `.ralphify/` with a marker markdown file containing YAML frontmatter. Each type's dataclass (`Check`, `Context`, `Ralph`) satisfies the `Primitive` protocol defined in `_discovery.py`, which requires `name` and `enabled` properties. This enables type-safe generic functions for discovery, filtering, merging, and display — the engine's `_discover_enabled_primitives()` helper uses the protocol to handle all three types through a single code path.
-
-| Primitive | Marker file | Runs | Injects into prompt |
-|---|---|---|---|
-| Check | `CHECK.md` | After iteration | Failures appended to next prompt |
-| Context | `CONTEXT.md` | Before iteration | Output replaces `{{ contexts.name }}` |
-| Ralph | `RALPH.md` | At run start | Replaces root RALPH.md when selected by name |
-
-Discovery is handled by `_discovery.py:discover_primitives()` which scans `.ralphify/{kind}/*/` for marker files. The engine groups enabled primitives into an `EnabledPrimitives` NamedTuple for clean parameter passing.
-
 ### Placeholder resolution
 
-Contexts use the resolver (`resolver.py:resolve_placeholders()`):
+The resolver (`resolver.py:resolve_placeholders()`) handles:
 
-- `{{ contexts.git-log }}` — named placement for a specific context
-- Contexts not referenced by name are excluded from the prompt
+- `{{ commands.tests }}` — replaced with the test command's output
+- `{{ args.dir }}` — replaced with the user argument value
+- Unmatched placeholders resolve to empty string
 
 ### Event system
 
@@ -97,14 +78,14 @@ The run loop communicates via structured events (`_events.py`). Each event has a
 
 - **`EventEmitter`** — protocol that any listener implements (just an `emit(event)` method)
 - **`NullEmitter`** — discards events (used in tests)
-- **`QueueEmitter`** — pushes events into a `queue.Queue` for async consumption (used by external orchestration layers)
-- **`FanoutEmitter`** — broadcasts events to multiple emitters (used by the manager for fan-out to queue + persistence)
+- **`QueueEmitter`** — pushes events into a `queue.Queue` for async consumption
+- **`FanoutEmitter`** — broadcasts events to multiple emitters
 
 The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders events to the terminal with Rich formatting.
 
 ### Multi-run management
 
-`manager.py:RunManager` orchestrates concurrent runs, providing the building blocks for any external orchestration layer:
+`manager.py:RunManager` orchestrates concurrent runs:
 
 - Creates runs with unique IDs and wraps them in `ManagedRun` (config + state + emitter + thread)
 - Starts each run in a daemon thread via `engine.run_loop()`
@@ -114,51 +95,33 @@ The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders 
 ## Key files to understand first
 
 1. **`engine.py`** — The core run loop. Uses `RunConfig` and `RunState` (from `_run_types.py`) and `EventEmitter`. This is where iteration logic lives.
-2. **`_run_types.py`** — `RunConfig`, `RunState`, and `RunStatus`. These are the shared data types used by the engine, CLI, and manager. Separated so modules that only need the types don't pull in execution logic.
-3. **`cli.py`** — All CLI commands. Delegates to `engine.run_loop()` for the actual loop. Prompt source resolution (name vs. file path) lives in `ralphs.py:resolve_ralph_source()`. Scaffold templates live in `_templates.py`. Terminal event rendering lives in `_console_emitter.py`.
-4. **`_frontmatter.py`** + **`_discovery.py`** — Frontmatter parsing and primitive discovery. `_frontmatter.py` handles YAML parsing and defines marker constants. `_discovery.py` defines the `Primitive` protocol, scans `.ralphify/` directories, and provides `merge_by_name()` for overlaying ralph-scoped primitives on globals. Understanding both is essential for working on checks/contexts/ralphs.
-5. **`resolver.py`** — Template placeholder logic used by contexts. Small file but critical.
-6. **`_skills.py`** + **`skills/`** — The skill system behind `ralph new`. `_skills.py` handles agent detection (from `ralph.toml` or PATH), reads bundled skill definitions from `skills/`, installs them into the agent's skill directory (e.g. `.claude/skills/`), and builds the command to launch the agent with the skill invoked. The `skills/new-ralph/` directory contains the `SKILL.md` that guides the agent through creating a complete ralph with checks and contexts.
+2. **`_run_types.py`** — `RunConfig`, `RunState`, `RunStatus`, and `Command`. These are the shared data types used by the engine, CLI, and manager.
+3. **`cli.py`** — All CLI commands. Delegates to `engine.run_loop()` for the actual loop. Terminal event rendering lives in `_console_emitter.py`.
+4. **`_frontmatter.py`** — YAML frontmatter parsing. Extracts `agent`, `commands`, `args` from the RALPH.md file.
+5. **`resolver.py`** — Template placeholder logic. Small file but critical.
+6. **`_skills.py`** + **`skills/`** — The skill system behind `ralph new`. `_skills.py` handles agent detection, reads bundled skill definitions from `skills/`, installs them into the agent's skill directory, and builds the command to launch the agent.
 
 ## Traps and gotchas
 
-### If you change the primitive marker filenames...
-
-The marker file names (`CHECK.md`, `CONTEXT.md`, `RALPH.md`) are defined as constants in `_frontmatter.py` (`CHECK_MARKER`, `CONTEXT_MARKER`, `RALPH_MARKER`). The primitives directory name is `PRIMITIVES_DIR`. All modules — `checks.py`, `contexts.py`, `ralphs.py`, and `cli.py` — import from there. Change the constant to rename everywhere.
-
 ### If you change frontmatter fields...
 
-Frontmatter parsing is in `_frontmatter.py:parse_frontmatter()` but the field names are consumed in each module's `discover_*()` function. The `timeout` and `enabled` fields get special type coercion in `parse_frontmatter()` — adding a new typed field requires updating the coercion logic there.
+Frontmatter parsing is in `_frontmatter.py:parse_frontmatter()`. The field names are consumed in `cli.py` and `engine.py`. Adding a new typed field may require updating the coercion logic in `parse_frontmatter()`.
 
 ### If you add a new CLI command...
 
-Add it in `cli.py`. The CLI uses Typer. The `new` subcommand group uses `app.add_typer()`. Update `docs/cli.md` to document the new command.
-
-### If you add a new primitive type...
-
-You need to:
-
-1. Create a new module (like `ralphs.py`) with a dataclass that satisfies the `Primitive` protocol (`name` and `enabled` properties), plus discover and resolve functions
-2. Add a scaffold template in `_templates.py` and a `new` subcommand in `cli.py`
-3. Wire it into `engine.py:run_loop()` — add it to `EnabledPrimitives` and use `_discover_enabled_primitives()`
-4. Add tests
-5. Update `docs/primitives.md`
-
-### If you add support for a new agent in `ralph new`...
-
-The `_AGENTS` dict in `_skills.py` is the single source of truth for agent-specific skill settings (`skill_dir` and `skill_prefix`). Add one entry there — `detect_agent()`, `install_skill()`, and `build_agent_command()` all use it automatically. No other changes needed unless the new agent requires a different invocation pattern.
+Add it in `cli.py`. The CLI uses Typer. Update `docs/cli.md` to document the new command.
 
 ### If you change the event system...
 
-Events are defined in `_events.py:EventType`. The `ConsoleEmitter` in `_console_emitter.py` renders them to the terminal. External consumers can use `QueueEmitter` or implement the `EventEmitter` protocol. Adding a new event type requires handling it in `ConsoleEmitter` and any other active emitters.
+Events are defined in `_events.py:EventType`. The `ConsoleEmitter` in `_console_emitter.py` renders them to the terminal. Adding a new event type requires handling it in `ConsoleEmitter` and any other active emitters.
 
 ### Output truncation
 
-`_output.py:truncate_output()` caps output at 5000 chars. This affects check failure output injected into prompts. If agents complain about missing error details, this is why.
+`_output.py:truncate_output()` caps output at 5000 chars. This affects command output injected into prompts. If agents complain about missing error details, this is why.
 
-### The `run.*` script convention
+### Command parsing
 
-Checks and contexts can use either a `command` in frontmatter or a `run.*` script file in the primitive directory. If both exist, the script wins. This is handled by `_discovery.py:find_run_script()`.
+Commands in RALPH.md frontmatter are parsed with `shlex.split()` — no shell features. For shell features, users point the `run` field at a script.
 
 ## Testing
 

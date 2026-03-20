@@ -38,25 +38,6 @@ uv run pytest -v        # Verbose output
 
 Tests use temporary directories and have no external dependencies — no API keys, no network access, no Docker.
 
-### Test structure
-
-```
-tests/
-├── conftest.py            # Shared fixtures (disables streaming path for all tests)
-├── test_checks.py         # Check discovery and execution
-├── test_cli.py            # CLI commands (init, run, new)
-├── test_contexts.py       # Context discovery and injection
-├── test_detector.py       # Project type detection
-├── test_discovery.py      # Primitive directory scanning
-├── test_engine.py         # Core run loop and RunState/RunConfig
-├── test_manager.py        # Multi-run orchestration
-├── test_output.py         # Output combining and truncation
-├── test_ralphs.py         # Named ralph discovery and resolution
-├── test_resolver.py       # Template placeholder resolution
-├── test_runner.py         # Command execution with timeout
-├── test_skills.py         # Agent skill integration
-```
-
 When adding a new feature, add tests in the corresponding file. If you're adding a new module, create a matching `test_<module>.py` file.
 
 ## Working on documentation
@@ -79,36 +60,9 @@ uv run mkdocs build --strict
 
 The `--strict` flag treats warnings as errors. The CI pipeline uses this flag, so make sure your changes build cleanly before submitting.
 
-### Docs structure
-
-```
-docs/
-├── index.md              # Landing page
-├── when-to-use.md        # Use case guide — when loops fit vs. don't fit
-├── getting-started.md    # Step-by-step tutorial
-├── how-it-works.md       # Iteration lifecycle explanation
-├── writing-prompts.md    # Patterns for effective autonomous loop prompts
-├── agents.md             # Setup guides for different agents
-├── cookbook.md            # Complete copy-pasteable setups
-├── quick-reference.md    # Condensed cheat sheet (bookmark this one)
-├── primitives.md         # Checks, contexts, ralphs reference
-├── cli.md                # Configuration and CLI reference
-├── api.md                # Python library reference (run_loop, RunConfig, events)
-├── troubleshooting.md    # Troubleshooting and FAQ
-├── contributing/         # Contributor docs (this section)
-│   ├── index.md          # This page
-│   └── codebase-map.md   # Architecture and module guide
-├── changelog.md          # Version history
-├── assets/               # Images and favicon
-├── stylesheets/          # Custom CSS (extra.css)
-└── overrides/            # MkDocs theme overrides (announcement bar, OG tags)
-```
-
-Navigation is configured in `mkdocs.yml`. If you add a new page, add it to the `nav` section there.
-
 ## Working on the website
 
-The deployed site at `computerlovetech.github.io/ralphify/` combines two pieces: a static **landing page** (`website/`) and the **MkDocs docs** (`docs/`). The `docs.yml` GitHub Actions workflow builds both and deploys them together to GitHub Pages.
+The deployed site combines a static **landing page** (`website/`) and the **MkDocs docs** (`docs/`). The `docs.yml` GitHub Actions workflow builds both and deploys them together to GitHub Pages.
 
 ### Local preview
 
@@ -118,31 +72,6 @@ Use the [justfile](https://github.com/casey/just) for common build tasks:
 just docs-preview         # MkDocs dev server at http://127.0.0.1:8000
 just website-build        # Build the full combined site to _site/
 just website-preview      # Build + serve at http://127.0.0.1:8080
-```
-
-`just docs-preview` is the same as `uv run mkdocs serve` — use it when working only on docs. `just website-preview` builds the complete site (landing page at the root, docs under `/docs/`) so you can test cross-links between the landing page and the docs.
-
-### Docker
-
-A `Dockerfile` builds the combined site and serves it via nginx on port 3000:
-
-```bash
-docker build -t ralphify-site .
-docker run -p 3000:3000 ralphify-site
-```
-
-This mirrors the production build — useful for verifying the site works end-to-end before pushing.
-
-### Site structure after build
-
-```
-_site/
-├── index.html            # Landing page (from website/)
-├── styles.css            # Landing page styles
-└── docs/                 # MkDocs output
-    ├── index.html
-    ├── getting-started/
-    └── ...
 ```
 
 ## Submitting changes
@@ -195,7 +124,7 @@ Think carefully before adding a new dependency. If it can be done with the stand
 Releases are published to PyPI automatically when a GitHub release is created:
 
 1. Update the version in `pyproject.toml`
-2. Create a GitHub release with a tag matching the version (e.g. `v0.1.4`)
+2. Create a GitHub release with a tag matching the version (e.g. `v0.2.0`)
 3. The `publish.yml` workflow runs tests, builds the package, verifies the version matches the tag, and publishes to PyPI
 
 Docs deploy automatically to GitHub Pages on every push to `main` that changes files in `docs/` or `mkdocs.yml`.

@@ -4,25 +4,15 @@ from __future__ import annotations
 
 import importlib.resources
 import shutil
-import tomllib
 from pathlib import Path
 from typing import NamedTuple
 
-from ralphify._frontmatter import CONFIG_FILENAME
-
 
 class DetectedAgent(NamedTuple):
-    """Result of agent auto-detection.
-
-    Returned by :func:`detect_agent` so call sites can access fields by
-    name instead of unpacking a positional tuple.
-    """
+    """Result of agent auto-detection."""
 
     name: str
-    """The agent binary name (e.g. ``"claude"``)."""
-
     path: str
-    """The resolved filesystem path from :func:`shutil.which`."""
 
 
 class _AgentConfig(NamedTuple):
@@ -33,8 +23,6 @@ class _AgentConfig(NamedTuple):
     extra_flags: tuple[str, ...] = ()
 
 
-# Single source of truth for agent-specific skill settings.
-# To add a new agent, add one entry here — no other changes needed.
 _AGENTS: dict[str, _AgentConfig] = {
     "claude": _AgentConfig(
         skill_dir=".claude/skills",
@@ -46,13 +34,7 @@ _AGENTS: dict[str, _AgentConfig] = {
 
 
 def _get_agent_config(agent_name: str) -> _AgentConfig:
-    """Look up agent-specific skill settings by name.
-
-    Raises ``RuntimeError`` if *agent_name* is not in the supported set.
-    Used by both :func:`install_skill` and :func:`build_agent_command` so
-    the error path is consistent — unknown agents always raise, never
-    silently fall back.
-    """
+    """Look up agent-specific skill settings by name."""
     config = _AGENTS.get(agent_name)
     if config is None:
         raise RuntimeError(
@@ -62,10 +44,7 @@ def _get_agent_config(agent_name: str) -> _AgentConfig:
 
 
 def read_bundled_skill(skill_name: str) -> str:
-    """Read a bundled SKILL.md from the ``ralphify.skills`` package.
-
-    Raises ``FileNotFoundError`` if the skill does not exist.
-    """
+    """Read a bundled SKILL.md from the ``ralphify.skills`` package."""
     pkg = importlib.resources.files("ralphify.skills").joinpath(skill_name, "SKILL.md")
     return pkg.read_text(encoding="utf-8")
 
@@ -73,46 +52,24 @@ def read_bundled_skill(skill_name: str) -> str:
 def detect_agent() -> DetectedAgent:
     """Detect the agent binary to use.
 
-    Resolution order:
-    1. ``ralph.toml`` ``[agent].command``
-    2. Auto-detect on PATH: ``claude``, then ``codex``
+    Auto-detects on PATH: ``claude``, then ``codex``.
 
     Returns a :class:`DetectedAgent` with the binary name and resolved path.
-
     Raises ``RuntimeError`` when no agent can be found.
     """
-    config_path = Path(CONFIG_FILENAME)
-    if config_path.exists():
-        with open(config_path, "rb") as f:
-            config = tomllib.load(f)
-        command = config.get("agent", {}).get("command")
-        if command:
-            resolved = shutil.which(command)
-            if resolved:
-                return DetectedAgent(command, resolved)
-
     for name in _AGENTS:
         resolved = shutil.which(name)
         if resolved:
             return DetectedAgent(name, resolved)
 
     raise RuntimeError(
-        "No agent found. Install Claude Code or Codex, or set [agent].command in ralph.toml."
+        "No agent found. Install Claude Code or Codex."
     )
 
 
 def install_skill(skill_name: str, agent_name: str) -> Path:
-    """Install a bundled skill into the agent's skill directory.
-
-    Always overwrites so the skill stays in sync with the installed
-    ralphify version.
-
-    Returns the path to the installed SKILL.md.
-
-    Raises ``RuntimeError`` for unknown agent names.
-    """
+    """Install a bundled skill into the agent's skill directory."""
     agent_config = _get_agent_config(agent_name)
-
     content = read_bundled_skill(skill_name)
     dest = Path(agent_config.skill_dir) / skill_name / "SKILL.md"
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -121,12 +78,7 @@ def install_skill(skill_name: str, agent_name: str) -> Path:
 
 
 def build_agent_command(agent_name: str, skill_name: str, ralph_name: str | None) -> list[str]:
-    """Build the command to launch the agent with the skill invoked.
-
-    Returns a list suitable for ``os.execvp``.
-
-    Raises ``RuntimeError`` for unknown agent names.
-    """
+    """Build the command to launch the agent with the skill invoked."""
     agent_config = _get_agent_config(agent_name)
     invocation = f"{agent_config.skill_prefix}{skill_name}"
     if ralph_name:
