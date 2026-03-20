@@ -6,6 +6,14 @@ description: Ralphify release history — new features, bug fixes, and breaking 
 
 All notable changes to ralphify are documented here.
 
+## 0.1.12 — 2026-03-20
+
+### Changed
+
+- **New tagline** — updated project tagline to "Stop stressing over not having an agent running. Ralph is always running" across CLI, PyPI, and docs.
+
+---
+
 ## 0.1.11 — 2026-03-18
 
 ### Improved

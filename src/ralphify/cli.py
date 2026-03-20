@@ -53,7 +53,7 @@ BANNER_LINES = [
     "╚═╝░░╚═╝╚═╝░░╚═╝╚══════╝╚═╝░░░░░╚═╝░░╚═╝╚═╝╚═╝░░░░░░░░╚═╝░░░",
 ]
 
-TAGLINE = "Harness toolkit for autonomous AI coding loops"
+TAGLINE = "Stop stressing over not having an agent running. Ralph is always running"
 
 
 BANNER_COLORS = [
@@ -96,7 +96,7 @@ def main_callback(
     ctx: typer.Context,
     version: bool = typer.Option(False, "--version", "-V", help="Show version and exit.", callback=_version_callback, is_eager=True),
 ) -> None:
-    """Harness toolkit for autonomous AI coding loops."""
+    """Stop stressing over not having an agent running. Ralph is always running."""
     if ctx.invoked_subcommand is None:
         _print_banner()
         rprint(ctx.get_help())
