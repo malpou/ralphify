@@ -14,6 +14,13 @@ from enum import Enum
 from pathlib import Path
 
 
+DEFAULT_COMMAND_TIMEOUT: int = 60
+"""Default timeout in seconds for commands defined in RALPH.md frontmatter."""
+
+RUN_ID_LENGTH: int = 12
+"""Number of hex characters used for generated run IDs."""
+
+
 class RunStatus(Enum):
     """Lifecycle status of a run.
 
@@ -36,7 +43,7 @@ class Command:
 
     name: str
     run: str
-    timeout: int = 60
+    timeout: int = DEFAULT_COMMAND_TIMEOUT
 
 
 @dataclass

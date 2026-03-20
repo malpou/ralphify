@@ -8,6 +8,7 @@ from unittest.mock import patch
 from conftest import MOCK_SUBPROCESS, drain_events, make_config, ok_result
 
 from ralphify._events import Event, EventType, FanoutEmitter, QueueEmitter
+from ralphify._run_types import RUN_ID_LENGTH
 from ralphify._run_types import RunStatus
 from ralphify.manager import ManagedRun, RunManager
 
@@ -38,7 +39,7 @@ class TestRunManagerCreateRun:
         managed = manager.create_run(config)
 
         run_id = managed.state.run_id
-        assert len(run_id) == 12
+        assert len(run_id) == RUN_ID_LENGTH
         assert all(c in "0123456789abcdef" for c in run_id)
 
 

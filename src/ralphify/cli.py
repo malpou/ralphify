@@ -19,7 +19,7 @@ from rich.console import Console
 from ralphify import __version__
 from ralphify._console_emitter import ConsoleEmitter
 from ralphify._frontmatter import RALPH_MARKER, parse_frontmatter
-from ralphify._run_types import Command, RunConfig, RunState
+from ralphify._run_types import Command, DEFAULT_COMMAND_TIMEOUT, RUN_ID_LENGTH, RunConfig, RunState
 from ralphify.engine import run_loop
 
 if sys.platform == "win32":
@@ -201,7 +201,7 @@ def _build_run_config(
         commands.append(Command(
             name=cmd_def["name"],
             run=cmd_def["run"],
-            timeout=cmd_def.get("timeout", 60),
+            timeout=cmd_def.get("timeout", DEFAULT_COMMAND_TIMEOUT),
         ))
 
     # Parse user args
@@ -254,7 +254,7 @@ def run(
     if log_dir:
         rprint(f"[dim]Logging output to {log_dir}/[/dim]")
 
-    state = RunState(run_id=uuid.uuid4().hex[:12])
+    state = RunState(run_id=uuid.uuid4().hex[:RUN_ID_LENGTH])
     emitter = ConsoleEmitter(_console)
 
     run_loop(config, state, emitter)
