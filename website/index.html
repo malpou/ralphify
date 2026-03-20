@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ralphify — Put your AI coding agent in a while True loop</title>
+  <title>Ralphify — Stop stressing. Ralph is always running.</title>
   <meta name="description" content="Ralphify runs your AI coding agent in an autonomous loop. Pipe a prompt, validate with checks, and let the self-healing feedback cycle ship your code.">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Ralphify — Put your AI coding agent in a while True loop">
+  <meta property="og:title" content="Ralphify — Stop stressing. Ralph is always running.">
   <meta property="og:description" content="Ralphify runs your AI coding agent in an autonomous loop. Pipe a prompt, validate with checks, and let the self-healing feedback cycle ship your code.">
   <meta property="og:url" content="https://computerlovetech.github.io/ralphify/">
   <meta property="og:site_name" content="Ralphify">
@@ -20,7 +20,7 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Ralphify — Put your AI coding agent in a while True loop">
+  <meta name="twitter:title" content="Ralphify — Stop stressing. Ralph is always running.">
   <meta name="twitter:description" content="Ralphify runs your AI coding agent in an autonomous loop. Pipe a prompt, validate with checks, and let the self-healing feedback cycle ship your code.">
   <meta name="twitter:image" content="https://computerlovetech.github.io/ralphify/docs/assets/cli-banner.png">
   <meta name="twitter:image:alt" content="Ralphify CLI showing an autonomous AI coding loop with three iterations — the agent detects a test failure and self-corrects">
@@ -28,7 +28,7 @@
   <meta name="theme-color" content="#8B6CF0">
   <link rel="canonical" href="https://computerlovetech.github.io/ralphify/">
   <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>∞</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x221e;</text></svg>">
 
   <!-- Structured data -->
   <script type="application/ld+json">
@@ -122,7 +122,7 @@
     "@context": "https://schema.org",
     "@type": "HowTo",
     "name": "How to run an AI coding agent in an autonomous loop with Ralphify",
-    "description": "Install Ralphify, initialize your project, and start an autonomous AI coding loop that validates and self-corrects every iteration.",
+    "description": "Install Ralphify, create a ralph, and start an autonomous AI coding loop that validates and self-corrects every iteration.",
     "totalTime": "PT2M",
     "tool": {
       "@type": "HowToTool",
@@ -143,11 +143,11 @@
       {
         "@type": "HowToStep",
         "position": 2,
-        "name": "Initialize your project",
-        "text": "Run ralph init in your project directory to create a ralph.toml config file and a RALPH.md prompt file.",
+        "name": "Create a ralph",
+        "text": "Run ralph new in your project directory to create a RALPH.md prompt file.",
         "itemListElement": {
           "@type": "HowToDirection",
-          "text": "Run: ralph init"
+          "text": "Run: ralph new"
         }
       },
       {
@@ -167,9 +167,10 @@
 </head>
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <header>
     <nav aria-label="Main navigation">
-      <a href="./" class="logo">∞ Ralphify</a>
+      <a href="./" class="logo" aria-label="Ralphify home"><span class="logo-symbol">&#x221e;</span> Ralphify</a>
       <div class="nav-links">
         <a href="docs/">Docs</a>
         <a href="https://github.com/computerlovetech/ralphify" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -179,9 +180,23 @@
   </header>
 
   <main id="main-content">
+
+    <!-- ── Hero ──────────────────────────────────────────── -->
     <section class="hero" aria-label="Introduction">
-      <h1>Put your AI coding agent in a <code>while True</code> loop and let it ship.</h1>
-      <p class="subtitle">Ralphify is a minimal CLI harness for autonomous AI coding loops. Pipe a prompt to an agent, validate with checks, repeat.</p>
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="ascii-banner" aria-hidden="true">
+        <div class="ascii-line l1">&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9619;&#9617;&#9617;&#9608;&#9608;&#9608;&#9608;&#9608;&#9619;&#9617;&#9608;&#9608;&#9619;&#9617;&#9617;&#9617;&#9617;&#9617;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9619;&#9617;&#9608;&#9608;&#9619;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9617;&#9617;&#9617;&#9608;&#9608;&#9619;</div>
+        <div class="ascii-line l2">&#9608;&#9608;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9617;&#9617;&#9617;&#9617;&#9617;&#9608;&#9608;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9608;&#9608;&#9617;&#9604;&#9604;&#9604;&#9604;&#9619;&#9617;&#9608;&#9608;&#9619;&#9617;&#9608;&#9608;&#9617;&#9618;</div>
+        <div class="ascii-line l3">&#9608;&#9608;&#9608;&#9608;&#9608;&#9617;&#9618;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9617;&#9617;&#9617;&#9617;&#9617;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9617;&#9618;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9608;&#9608;&#9608;&#9608;&#9608;&#9619;&#9617;&#9617;&#9617;&#9608;&#9608;&#9608;&#9608;&#9617;&#9618;</div>
+        <div class="ascii-line l4">&#9608;&#9608;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9617;&#9617;&#9617;&#9617;&#9617;&#9608;&#9608;&#9617;&#9604;&#9604;&#9604;&#9619;&#9617;&#9608;&#9608;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9608;&#9608;&#9617;&#9617;&#9604;&#9619;&#9617;&#9617;&#9617;&#9617;&#9608;&#9608;&#9617;&#9618;&#9617;</div>
+        <div class="ascii-line l5">&#9608;&#9608;&#9619;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9617;&#9617;&#9617;&#9617;&#9617;&#9608;&#9608;&#9619;&#9617;&#9617;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9608;&#9608;&#9619;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9608;&#9608;&#9619;&#9617;&#9617;</div>
+        <div class="ascii-line l6">&#9604;&#9604;&#9619;&#9617;&#9617;&#9604;&#9604;&#9619;&#9604;&#9604;&#9619;&#9617;&#9617;&#9604;&#9604;&#9619;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9604;&#9617;&#9604;&#9604;&#9619;&#9617;&#9617;&#9617;&#9617;&#9617;&#9604;&#9604;&#9619;&#9617;&#9617;&#9604;&#9604;&#9619;&#9604;&#9604;&#9619;&#9604;&#9604;&#9619;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9617;&#9604;&#9604;&#9619;&#9617;&#9617;</div>
+      </div>
+
+      <p class="tagline">Stop stressing over not having an agent running.</p>
+      <h1 class="tagline-punch">Ralph is always running <span class="runner" aria-hidden="true">&#x1F3C3;</span></h1>
+      <p class="subtitle">Put your AI coding agent in a <code>while True</code> loop.<br>Write a prompt. Point it at an agent. Walk away.</p>
+
       <div class="cta">
         <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
         <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
@@ -189,160 +204,213 @@
       <p class="agent-compat">Works with <a href="docs/agents/">Claude Code</a>, <a href="docs/agents/">Aider</a>, <a href="docs/agents/">Codex CLI</a>, and <a href="docs/agents/">any CLI agent</a></p>
     </section>
 
+    <!-- ── The scene ─────────────────────────────────────── -->
+    <section class="scene" aria-labelledby="scene-heading">
+      <h2 id="scene-heading" class="sr-only">The scene</h2>
+      <div class="scene-content">
+        <div class="scene-text">
+          <p class="scene-setup">Everyone's running AI coding agents now.</p>
+          <p class="scene-problem">But every time yours finishes a task&hellip; it stops. You re-read the output. You re-type the prompt. You re-run the command. Again.</p>
+          <p class="scene-solution">What if your agent just <em>kept going</em>?</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Terminal demo ─────────────────────────────────── -->
     <figure class="terminal" aria-label="CLI demo">
-      <div class="terminal-window" role="img" aria-label="Terminal showing ralph init and ralph run commands with three iterations — iteration 2 fails a test, iteration 3 automatically fixes it">
+      <div class="terminal-window" role="img" aria-label="Terminal showing ralph new and ralph run commands with three iterations — iteration 2 fails a test, iteration 3 automatically fixes it">
         <div class="terminal-header">
           <span class="terminal-dot red"></span>
           <span class="terminal-dot yellow"></span>
           <span class="terminal-dot green"></span>
+          <span class="terminal-title">ralph</span>
         </div>
-        <pre><code><span class="prompt">$</span> ralph init
-<span class="dim">Created ralph.toml + RALPH.md</span>
+        <pre><code><span class="prompt">$</span> ralph new
+<span class="dim">Created RALPH.md</span>
 
 <span class="prompt">$</span> ralph run -n 3
-<span class="dim">── Iteration 1 ──</span>
-<span class="success">✓</span> Iteration 1 completed (52.3s)
+<span class="dim">&boxdr;&boxh; Iteration 1 &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;</span>
+<span class="success">&#x2713;</span> Iteration 1 completed <span class="dim">(52.3s)</span>
   Checks: 2 passed
-    <span class="success">✓</span> lint
-    <span class="success">✓</span> tests
+    <span class="success">&#x2713;</span> lint
+    <span class="success">&#x2713;</span> tests
 
-<span class="dim">── Iteration 2 ──</span>
-<span class="fail">✗</span> Iteration 2 failed with exit code 1 (23.1s)
+<span class="dim">&boxdr;&boxh; Iteration 2 &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;</span>
+<span class="fail">&#x2717;</span> Iteration 2 failed with exit code 1 <span class="dim">(23.1s)</span>
   Checks: 1 passed, 1 failed
-    <span class="success">✓</span> lint
-    <span class="fail">✗</span> tests (exit 1)
+    <span class="success">&#x2713;</span> lint
+    <span class="fail">&#x2717;</span> tests <span class="dim">(exit 1)</span>
 
-<span class="dim">── Iteration 3 ──</span>
-<span class="success">✓</span> Iteration 3 completed (41.7s)
+<span class="dim">&boxdr;&boxh; Iteration 3 &boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;</span>
+<span class="success">&#x2713;</span> Iteration 3 completed <span class="dim">(41.7s)</span>
   Checks: 2 passed
-    <span class="success">✓</span> lint
-    <span class="success">✓</span> tests
+    <span class="success">&#x2713;</span> lint
+    <span class="success">&#x2713;</span> tests
 
-<span class="dim">Done: 3 iteration(s) — 2 succeeded, 1 failed</span></code></pre>
+<span class="dim">Done: 3 iteration(s) &mdash; 2 succeeded, 1 failed</span></code></pre>
       </div>
-      <figcaption class="terminal-caption">Iteration 2 broke a test. Iteration 3 saw the failure and fixed it — that's the self-healing loop.</figcaption>
+      <figcaption class="terminal-caption">Iteration 2 broke a test. Iteration 3 saw the failure and fixed it. That's the loop.</figcaption>
     </figure>
 
-    <hr>
-
+    <!-- ── How the loop works ────────────────────────────── -->
     <section class="how-it-works" aria-labelledby="how-it-works-heading">
-      <h2 id="how-it-works-heading">How the AI coding agent loop works</h2>
-      <p class="how-subtitle">Every iteration of the autonomous AI coding cycle follows the same three steps. The agent always starts fresh — no conversation history, no stale context.</p>
+      <h2 id="how-it-works-heading">The loop</h2>
+      <p class="section-subtitle">Three steps, every iteration. Fresh context, no conversation history, no drift.</p>
+      <div class="loop-visual" aria-hidden="true">
+        <div class="loop-track">
+          <div class="loop-step-wrap">
+            <div class="loop-node">1</div>
+            <div class="loop-label">Assemble prompt</div>
+          </div>
+          <div class="loop-connector"></div>
+          <div class="loop-step-wrap">
+            <div class="loop-node">2</div>
+            <div class="loop-label">Pipe to agent</div>
+          </div>
+          <div class="loop-connector"></div>
+          <div class="loop-step-wrap">
+            <div class="loop-node">3</div>
+            <div class="loop-label">Repeat</div>
+          </div>
+        </div>
+      </div>
       <div class="steps">
         <div class="step">
           <div class="step-number">1</div>
-          <h3>Read prompt + contexts</h3>
-          <p>Ralphify reads your <a href="docs/writing-prompts/"><code>RALPH.md</code> prompt</a>, runs <a href="docs/primitives/">context commands</a> (git log, test status, etc.), and injects the results into the prompt via placeholders.</p>
+          <h3>Assemble the prompt</h3>
+          <p>Ralphify reads your <a href="docs/writing-prompts/"><code>RALPH.md</code></a>, runs commands to gather live data (git log, test output, anything), and injects results into the prompt.</p>
         </div>
-        <div class="step-arrow">&rarr;</div>
         <div class="step">
           <div class="step-number">2</div>
-          <h3>Agent does one thing</h3>
-          <p>The assembled prompt is piped to your <a href="docs/agents/">agent</a>. It reads the codebase, implements one task, runs tests, and commits. Then it exits.</p>
+          <h3>Pipe to the agent</h3>
+          <p>The assembled prompt goes to your <a href="docs/agents/">agent</a>. It reads the codebase, does one unit of work, commits, and exits.</p>
         </div>
-        <div class="step-arrow">&rarr;</div>
         <div class="step">
           <div class="step-number">3</div>
-          <h3>Checks validate &amp; feed back</h3>
-          <p><a href="docs/primitives/">Checks</a> (tests, linters) run after the agent exits. If something fails, the output feeds into the next iteration — the agent fixes its own mistakes.</p>
+          <h3>Repeat</h3>
+          <p>Back to step 1. Fresh context window, latest code, latest prompt. Edit the prompt while it runs &mdash; changes apply next cycle.</p>
         </div>
       </div>
-      <p class="how-repeat">Then it repeats. Edit the prompt while it runs — changes take effect on the next cycle.</p>
     </section>
 
+    <!-- ── Why loops beat single runs ────────────────────── -->
     <section class="why" aria-labelledby="why-heading">
-      <h2 id="why-heading">Why ralph loops?</h2>
-      <p class="why-subtitle">A single agent conversation fills up its context window, slows down, and loses the plot. Ralph loops solve this by resetting every iteration.</p>
+      <h2 id="why-heading">Why loops beat single runs</h2>
+      <p class="section-subtitle">A single agent conversation fills up, slows down, and loses the plot.</p>
       <div class="why-grid">
         <div class="why-item">
-          <div class="why-icon">&#x21bb;</div>
+          <div class="why-icon">&gt;_</div>
           <h3>Fresh context, no decay</h3>
-          <p>Each iteration starts with a clean context window. No conversation bloat, no hallucinated memories. The agent reads the current codebase every loop.</p>
+          <p>Each iteration starts with a clean context window. No conversation bloat, no hallucinated memories. The agent reads the actual codebase every loop.</p>
         </div>
         <div class="why-item">
-          <div class="why-icon">&#x2694;</div>
+          <div class="why-icon">&lt;/&gt;</div>
           <h3>Self-healing feedback</h3>
-          <p>Checks validate the agent's work after each iteration. When something breaks, the failure feeds into the next iteration automatically &mdash; the agent fixes its own mistakes.</p>
+          <p>When something breaks, the failure output feeds into the next iteration automatically. The agent sees what went wrong and fixes it.</p>
         </div>
         <div class="why-item">
-          <div class="why-icon">&#x270E;</div>
+          <div class="why-icon">~/</div>
           <h3>Steer while it runs</h3>
-          <p>The prompt is re-read every iteration. Edit it while the loop runs and the agent follows your new rules on the next cycle. When it does something dumb, add a sign.</p>
+          <p>The prompt is re-read every iteration. Edit it while the loop runs and the agent follows your new direction on the next cycle.</p>
         </div>
         <div class="why-item">
-          <div class="why-icon">&#x2387;</div>
+          <div class="why-icon">&#x221e;</div>
           <h3>Progress lives in git</h3>
-          <p>Every iteration commits to git. If something goes wrong, <code>git log</code> shows exactly what happened and <code>git reset</code> rolls it back. No opaque state to debug.</p>
+          <p>Every iteration commits. If something goes sideways, <code>git log</code> shows exactly what happened and <code>git reset</code> rolls it back.</p>
         </div>
       </div>
     </section>
 
-    <hr>
+    <!-- ── What is a ralph ───────────────────────────────── -->
+    <section class="what-is-ralph" aria-labelledby="what-is-ralph-heading">
+      <h2 id="what-is-ralph-heading">A ralph is just a directory</h2>
+      <p class="section-subtitle">No config files, no project scaffolding. A ralph is a directory with a <code>RALPH.md</code> file. That's the whole primitive.</p>
+      <div class="ralph-demo">
+        <div class="terminal-window terminal-small">
+          <div class="terminal-header">
+            <span class="terminal-dot red"></span>
+            <span class="terminal-dot yellow"></span>
+            <span class="terminal-dot green"></span>
+            <span class="terminal-title">RALPH.md</span>
+          </div>
+          <pre><code><span class="dim">---</span>
+<span class="yaml-key">agent</span>: claude-code
+<span class="yaml-key">commands</span>:
+  - <span class="yaml-key">name</span>: tests
+    <span class="yaml-key">run</span>: uv run pytest --tb=short
+<span class="dim">---</span>
 
+You are an autonomous coding agent running in a loop.
+
+Test results from the last run:
+<span class="placeholder">{{ commands.tests }}</span>
+
+Fix any failing tests. If all tests pass,
+pick the next task from TODO.md and implement it.</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Install ───────────────────────────────────────── -->
     <section class="install" aria-labelledby="install-heading">
-      <h2 id="install-heading">Install Ralphify</h2>
-      <div class="install-command">
-        <code>uv tool install ralphify</code>
-      </div>
-      <p class="install-alt">or <code>pip install ralphify</code></p>
-    </section>
-
-    <section class="features" aria-labelledby="features-heading">
-      <h2 id="features-heading">Three primitives for your AI agent harness</h2>
-      <p class="features-subtitle">Extend the autonomous coding loop with building blocks that live in <code>.ralphify/</code>. See the <a href="docs/primitives/">primitives guide</a>.</p>
-      <div class="card-grid">
-        <div class="card">
-          <h3><a href="docs/primitives/">Checks</a></h3>
-          <p>Run after each iteration to validate the agent's work. Failed check output feeds into the next iteration so the agent can fix its own mistakes.</p>
+      <h2 id="install-heading">Get Ralph running</h2>
+      <div class="install-steps">
+        <div class="install-step">
+          <span class="install-label">Install</span>
+          <div class="install-command">
+            <code>uv tool install ralphify</code>
+          </div>
         </div>
-        <div class="card">
-          <h3><a href="docs/primitives/">Contexts</a></h3>
-          <p>Inject dynamic data into the prompt before each iteration — git history, test status, API responses. The agent always sees fresh information.</p>
+        <div class="install-step">
+          <span class="install-label">Create a ralph</span>
+          <div class="install-command">
+            <code>ralph new</code>
+          </div>
         </div>
-        <div class="card">
-          <h3><a href="docs/primitives/">Ralphs</a></h3>
-          <p>Named, task-focused prompts you switch between at run time. Keep a docs ralph, a refactor ralph, and a bug-fix ralph.</p>
+        <div class="install-step">
+          <span class="install-label">Run it</span>
+          <div class="install-command">
+            <code>ralph run</code>
+          </div>
         </div>
       </div>
+      <p class="install-alt">Also available via <code>pip install ralphify</code> or <code>pipx install ralphify</code></p>
     </section>
 
-    <hr>
-
+    <!-- ── FAQ ───────────────────────────────────────────── -->
     <section class="faq" aria-labelledby="faq-heading">
-      <h2 id="faq-heading">Frequently asked questions</h2>
+      <h2 id="faq-heading">FAQ</h2>
       <dl class="faq-list">
         <div class="faq-item">
           <dt>What AI coding agents work with Ralphify?</dt>
-          <dd>Any agent that accepts prompts via stdin or CLI arguments — Claude Code, Aider, Codex CLI, and others. Ralphify is agent-agnostic by design. See <a href="docs/agents/">supported agents</a>.</dd>
+          <dd>Any agent that accepts prompts via stdin or CLI arguments &mdash; Claude Code, Aider, Codex CLI, and others. Ralphify is agent-agnostic by design. See <a href="docs/agents/">supported agents</a>.</dd>
         </div>
         <div class="faq-item">
           <dt>What is a ralph loop?</dt>
-          <dd>A ralph loop is an autonomous AI coding cycle: read a prompt, run the agent, validate with checks, and repeat. Each iteration starts fresh with a clean context window, so the agent never accumulates stale conversation history. Learn more in <a href="docs/how-it-works/">how it works</a>.</dd>
+          <dd>An autonomous AI coding cycle: assemble a prompt, pipe it to an agent, let the agent work, repeat. Each iteration starts fresh &mdash; no stale context, no accumulated conversation history.</dd>
         </div>
         <div class="faq-item">
           <dt>How is this different from running my agent once?</dt>
-          <dd>A single agent run fills up its context window, slows down, and loses focus. Ralphify resets the agent every iteration — it re-reads the codebase, gets fresh check results, and follows your latest prompt. You steer, the loop executes.</dd>
+          <dd>A single agent run fills up its context window, slows down, and loses focus. Ralphify resets every iteration &mdash; fresh codebase, fresh data, fresh prompt. You steer, the loop executes.</dd>
         </div>
         <div class="faq-item">
-          <dt>Does Ralphify require a web UI or JavaScript runtime?</dt>
-          <dd>No. Ralphify is a pure CLI tool installed via <code>pip</code> or <code>uv</code>. It runs in your terminal and works over SSH — no browser needed.</dd>
-        </div>
-        <div class="faq-item">
-          <dt>What is an AI agent validation harness?</dt>
-          <dd>A validation harness wraps an AI coding agent with automated checks — tests, linters, type checkers — that run after every agent action. Ralphify is a minimal harness that validates each iteration and feeds failures back to the agent, creating a self-correcting loop. The harness defines your quality bar; the agent does the work.</dd>
+          <dt>Does Ralphify need a web UI?</dt>
+          <dd>No. It's a pure CLI tool. Runs in your terminal, works over SSH, no browser needed.</dd>
         </div>
       </dl>
     </section>
 
-    <hr>
-
+    <!-- ── Bottom CTA ────────────────────────────────────── -->
     <section class="cta-bottom" aria-labelledby="cta-bottom-heading">
-      <h2 id="cta-bottom-heading">Two commands to start</h2>
+      <div class="cta-bottom-ascii" aria-hidden="true">&#x221e;</div>
+      <h2 id="cta-bottom-heading">Let Ralph run so you don't have to.</h2>
       <div class="install-command">
-        <code>ralph init && ralph run</code>
+        <code>uv tool install ralphify && ralph new && ralph run</code>
       </div>
-      <p class="install-alt">That's it. Install, init, run.</p>
-      <a href="docs/getting-started/" class="btn btn-primary">Read the guide</a>
+      <div class="cta">
+        <a href="docs/getting-started/" class="btn btn-primary">Read the guide</a>
+        <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
+      </div>
     </section>
   </main>
 
@@ -364,7 +432,7 @@
         </ul>
       </div>
     </nav>
-    <p class="footer-copy">&copy; 2025–2026 Computerlove Technologies &middot; <a href="https://github.com/computerlovetech/ralphify/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></p>
+    <p class="footer-copy">&copy; 2025&ndash;2026 Computerlove Technologies &middot; <a href="https://github.com/computerlovetech/ralphify/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></p>
   </footer>
 </body>
 </html>
