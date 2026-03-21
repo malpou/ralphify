@@ -98,15 +98,18 @@ $ ralph run my-ralph -n 3 --log-dir ralph_logs
 
 ── Iteration 1 ──
   Commands: 2 ran
-✓ Iteration 1 completed (52.3s) → ralph_logs/001_20250115-142301.log
+✓ Iteration 1 completed (52.3s) →
+ralph_logs/001_20250115-142301.log
 
 ── Iteration 2 ──
   Commands: 2 ran
-✗ Iteration 2 failed with exit code 1 (23.1s) → ralph_logs/002_20250115-142512.log
+✗ Iteration 2 failed with exit code 1 (23.1s) →
+ralph_logs/002_20250115-142512.log
 
 ── Iteration 3 ──
   Commands: 2 ran
-✓ Iteration 3 completed (41.7s) → ralph_logs/003_20250115-143012.log
+✓ Iteration 3 completed (41.7s) →
+ralph_logs/003_20250115-143012.log
 
 Done: 3 iteration(s) — 2 succeeded, 1 failed
 ```
