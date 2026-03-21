@@ -39,7 +39,7 @@ Start the autonomous coding loop.
 ```bash
 ralph run my-ralph                         # Run forever (Ctrl+C to stop)
 ralph run my-ralph -n 5                    # Run 5 iterations
-ralph run my-ralph --stop-on-error         # Stop if agent exits non-zero
+ralph run my-ralph --stop-on-error         # Stop if agent exits non-zero or times out
 ralph run my-ralph --delay 10              # Wait 10s between iterations
 ralph run my-ralph --timeout 300           # Kill agent after 5 minutes per iteration
 ralph run my-ralph --log-dir ralph_logs    # Save output to log files
