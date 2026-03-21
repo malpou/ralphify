@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 
 from helpers import MOCK_ENGINE_SLEEP, MOCK_SUBPROCESS, MOCK_WHICH, ok_result, fail_result
 from ralphify import __version__
+from ralphify._frontmatter import serialize_frontmatter
 from ralphify.cli import app, _parse_commands, _parse_user_args
 
 runner = CliRunner()
@@ -20,18 +21,13 @@ def _make_ralph(tmp_path, prompt="go", agent="claude -p --dangerously-skip-permi
     """Create a ralph directory with RALPH.md for tests."""
     ralph_dir = tmp_path / "my-ralph"
     ralph_dir.mkdir(exist_ok=True)
-    fm_lines = [f"agent: {agent}"]
+    frontmatter = {"agent": agent}
     if commands:
-        fm_lines.append("commands:")
-        for cmd in commands:
-            fm_lines.append(f"  - name: {cmd['name']}")
-            fm_lines.append(f"    run: {cmd['run']}")
+        frontmatter["commands"] = commands
     if args:
-        fm_lines.append("args:")
-        for a in args:
-            fm_lines.append(f"  - {a}")
-    fm = "\n".join(fm_lines)
-    (ralph_dir / "RALPH.md").write_text(f"---\n{fm}\n---\n{prompt}")
+        frontmatter["args"] = args
+    content = serialize_frontmatter(frontmatter, prompt)
+    (ralph_dir / "RALPH.md").write_text(content)
     return ralph_dir
 
 
