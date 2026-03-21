@@ -75,28 +75,21 @@ class _StreamResult:
 
 
 def _write_log(
-    log_path_dir: Path,
-    iteration: int,
-    stdout: str | bytes | None,
-    stderr: str | bytes | None,
-) -> Path:
-    """Write iteration output to a timestamped log file and return the path."""
-    timestamp = datetime.now(timezone.utc).strftime(_LOG_TIMESTAMP_FORMAT)
-    log_file = log_path_dir / f"{iteration:0{_LOG_ITERATION_PAD_WIDTH}d}_{timestamp}.log"
-    log_file.write_text(collect_output(stdout, stderr), encoding="utf-8")
-    return log_file
-
-
-def _maybe_write_log(
     log_path_dir: Path | None,
     iteration: int,
     stdout: str | bytes | None,
     stderr: str | bytes | None,
 ) -> Path | None:
-    """Write a log file if logging is configured, otherwise return ``None``."""
+    """Write iteration output to a timestamped log file if logging is configured.
+
+    Returns the log file path, or ``None`` when *log_path_dir* is not set.
+    """
     if log_path_dir is None:
         return None
-    return _write_log(log_path_dir, iteration, stdout, stderr)
+    timestamp = datetime.now(timezone.utc).strftime(_LOG_TIMESTAMP_FORMAT)
+    log_file = log_path_dir / f"{iteration:0{_LOG_ITERATION_PAD_WIDTH}d}_{timestamp}.log"
+    log_file.write_text(collect_output(stdout, stderr), encoding="utf-8")
+    return log_file
 
 
 def _supports_stream_json(cmd: list[str]) -> bool:
@@ -202,7 +195,7 @@ def _run_agent_streaming(
             proc.kill()
             proc.wait()
 
-    log_file = _maybe_write_log(log_path_dir, iteration, "".join(stream.stdout_lines), stderr_data)
+    log_file = _write_log(log_path_dir, iteration, "".join(stream.stdout_lines), stderr_data)
 
     return AgentResult(
         returncode=None if stream.timed_out else proc.returncode,
@@ -239,10 +232,10 @@ def _run_agent_blocking(
             encoding="utf-8",
             errors="replace",
             timeout=timeout,
-            capture_output=bool(log_path_dir),
+            capture_output=log_path_dir is not None,
         )
     except subprocess.TimeoutExpired as exc:
-        log_file = _maybe_write_log(log_path_dir, iteration, exc.stdout, exc.stderr)
+        log_file = _write_log(log_path_dir, iteration, exc.stdout, exc.stderr)
         return AgentResult(
             returncode=None,
             elapsed=time.monotonic() - start,
@@ -250,7 +243,7 @@ def _run_agent_blocking(
             timed_out=True,
         )
 
-    log_file = _maybe_write_log(log_path_dir, iteration, result.stdout, result.stderr)
+    log_file = _write_log(log_path_dir, iteration, result.stdout, result.stderr)
     if log_path_dir:
         if result.stdout:
             sys.stdout.write(result.stdout)
