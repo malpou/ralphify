@@ -42,12 +42,11 @@ Ralphify is a minimal CLI harness for autonomous AI coding loops, inspired by th
 
 ## Create a ralph and run it
 
-A ralph is just a directory with a `RALPH.md` file:
+```bash
+ralph init my-ralph
+```
 
-```
-my-ralph/
-└── RALPH.md
-```
+This creates a directory with a `RALPH.md` template. Edit it to fit your project:
 
 **`my-ralph/RALPH.md`**
 
