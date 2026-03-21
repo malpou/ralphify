@@ -199,12 +199,13 @@
     <!-- Hero -->
     <section class="hero" aria-label="Introduction">
       <div class="hero-bg" aria-hidden="true">
+        <div class="hero-gradient-wash"></div>
         <div class="hero-gradient-orb hero-orb-1"></div>
         <div class="hero-gradient-orb hero-orb-2"></div>
         <div class="hero-gradient-orb hero-orb-3"></div>
         <div class="hero-grid"></div>
+        <div class="hero-noise"></div>
       </div>
-      <div class="hero-horizon-glow" aria-hidden="true"></div>
 
       <div class="hero-inner">
         <div class="hero-badge">
@@ -213,9 +214,8 @@
         </div>
 
         <h1 class="hero-headline">
-          <span class="hero-line-faded">Stop stressing over</span>
-          <span class="hero-line-bold">not having an</span>
-          <span class="hero-line-bold">agent running.</span>
+          <span class="hero-line-small">Stop stressing over</span>
+          <span class="hero-line-big">not having an<br>agent running.</span>
         </h1>
 
         <p class="hero-tagline">
@@ -267,6 +267,7 @@
           </div>
         </div>
       </div>
+      <div class="hero-horizon" aria-hidden="true"></div>
     </section>
 
     <!-- Ticker -->
@@ -560,7 +561,10 @@ pick the next task from TODO.md and implement it.</code></pre>
 
     <!-- Bottom CTA -->
     <section class="cta-bottom" aria-labelledby="cta-bottom-heading">
-      <div class="cta-bottom-glow" aria-hidden="true"></div>
+      <div class="cta-bottom-bg" aria-hidden="true">
+        <div class="cta-bottom-orb cta-orb-1"></div>
+        <div class="cta-bottom-orb cta-orb-2"></div>
+      </div>
       <div class="cta-bottom-inner">
         <div class="cta-bottom-status">
           <span class="status-dot status-dot-lg"></span>
@@ -679,28 +683,28 @@ pick the next task from TODO.md and implement it.</code></pre>
     }
 
     // Hero headline entrance animation
-    const heroFaded = document.querySelector('.hero-line-faded');
-    const heroBolds = document.querySelectorAll('.hero-line-bold');
+    const heroSmall = document.querySelector('.hero-line-small');
+    const heroBig = document.querySelector('.hero-line-big');
 
-    if (heroFaded) {
-      heroFaded.style.opacity = '0';
-      heroFaded.style.transform = 'translateY(40px)';
+    if (heroSmall) {
+      heroSmall.style.opacity = '0';
+      heroSmall.style.transform = 'translateY(30px)';
       setTimeout(() => {
-        heroFaded.style.transition = 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
-        heroFaded.style.opacity = '1';
-        heroFaded.style.transform = 'translateY(0)';
+        heroSmall.style.transition = 'opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)';
+        heroSmall.style.opacity = '1';
+        heroSmall.style.transform = 'translateY(0)';
       }, 100);
     }
 
-    heroBolds.forEach((line, i) => {
-      line.style.opacity = '0';
-      line.style.transform = 'translateY(40px)';
+    if (heroBig) {
+      heroBig.style.opacity = '0';
+      heroBig.style.transform = 'translateY(30px)';
       setTimeout(() => {
-        line.style.transition = 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
-        line.style.opacity = '1';
-        line.style.transform = 'translateY(0)';
-      }, 200 + i * 120);
-    });
+        heroBig.style.transition = 'opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)';
+        heroBig.style.opacity = '1';
+        heroBig.style.transform = 'translateY(0)';
+      }, 220);
+    }
 
     // Hero tagline entrance
     const heroTagline = document.querySelector('.hero-tagline');
