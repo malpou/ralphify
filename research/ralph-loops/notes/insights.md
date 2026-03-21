@@ -89,6 +89,19 @@
 - **"There is no gold standard for evals yet."** HN consensus: practices range from zero evals to sophisticated CI/CD integration. The field is heterogeneous and immature. Tools: Braintrust, Promptfoo, LangSmith, Langfuse, Skill Eval.
 - **AGENTS.md content always-in-prompt outperforms skills invoked-on-demand.** Vercel found 33/33 vs 29/33 success rates. But HN skeptics note the sample sizes are too small to be conclusive. The debate between "always present" and "invoked when needed" is unresolved.
 
+## Harness Evolution & Entropy (NEW — Iteration 9)
+- **Vercel removed 80% of agent tools and got better results.** Fewer tools = fewer steps, fewer tokens, faster responses, higher success. Harness improvement through subtraction.
+- **Manus refactored their harness 5x in 6 months.** Each refactor simplified rather than complexified. Rapid model improvement means harness logic has a short shelf life.
+- **Permanent vs temporary harness layers are now identifiable.** Permanent: context engineering, architectural constraints, safety boundaries, state persistence. Temporary: reasoning optimization, loop detection, planning scaffolding, tool routing.
+- **OpenAI spent every Friday cleaning "AI slop" until they automated it.** Periodic garbage-collection agents scan for documentation drift, constraint violations, dead code. The "cleanup agent" is the operational complement to the "development agent."
+- **Agent-generated codebases accumulate entropy — agents replicate suboptimal patterns.** Codex replicates patterns that already exist in the repo, even uneven ones. Over time, this compounds into drift that no single iteration catches.
+- **Completion promise gating prevents premature loop exit.** Machine-verifiable markers (`<promise>COMPLETE</promise>`) + stop hooks = agent exits only when external verification passes. Architectural fix for ReAct's self-assessment weakness.
+- **Trajectory data (not prompts) is the competitive advantage.** Every agent failure provides training material for harness iteration. Organizations that capture the richest trajectory data build the best harnesses over time — a data flywheel.
+- **Ralph TUI tracks three metrics: completion rate (60% baseline), stuck detection (<5 min), cost per feature ($1.50 target).** First dedicated dashboard for agent loop observability.
+- **Huntley's Level 9 vision: evolutionary software.** Agents push to master, deploy in 30 seconds, self-repair via feedback loops. No branches, no code review. Extreme but directionally correct as trust and verification mature.
+- **Three operational modes for loops: forward (build), reverse (clean room), loop mindset (continuous).** The "loop mindset" is the key shift — ralph as continuous process, not one-time execution.
+- **Model tiering within loops cuts costs.** Cheaper models (Haiku) for routine tasks, premium models (Opus) for complex logic. Cost optimization happens per-iteration, not per-loop.
+
 ## Ralphify-Specific
 - **Ralphify's command system naturally supports the "commands as verifiers" pattern.** Running tests/metrics as commands and injecting results into the prompt is exactly what Spotify and Karpathy do — ralphify just needs to formalize verification as a first-class concept.
 - **Agent skills as portable packages is a validated trend.** Ralphify's skill system aligns with the industry direction of installable, reusable instruction sets.

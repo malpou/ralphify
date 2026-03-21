@@ -38,6 +38,12 @@
 
 17. **Test the harness, not the agent output.** Block's record/playback pattern captures real LLM interactions to JSON, then replays deterministically — testing harness logic without burning tokens. LangChain improved from Top 30 to Top 5 on Terminal Bench by changing only the harness. Live LLM tests never run in CI: "too expensive, too slow, and too flaky."
 
+18. **Build your harness to be rippable — permanent layers vs. temporary scaffolding.** Vercel removed 80% of agent tools and got better results. Manus refactored their harness 5x in 6 months. Permanent: context engineering, architectural constraints, safety boundaries. Temporary: reasoning optimization, loop detection, planning decomposition. Before adding middleware, ask: "Will I want to remove this when the next model ships?"
+
+19. **Entropy management is the third pillar of harness engineering.** Agent-generated codebases accumulate documentation drift, convention divergence, and dead code. OpenAI spent every Friday cleaning "AI slop" until they automated it with periodic garbage-collection agents that scan for constraint violations and open targeted refactoring PRs. The "cleanup ralph" is the operational complement to the "development ralph."
+
+20. **Completion promise gating replaces subjective self-assessment.** Machine-verifiable exit markers (`<promise>COMPLETE</promise>`) combined with stop hooks prevent premature loop exit. The agent exits only when external verification passes — not when it *thinks* it's done. This is the architectural fix for the fundamental weakness in ReAct-style self-assessment.
+
 ## Chapters
 
 | # | Chapter | Summary |
@@ -53,15 +59,18 @@
 | 9 | [Prompt Assembly & Context Engineering](chapters/09-prompt-assembly.md) | Three-phase architecture, context management, double-loop model, steering injection |
 | 10 | [Operational Reality](chapters/10-operational-reality.md) | Ecosystem landscape, cost control, circuit breakers, daily practitioner workflows |
 | 11 | [Trust, Testing, and Convergence](chapters/11-trust-testing-convergence.md) | Autonomy scaling data, harness testing pyramids, spec+ralph integration |
+| 12 | [Harness Evolution & Entropy Management](chapters/12-harness-evolution-entropy.md) | Rippable harnesses, garbage collection agents, completion promises, evolutionary software |
 
 ## Open Questions
 
 - How do cross-company model diversity reviewers compare to same-family self-review in measurable quality?
 - What's the optimal ratio of spec-writing time to execution time in spec+ralph integrated workflows?
 - How do teams handle the asymmetric trust problem (one failure erases weeks of accumulated confidence)?
-- What does a "rippable" harness look like in practice — which middleware layers get removed first as models improve?
+- ~~What does a "rippable" harness look like in practice — which middleware layers get removed first as models improve?~~ Answered in Ch12: permanent (context, constraints, safety) vs temporary (reasoning optimization, loop detection, planning scaffolding). Vercel, Manus, LangChain all actively ripping layers.
 - What pass@k / pass^k thresholds do teams target before promoting a ralph configuration to production?
 - How effective is the "meta-ralph" pattern — a ralph that optimizes other ralphs via eval feedback?
+- What's the right cadence for garbage-collection/cleanup ralphs — daily, weekly, event-triggered?
+- How do teams decide which harness layers to rip when a new model ships — is there a systematic evaluation process?
 
 ## Key Sources
 
@@ -92,3 +101,6 @@
 - [Eval-Driven Development](https://evaldriven.org/) — Grey Newell (10-principle manifesto)
 - [Optimizing CLAUDE.md with Prompt Learning](https://arize.com/blog/claude-md-best-practices-learned-from-optimizing-claude-code-with-prompt-learning/) — Arize AI (+5-10% from system prompt optimization alone)
 - [Skill Eval](https://blog.mgechev.com/2026/02/26/skill-eval/) — Minko Gechev (unit-testing AI agent skills)
+- [The Importance of Agent Harness in 2026](https://www.philschmid.de/agent-harness-2026) — Phil Schmid (build-to-delete, rippable harness framework)
+- [Harness Engineering (OpenAI)](https://openai.com/index/harness-engineering/) — OpenAI (entropy management, garbage collection agents, 1M+ lines with zero hand-written code)
+- [Everything is a Ralph Loop](https://ghuntley.com/loop/) — Geoffrey Huntley (evolutionary software, Loom, Level 9)

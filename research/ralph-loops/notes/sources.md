@@ -116,6 +116,15 @@
 - https://news.ycombinator.com/item?id=47145438 — HN — "Your lack of Evals is the problem" — ad-hoc iteration on AGENTS.md, tools: Tessl.io, ai-evals.io — **medium**
 - https://news.ycombinator.com/item?id=46809708 — HN — AGENTS.md outperforms skills in Vercel evals (always-in-prompt vs invoked-on-demand), sample size concerns — **medium**
 
+- https://www.philschmid.de/agent-harness-2026 — Phil Schmid / Hugging Face — "Build to Delete" framework for rippable harnesses, the Bitter Lesson applied to agent harness design — **high**
+- https://ghuntley.com/loop/ — Geoffrey Huntley — "Everything is a Ralph Loop": forward/reverse/loop modes, Loom (Level 9 evolutionary software), push-to-master with no branches — **high**
+- https://www.nxcode.io/resources/news/harness-engineering-complete-guide-ai-agent-codex-2026 — NxCode — Comprehensive harness engineering guide: entropy management, agent-specific code review, multi-provider harness design — **high**
+- https://www.alibabacloud.com/blog/from-react-to-ralph-loop-a-continuous-iteration-paradigm-for-ai-agents_602799 — Alibaba Cloud — ReAct vs Ralph Loop architectural comparison: external verification beats self-assessment, completion promises, stop hooks — **high**
+- https://www.verdent.ai/guides/ralph-tui-ai-agent-dashboard — Verdent — Ralph TUI: first dedicated agent loop dashboard, tracks completion rate/stuck detection/cost per feature, session state persistence — **high**
+- https://paddo.dev/blog/ralph-wiggum-autonomous-loops/ — Paddo.dev — Practical ralph loop guide: high-success use cases (migrations, test coverage, scaffolding), anti-patterns (ambiguous requirements, security code), 3-month compiler story — **high**
+- https://linearb.io/dev-interrupted/podcast/inventing-the-ralph-wiggum-loop — Dev Interrupted / LinearB — Geoffrey Huntley podcast: Loom/Gas Town, Level 9 evolutionary software, agents push to master with 30-second deploys — **high**
+- https://www.infoq.com/news/2026/02/openai-harness-engineering-codex/ — InfoQ — OpenAI harness engineering: 1M+ lines with zero hand-written code, three pillars (context engineering, architectural constraints, entropy management), Friday cleanup → automated GC agents — **high**
+
 ## Lower Relevance
 
 - https://www.permit.io/blog/human-in-the-loop-for-ai-agents-best-practices-frameworks-use-cases-and-demo — Permit.io — Human-in-the-loop patterns for AI agents — **low**

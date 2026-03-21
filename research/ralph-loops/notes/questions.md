@@ -15,6 +15,10 @@
 - [ ] What pass@k / pass^k thresholds do teams target before promoting an agent configuration to production?
 - [ ] How effective is the "meta-ralph" pattern — a ralph that optimizes other ralphs via eval feedback? Arize showed +5-10% on SWE-bench, but has anyone applied this to ralph loops specifically?
 - [ ] Does "always-in-prompt" vs "invoked-on-demand" skill placement have a measurable impact at scale? Vercel's small sample (33 vs 29) is suggestive but inconclusive.
+- [x] What does a "rippable" harness look like in practice? — Permanent layers (context, constraints, safety) vs temporary (reasoning optimization, loop detection, planning scaffolding). Vercel removed 80% of tools and improved. Manus refactored 5x in 6 months. See chapter 12.
+- [ ] What's the right cadence for garbage-collection/cleanup ralphs — daily, weekly, event-triggered? OpenAI did it weekly (Fridays) before automating.
+- [ ] How do teams decide which harness layers to rip when a new model ships — is there a systematic evaluation process?
+- [ ] What does Huntley's Level 9 "evolutionary software" look like at scale beyond a single developer? Is the no-branches, push-to-master model viable for teams?
 
 ## Answered
 - [x] What are the most effective patterns for keeping agents on track during long-running loops? — Fresh context resets + file-based state + verification gates. See chapters 01-02.

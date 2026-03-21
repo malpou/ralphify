@@ -179,3 +179,29 @@
 **Next iteration should focus on:**
 - Research: deep dive into one of the remaining open threads (cross-model diversity, rippable harness, meta-ralph in practice)
 - Or: explore YouTube/Reddit practitioner voices that have been under-represented
+
+## Iteration 9 — 2026-03-22
+
+**Decision: RESEARCH**
+
+**Focus area:** Two underexplored threads:
+1. **Reddit/YouTube practitioner voices** — r/ClaudeAI, r/ChatGPTCoding, r/LocalLLaMA, YouTube transcripts on agent loops and harness engineering. The research has been HN/blog-heavy.
+2. **Emerging patterns in March 2026** — what's new since iteration 8? Latest blog posts, new tools, new practitioner techniques for autonomous loops and harness engineering.
+
+**What was done:**
+- Searched across 5 parallel threads: Reddit/YouTube, rippable harness patterns, emerging March 2026 techniques, completion promise gating, observability dashboards
+- Found and analyzed 8+ new high-signal sources: Phil Schmid (build-to-delete), Ghuntley (Loom/Level 9), Alibaba Cloud (ReAct vs Ralph), Verdent (Ralph TUI), OpenAI (entropy management), NxCode (comprehensive guide), Paddo.dev (practical ralph loops)
+- Created chapter 12 (Harness Evolution & Entropy Management) covering rippable harnesses, garbage collection agents, completion promises, evolutionary software, trajectory data
+- Added 3 new insights to REPORT.md (#18-#20), 11 new insights to notes, 8 new sources, 1 question answered, 3 new questions added
+
+**Key surprises:**
+- Vercel removed 80% of agent tools and got BETTER results — harness improvement through subtraction
+- OpenAI spent every Friday manually cleaning AI slop before automating with GC agents — entropy management is a real operational burden
+- Huntley pushes to master with no branches, deploys in 30 seconds, no code review — extreme but directionally correct
+- Ralph TUI tracks cost per feature ($1.50 target vs $5+ typical) — first dedicated observability dashboard for agent loops
+- Completion promise gating has been formalized as the architectural fix for ReAct's self-assessment weakness
+- Phil Schmid frames harness layers as permanent (context, constraints, safety) vs temporary (reasoning, loop detection, planning) — the first clear taxonomy
+
+**Next iteration should focus on:**
+- Refine cycle (iteration 10): 12 chapters may be too many — consider consolidation. REPORT.md now has 20 insights — trim back to ~17. Update Ch06 implications with new findings (entropy ralph, rippable harness, completion promises, observability).
+- Or: explore the "cleanup ralph" pattern in more depth — how do teams actually implement periodic codebase maintenance agents?

@@ -204,6 +204,51 @@ hooks:
 
 This generalizes the verification field and enables the full middleware pattern without framework complexity. Design principle from LangChain: **build your harness to be rippable** — remove "smart" logic when the model gets smart enough not to need it.
 
+## Entropy Management & Cleanup Ralphs
+
+OpenAI's third pillar of harness engineering — entropy management — maps directly to a new ralph pattern: the **cleanup ralph**. Agent-generated codebases accumulate drift (documentation divergence, convention violations, dead code), and periodic cleanup agents are the validated solution.
+
+**Cookbook recipe: Cleanup Ralph**
+```yaml
+agent: claude -p
+commands:
+  - name: violations
+    run: ./scripts/check-constraints.sh
+  - name: stale_docs
+    run: ./scripts/find-stale-docs.sh
+  - name: dead_code
+    run: ./scripts/find-unused-exports.sh
+```
+
+The prompt instructs the agent to fix the highest-priority violations each iteration. Run daily or weekly via cron. This is the operational complement to development ralphs — one builds, the other maintains.
+
+## Rippable Harness Design
+
+Phil Schmid's "build to delete" framework suggests ralphify's architecture should distinguish between permanent and temporary features:
+
+**Permanent** (invest heavily):
+- RALPH.md frontmatter parsing, command execution, state persistence
+- Context assembly and placeholder resolution
+- Safety boundaries (max_iterations, scope constraints)
+
+**Temporary** (design for removal):
+- Any "smart" orchestration logic (planning decomposition, task routing)
+- Model-specific workarounds
+- Verbose loop detection middleware
+
+The principle: as models improve, ralphify should get simpler, not more complex. Every feature should be evaluable against "will this still be needed when the next model ships?"
+
+## Completion Promise Support
+
+The completion promise pattern (machine-verifiable exit markers + stop hooks) addresses a gap in ralphify's current architecture. Currently, the loop runs for `max_iterations` or until the agent naturally stops. Adding completion promise support would enable:
+
+1. The prompt defines a completion marker (e.g., `ALL_TASKS_COMPLETE`)
+2. Ralphify checks agent output for the marker after each iteration
+3. If absent, the loop continues (agent confronts its work in the next iteration)
+4. If present, the loop exits early (before `max_iterations`)
+
+This is complementary to command-based verification — commands verify *state*, completion promises verify *intent*.
+
 ## Competitive Positioning
 
 Ralphify sits at a validated sweet spot: simpler than full orchestration frameworks (LangGraph, CrewAI) but more structured than raw bash loops. The Karpathy autoresearch moment — 630 lines running 700 experiments — proves that "simple harness, powerful results" wins.
@@ -213,3 +258,5 @@ The key differentiators to develop:
 2. **Eval-driven loop development.** No tool in ralphify's weight class supports the EDD flywheel. A `ralph eval` command that runs a ralph against a golden dataset and reports pass@k/pass^k would be a unique capability.
 3. **Cost-aware loops.** `max_iterations`, iteration metrics, and prompt caching guidance would address the #1 operational pain point practitioners report.
 4. **Skills ecosystem integration.** With 500+ skills in a compatible format, ralphify can offer a rich library of pre-built ralphs out of the box.
+5. **Iteration observability.** Per-iteration metrics (duration, command pass/fail, iteration count, estimated cost) surfaced in CLI output. Ralph TUI shows the market wants this — completion rate, stuck detection, cost per feature are the three metrics practitioners track. Ralphify can provide this natively without requiring a separate dashboard.
+6. **Rippable-by-design architecture.** As models improve, ralphify should get simpler. Design features to be removable (e.g., loop detection can be a plugin, not core). This positions ralphify as a framework that evolves with models rather than fighting them.
