@@ -46,6 +46,11 @@ class AgentResult:
     result_text: str | None = None
     timed_out: bool = False
 
+    @property
+    def success(self) -> bool:
+        """Whether the agent exited successfully (code 0, no timeout)."""
+        return self.returncode == 0 and not self.timed_out
+
 
 @dataclass(frozen=True)
 class _StreamResult:

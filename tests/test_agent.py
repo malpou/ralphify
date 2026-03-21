@@ -216,3 +216,15 @@ class TestAgentResult:
         result = AgentResult(returncode=None, elapsed=5.0, log_file=None, timed_out=True)
         assert result.timed_out is True
         assert result.returncode is None
+
+    def test_success_when_zero_exit(self):
+        result = AgentResult(returncode=0, elapsed=1.0, log_file=None)
+        assert result.success is True
+
+    def test_not_success_when_nonzero_exit(self):
+        result = AgentResult(returncode=1, elapsed=1.0, log_file=None)
+        assert result.success is False
+
+    def test_not_success_when_timed_out(self):
+        result = AgentResult(returncode=None, elapsed=5.0, log_file=None, timed_out=True)
+        assert result.success is False

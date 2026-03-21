@@ -133,10 +133,10 @@ def _run_agent_phase(
     state: RunState,
     log_path_dir: Path | None,
     emit: _BoundEmitter,
-) -> int | None:
+) -> bool:
     """Run the agent subprocess, update state counters, and emit the result event.
 
-    Returns the process return code, or ``None`` if the process timed out.
+    Returns ``True`` when the agent exited successfully (code 0, no timeout).
     """
     cmd = shlex.split(config.agent)
 
@@ -157,7 +157,7 @@ def _run_agent_phase(
         state.mark_timed_out()
         event_type = EventType.ITERATION_TIMED_OUT
         state_detail = f"timed out after {duration}"
-    elif agent.returncode == 0:
+    elif agent.success:
         state.mark_completed()
         event_type = EventType.ITERATION_COMPLETED
         state_detail = f"completed ({duration})"
@@ -175,7 +175,7 @@ def _run_agent_phase(
         "log_file": str(agent.log_file) if agent.log_file else None,
         "result_text": agent.result_text,
     })
-    return agent.returncode
+    return agent.success
 
 
 def _run_iteration(
@@ -211,9 +211,9 @@ def _run_iteration(
     emit(EventType.PROMPT_ASSEMBLED, {"iteration": iteration, "prompt_length": len(prompt)})
 
     # Run agent
-    returncode = _run_agent_phase(prompt, config, state, log_path_dir, emit)
+    agent_succeeded = _run_agent_phase(prompt, config, state, log_path_dir, emit)
 
-    if returncode != 0 and config.stop_on_error:
+    if not agent_succeeded and config.stop_on_error:
         emit(EventType.LOG_MESSAGE, {"message": "Stopping due to --stop-on-error.", "level": "error"})
         return False
 
