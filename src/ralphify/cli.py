@@ -270,12 +270,14 @@ def _build_run_config(
 
     # Parse commands from frontmatter
     raw_commands = fm.get("commands", [])
-    if raw_commands and not isinstance(raw_commands, list):
+    if not isinstance(raw_commands, list):
         _exit_error("'commands' must be a list of {name, run} mappings.")
     commands = _parse_commands(raw_commands)
 
     # Parse user args
     declared_names = fm.get("args")
+    if declared_names is not None and not isinstance(declared_names, list):
+        _exit_error("'args' must be a list of strings.")
     ralph_args: dict[str, str] = {}
     if extra_args:
         ralph_args = _parse_user_args(extra_args, declared_names)

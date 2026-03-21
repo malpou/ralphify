@@ -77,12 +77,14 @@ class TestRun:
         ("commands:\n  - name: \"\"\n    run: echo hi", "name"),
         ("commands:\n  - name: status\n    run: \"\"", "run"),
         ("commands: not-a-list", "must be a list"),
+        ("commands: 0", "must be a list"),
+        ("commands: false", "must be a list"),
         (
             "commands:\n  - name: status\n    run: git status\n"
             "  - name: status\n    run: echo hi",
             "duplicate",
         ),
-    ], ids=["empty-name", "empty-run", "not-a-list", "duplicate-names"])
+    ], ids=["empty-name", "empty-run", "not-a-list", "falsy-int", "falsy-bool", "duplicate-names"])
     def test_errors_with_invalid_commands(self, mock_which, tmp_path, monkeypatch,
                                           frontmatter, expected_error):
         monkeypatch.chdir(tmp_path)
@@ -94,6 +96,19 @@ class TestRun:
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
         assert result.exit_code == 1
         assert expected_error in result.output.lower()
+
+    @pytest.mark.parametrize("args_value", ["true", "42", "not-a-list"],
+                             ids=["bool", "int", "string"])
+    def test_errors_with_invalid_args_type(self, mock_which, tmp_path, monkeypatch, args_value):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir()
+        (ralph_dir / "RALPH.md").write_text(
+            f"---\nagent: claude -p\nargs: {args_value}\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "must be a list" in result.output.lower()
 
     @pytest.mark.parametrize("n_value", ["-1", "0", "-100"])
     def test_errors_with_non_positive_n(self, mock_which, tmp_path, monkeypatch, n_value):
