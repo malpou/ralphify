@@ -8,12 +8,9 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from helpers import ok_result, fail_result
+from helpers import MOCK_WHICH, ok_result, fail_result
 from ralphify import __version__
 from ralphify.cli import app, _parse_commands, _parse_user_args
-
-MOCK_WHICH = "ralphify.cli.shutil.which"
-"""Patch target for shutil.which inside the CLI module."""
 
 runner = CliRunner()
 

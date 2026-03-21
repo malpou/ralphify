@@ -18,6 +18,9 @@ MOCK_SUBPROCESS = "ralphify._agent.subprocess.run"
 MOCK_RUNNER_SUBPROCESS = "ralphify._runner.subprocess.run"
 """Patch target for subprocess.run inside the runner module."""
 
+MOCK_WHICH = "ralphify.cli.shutil.which"
+"""Patch target for shutil.which inside the CLI module."""
+
 
 # ── Factory helpers ───────────────────────────────────────────────────
 

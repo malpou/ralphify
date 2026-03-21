@@ -9,17 +9,15 @@ prompt.  This forces explicit placement and avoids accidental data dumps.
 """
 
 import re
+from functools import lru_cache
 
-_PATTERN_CACHE: dict[str, re.Pattern[str]] = {}
 
-
+@lru_cache(maxsize=None)
 def _get_pattern(kind: str) -> re.Pattern[str]:
     """Return a compiled regex for the given placeholder kind, caching the result."""
-    if kind not in _PATTERN_CACHE:
-        _PATTERN_CACHE[kind] = re.compile(
-            r"\{\{\s*" + re.escape(kind) + r"\.([a-zA-Z0-9_-]+)\s*\}\}"
-        )
-    return _PATTERN_CACHE[kind]
+    return re.compile(
+        r"\{\{\s*" + re.escape(kind) + r"\.([a-zA-Z0-9_-]+)\s*\}\}"
+    )
 
 
 def resolve_placeholders(

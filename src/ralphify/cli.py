@@ -155,12 +155,13 @@ def _parse_commands(raw_commands: list) -> list[Command]:
             if not cmd_def[field] or not isinstance(cmd_def[field], str):
                 _exit_error(f"Command '{field}' must be a non-empty string.")
         cmd_name = cmd_def["name"]
+        cmd_run = cmd_def["run"]
         if cmd_name in seen_names:
             _exit_error(f"Duplicate command name '{cmd_name}'.")
         seen_names.add(cmd_name)
         commands.append(Command(
-            name=cmd_def["name"],
-            run=cmd_def["run"],
+            name=cmd_name,
+            run=cmd_run,
             timeout=cmd_def.get("timeout", DEFAULT_COMMAND_TIMEOUT),
         ))
     return commands
