@@ -121,13 +121,13 @@ class ConsoleEmitter:
             self._console.print(f"  [bold]Commands:[/bold] {count} ran")
 
     def _on_log_message(self, data: LogMessageData) -> None:
-        msg = data["message"]
+        msg = escape_markup(data["message"])
         level = data["level"]
         if level == "error":
             self._console.print(f"[red]{msg}[/red]")
             tb = data.get("traceback")
             if tb:
-                self._console.print(f"[dim]{tb}[/dim]")
+                self._console.print(f"[dim]{escape_markup(tb)}[/dim]")
         else:
             self._console.print(f"[dim]{msg}[/dim]")
 

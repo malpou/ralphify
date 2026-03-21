@@ -133,6 +133,43 @@ class TestLogMessage:
         output = console.export_text()
         assert "Traceback:" in output
 
+    def test_error_message_with_brackets_not_corrupted(self):
+        """Error messages containing bracket patterns must not be
+        swallowed by Rich markup interpretation."""
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.LOG_MESSAGE,
+            message="Run crashed: KeyError('[bold]')",
+            level="error",
+        ))
+        output = console.export_text()
+        assert "[bold]" in output
+
+    def test_info_message_with_brackets_not_corrupted(self):
+        """Info messages containing bracket patterns must not be
+        swallowed by Rich markup interpretation."""
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.LOG_MESSAGE,
+            message="Processing [section] data",
+            level="info",
+        ))
+        output = console.export_text()
+        assert "[section]" in output
+
+    def test_traceback_with_brackets_not_corrupted(self):
+        """Traceback text containing bracket patterns must not be
+        swallowed by Rich markup interpretation."""
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.LOG_MESSAGE,
+            message="Run crashed",
+            level="error",
+            traceback="KeyError: '[red]missing[/red]'",
+        ))
+        output = console.export_text()
+        assert "[red]missing[/red]" in output
+
 
 class TestRunStopped:
     def test_completed_shows_summary(self):
