@@ -7,6 +7,19 @@ keywords: ralphify changelog, release history, new features, version updates, br
 
 All notable changes to ralphify are documented here.
 
+## 0.2.3 — 2026-03-21
+
+### Added
+
+- **Co-authored-by credit trailer** — every prompt now includes an instruction telling the agent to add `Co-authored-by: Ralphify <noreply@ralphify.co>` to commit messages. On by default; opt out with `credit: false` in RALPH.md frontmatter.
+
+### Improved
+
+- **Typed event payloads** — replaced `dict[str, Any]` event data with TypedDict classes throughout the engine and console emitter for stronger type safety.
+- **Code quality** — standardized imports, extracted constants, simplified TypedDicts with `NotRequired`.
+
+---
+
 ## 0.2.2 — 2026-03-21
 
 ### Added
