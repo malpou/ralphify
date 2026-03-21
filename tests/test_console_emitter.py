@@ -1,5 +1,6 @@
 """Tests for the ConsoleEmitter rich terminal renderer."""
 
+import pytest
 from rich.console import Console
 
 from ralphify._console_emitter import ConsoleEmitter
@@ -49,32 +50,19 @@ class TestIterationLifecycle:
         output = console.export_text()
         assert "Iteration 1" in output
 
-    def test_iteration_completed_shows_detail(self):
+    @pytest.mark.parametrize("event_type,detail,expected", [
+        (EventType.ITERATION_COMPLETED, "completed (5s)", "completed (5s)"),
+        (EventType.ITERATION_FAILED, "failed with exit code 1 (3s)", "failed with exit code 1"),
+        (EventType.ITERATION_TIMED_OUT, "timed out after 2m 0s", "timed out"),
+    ])
+    def test_iteration_ended_shows_detail(self, event_type, detail, expected):
         emitter, console = _capture_emitter()
         emitter.emit(_make_event(
-            EventType.ITERATION_COMPLETED,
-            iteration=1, detail="completed (5s)", log_file=None, result_text=None,
+            event_type,
+            iteration=1, detail=detail, log_file=None, result_text=None,
         ))
         output = console.export_text()
-        assert "completed (5s)" in output
-
-    def test_iteration_failed_shows_detail(self):
-        emitter, console = _capture_emitter()
-        emitter.emit(_make_event(
-            EventType.ITERATION_FAILED,
-            iteration=2, detail="failed with exit code 1 (3s)", log_file=None, result_text=None,
-        ))
-        output = console.export_text()
-        assert "failed with exit code 1" in output
-
-    def test_iteration_timed_out_shows_detail(self):
-        emitter, console = _capture_emitter()
-        emitter.emit(_make_event(
-            EventType.ITERATION_TIMED_OUT,
-            iteration=3, detail="timed out after 2m 0s", log_file=None, result_text=None,
-        ))
-        output = console.export_text()
-        assert "timed out" in output
+        assert expected in output
 
     def test_iteration_ended_shows_log_file(self):
         emitter, console = _capture_emitter()

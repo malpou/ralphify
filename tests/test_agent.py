@@ -131,7 +131,7 @@ class TestReadAgentStream:
 
 class TestExecuteAgentBlocking:
     @patch(MOCK_SUBPROCESS)
-    def test_success(self, mock_run, tmp_path):
+    def test_success(self, mock_run):
         mock_run.return_value = subprocess.CompletedProcess(
             args=[], returncode=0, stdout="", stderr=""
         )

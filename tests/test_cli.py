@@ -36,13 +36,9 @@ def _make_ralph(tmp_path, prompt="go", agent="claude -p --dangerously-skip-permi
 
 
 class TestVersion:
-    def test_version_flag(self):
-        result = runner.invoke(app, ["--version"])
-        assert result.exit_code == 0
-        assert f"ralphify {__version__}" in result.output
-
-    def test_version_short_flag(self):
-        result = runner.invoke(app, ["-V"])
+    @pytest.mark.parametrize("flag", ["--version", "-V"])
+    def test_version_flag(self, flag):
+        result = runner.invoke(app, [flag])
         assert result.exit_code == 0
         assert f"ralphify {__version__}" in result.output
 
