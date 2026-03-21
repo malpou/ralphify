@@ -153,4 +153,4 @@ class RunState:
     def mark_timed_out(self) -> None:
         """Record a timed-out iteration (also counts as failed)."""
         self.timed_out += 1
-        self.failed += 1
+        self.mark_failed()

@@ -13,6 +13,39 @@ from ralphify._runner import RunResult
 from ralphify.engine import _BoundEmitter, _delay_if_needed, run_loop
 
 
+class TestBoundEmitter:
+    def test_emits_event_with_fixed_run_id(self):
+        q = QueueEmitter()
+        emit = _BoundEmitter(q, "run-abc")
+        emit(EventType.ITERATION_STARTED, {"iteration": 1})
+
+        events = drain_events(q)
+        assert len(events) == 1
+        assert events[0].run_id == "run-abc"
+        assert events[0].type == EventType.ITERATION_STARTED
+        assert events[0].data == {"iteration": 1}
+
+    def test_emits_empty_data_when_none_provided(self):
+        q = QueueEmitter()
+        emit = _BoundEmitter(q, "run-xyz")
+        emit(EventType.RUN_PAUSED)
+
+        events = drain_events(q)
+        assert len(events) == 1
+        assert events[0].data == {}
+
+    def test_multiple_events_share_run_id(self):
+        q = QueueEmitter()
+        emit = _BoundEmitter(q, "run-123")
+        emit(EventType.RUN_STARTED)
+        emit(EventType.ITERATION_STARTED, {"iteration": 1})
+        emit(EventType.RUN_STOPPED)
+
+        events = drain_events(q)
+        assert all(e.run_id == "run-123" for e in events)
+        assert len(events) == 3
+
+
 class TestRunLoop:
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_single_iteration(self, mock_run, tmp_path):
