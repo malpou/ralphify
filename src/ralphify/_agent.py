@@ -87,6 +87,18 @@ def _write_log(
     return log_file
 
 
+def _maybe_write_log(
+    log_path_dir: Path | None,
+    iteration: int,
+    stdout: str | bytes | None,
+    stderr: str | bytes | None,
+) -> Path | None:
+    """Write a log file if logging is configured, otherwise return ``None``."""
+    if log_path_dir is None:
+        return None
+    return _write_log(log_path_dir, iteration, stdout, stderr)
+
+
 def _supports_stream_json(cmd: list[str]) -> bool:
     """Return True if the agent command supports ``--output-format stream-json``.
 
@@ -190,9 +202,7 @@ def _run_agent_streaming(
             proc.kill()
             proc.wait()
 
-    log_file: Path | None = None
-    if log_path_dir:
-        log_file = _write_log(log_path_dir, iteration, "".join(stream.stdout_lines), stderr_data)
+    log_file = _maybe_write_log(log_path_dir, iteration, "".join(stream.stdout_lines), stderr_data)
 
     return AgentResult(
         returncode=None if stream.timed_out else proc.returncode,
@@ -232,9 +242,7 @@ def _run_agent_blocking(
             capture_output=bool(log_path_dir),
         )
     except subprocess.TimeoutExpired as exc:
-        log_file = None
-        if log_path_dir:
-            log_file = _write_log(log_path_dir, iteration, exc.stdout, exc.stderr)
+        log_file = _maybe_write_log(log_path_dir, iteration, exc.stdout, exc.stderr)
         return AgentResult(
             returncode=None,
             elapsed=time.monotonic() - start,
@@ -242,9 +250,8 @@ def _run_agent_blocking(
             timed_out=True,
         )
 
-    log_file: Path | None = None
+    log_file = _maybe_write_log(log_path_dir, iteration, result.stdout, result.stderr)
     if log_path_dir:
-        log_file = _write_log(log_path_dir, iteration, result.stdout, result.stderr)
         if result.stdout:
             sys.stdout.write(result.stdout)
         if result.stderr:
