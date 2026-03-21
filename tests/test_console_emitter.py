@@ -137,9 +137,22 @@ class TestRunStopped:
         emitter, console = _capture_emitter()
         emitter.emit(_make_event(
             EventType.RUN_STOPPED,
-            reason=REASON_COMPLETED, total=3, completed=2, failed=0, timed_out=1,
+            reason=REASON_COMPLETED, total=3, completed=2, failed=1, timed_out=1,
         ))
         output = console.export_text()
+        assert "1 timed out" in output
+        # timed_out is subset of failed — only non-timeout failures shown as "failed"
+        assert "failed" not in output
+
+    def test_completed_with_mixed_failures_and_timeouts(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STOPPED,
+            reason=REASON_COMPLETED, total=5, completed=3, failed=2, timed_out=1,
+        ))
+        output = console.export_text()
+        assert "3 succeeded" in output
+        assert "1 failed" in output
         assert "1 timed out" in output
 
     def test_non_completed_reason_skips_summary(self):

@@ -272,7 +272,6 @@ class TestRunTimeout:
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1", "--timeout", "10"])
         assert result.exit_code == 0
         assert "timed out" in result.output
-        assert "1 failed" in result.output
         assert "1 timed out" in result.output
 
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)

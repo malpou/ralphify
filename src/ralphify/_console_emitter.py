@@ -89,12 +89,15 @@ class ConsoleEmitter:
             self._live = None
 
     def _on_iteration_started(self, data: dict) -> None:
-        self._rprint(f"\n[bold blue]── Iteration {data['iteration']} ──[/bold blue]")
+        iteration = data.get("iteration", "?")
+        self._rprint(f"\n[bold blue]── Iteration {iteration} ──[/bold blue]")
         self._start_live()
 
     def _on_iteration_ended(self, data: dict, color: str, icon: str) -> None:
         self._stop_live()
-        status_msg = f"[{color}]{icon} Iteration {data['iteration']} {data['detail']}"
+        iteration = data.get("iteration", "?")
+        detail = data.get("detail", "")
+        status_msg = f"[{color}]{icon} Iteration {iteration} {detail}"
         if data.get("log_file"):
             status_msg += f" {_ICON_ARROW}\n{data['log_file']}"
         status_msg += f"[/{color}]"
@@ -128,10 +131,13 @@ class ConsoleEmitter:
         failed = data.get("failed", 0)
         timed_out_count = data.get("timed_out", 0)
 
+        # timed_out is a subset of failed — show non-timeout failures
+        # and timeouts as separate categories for clarity.
+        errored = failed - timed_out_count
         parts = [f"{completed} succeeded"]
-        if failed:
-            parts.append(f"{failed} failed")
-        detail = ", ".join(parts)
+        if errored:
+            parts.append(f"{errored} failed")
         if timed_out_count:
-            detail += f" ({timed_out_count} timed out)"
+            parts.append(f"{timed_out_count} timed out")
+        detail = ", ".join(parts)
         self._rprint(f"\n[green]Done: {total} iteration(s) {_ICON_DASH} {detail}[/green]")
