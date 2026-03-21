@@ -95,6 +95,35 @@ class TestRun:
         assert result.exit_code == 1
         assert expected_error in result.output.lower()
 
+    @pytest.mark.parametrize("n_value", ["-1", "0", "-100"])
+    def test_errors_with_non_positive_n(self, mock_which, tmp_path, monkeypatch, n_value):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = make_ralph(tmp_path)
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", n_value])
+        assert result.exit_code == 1
+        assert "positive integer" in result.output.lower()
+
+    def test_errors_with_negative_delay(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = make_ralph(tmp_path)
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1", "--delay", "-5"])
+        assert result.exit_code == 1
+        assert "non-negative" in result.output.lower()
+
+    def test_errors_with_non_positive_timeout(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = make_ralph(tmp_path)
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1", "--timeout", "-10"])
+        assert result.exit_code == 1
+        assert "positive number" in result.output.lower()
+
+    def test_errors_with_zero_timeout(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = make_ralph(tmp_path)
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1", "--timeout", "0"])
+        assert result.exit_code == 1
+        assert "positive number" in result.output.lower()
+
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_runs_when_valid(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)

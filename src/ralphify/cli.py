@@ -224,6 +224,14 @@ def _build_run_config(
     if extra_args:
         ralph_args = _parse_user_args(extra_args, declared_names)
 
+    # Validate numeric options
+    if max_iterations is not None and max_iterations < 1:
+        _exit_error(f"'-n' must be a positive integer, got {max_iterations}.")
+    if delay < 0:
+        _exit_error(f"'--delay' must be non-negative, got {delay}.")
+    if timeout is not None and timeout <= 0:
+        _exit_error(f"'--timeout' must be a positive number, got {timeout}.")
+
     return RunConfig(
         agent=agent,
         ralph_dir=ralph_dir.resolve(),
