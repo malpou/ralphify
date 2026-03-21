@@ -211,6 +211,11 @@
         <div class="hero-noise"></div>
       </div>
 
+      <!-- Runner that loops across the hero -->
+      <div class="hero-runner-track" aria-hidden="true">
+        <span class="hero-runner">&#x1F3C3;</span>
+      </div>
+
       <div class="hero-center">
         <div class="hero-badge">
           <span class="status-dot"></span>
@@ -221,10 +226,6 @@
           <span class="hero-line-prelude">Stop stressing over not having an agent running.</span>
           <span class="hero-line-punchline">
             <span class="hero-gradient-text">Ralph is always running</span>
-            <span class="runner-wrap" aria-hidden="true">
-              <span class="runner-track"></span>
-              <span class="runner-emoji">&#x1F3C3;</span>
-            </span>
           </span>
         </h1>
 
@@ -251,6 +252,7 @@
           <div class="status-panel-header">
             <span class="status-dot"></span>
             <span class="status-panel-title">ralph is running</span>
+            <span class="status-panel-uptime" id="uptime">uptime 14h 23m</span>
           </div>
           <div class="status-panel-grid">
             <div class="status-metric">
@@ -262,8 +264,8 @@
               <span class="status-metric-value status-metric-green">127/127</span>
             </div>
             <div class="status-metric">
-              <span class="status-metric-label">Last commit</span>
-              <span class="status-metric-value status-metric-mono">feat: add webhook handler</span>
+              <span class="status-metric-label">Commits shipped</span>
+              <span class="status-metric-value" id="commit-counter">9</span>
             </div>
             <div class="status-metric">
               <span class="status-metric-label">Status</span>
@@ -272,6 +274,11 @@
                 Running agent...
               </span>
             </div>
+          </div>
+          <div class="status-panel-log" id="status-log">
+            <div class="log-line log-line-visible"><span class="log-time">2m ago</span> <span class="log-success">&#x2713;</span> committed: feat: add webhook handler</div>
+            <div class="log-line log-line-visible"><span class="log-time">8m ago</span> <span class="log-success">&#x2713;</span> committed: fix: session store race condition</div>
+            <div class="log-line log-line-visible"><span class="log-time">15m ago</span> <span class="log-success">&#x2713;</span> committed: feat: add rate limiting middleware</div>
           </div>
         </div>
       </div>
@@ -289,7 +296,7 @@
           You close your laptop.<br>
           <span class="text-muted-heading">Your agent stops.</span>
         </h2>
-        <p class="section-subtitle fade-up">You start an agent. It works great. Then you go to lunch, close your laptop, or context fills up. The agent stops. You come back, re-read the thread, restart it. Again. And again.</p>
+        <p class="section-subtitle fade-up">You start an agent. It works great. Then you go to lunch, close your laptop, or the context fills up. The agent stops. You come back, re-read the thread, restart it. Again. And again.</p>
 
         <div class="problem-cycle fade-up">
           <div class="cycle-step">
@@ -337,10 +344,10 @@
           <div class="fomo-card fomo-without">
             <div class="fomo-card-label">
               <span class="status-dot status-dot-dead"></span>
-              You, without Ralph
+              Without Ralph
             </div>
             <div class="fomo-card-body">
-              <div class="fomo-line"><span class="fomo-time">Fri 6 PM</span> Closed laptop for the weekend</div>
+              <div class="fomo-line"><span class="fomo-time">Fri 6 PM</span> Closed laptop</div>
               <div class="fomo-line fomo-dim"><span class="fomo-time">Sat</span> &hellip;</div>
               <div class="fomo-line fomo-dim"><span class="fomo-time">Sun</span> &hellip;</div>
               <div class="fomo-line"><span class="fomo-time">Mon 9 AM</span> Opened laptop</div>
@@ -357,7 +364,7 @@
           <div class="fomo-card fomo-with">
             <div class="fomo-card-label">
               <span class="status-dot"></span>
-              You, with Ralph
+              With Ralph
             </div>
             <div class="fomo-card-body">
               <div class="fomo-line"><span class="fomo-time">Fri 6 PM</span> <code>ralph run</code> &rarr; closed laptop</div>
@@ -652,9 +659,7 @@ pick the next task from TODO.md and implement it.</code></pre>
         <h2 id="cta-bottom-heading">
           Stop stressing.<br>
           <span class="hero-gradient-text">Start shipping.</span>
-          <span class="runner-wrap runner-wrap-sm" aria-hidden="true">
-            <span class="runner-emoji runner-emoji-sm">&#x1F3C3;</span>
-          </span>
+          <span class="cta-runner" aria-hidden="true">&#x1F3C3;</span>
         </h2>
         <div class="install-command cta-command">
           <code>uv tool install ralphify && ralph new && ralph run</code>
@@ -731,8 +736,10 @@ pick the next task from TODO.md and implement it.</code></pre>
 
     // Iteration counter — counts up slowly to feel alive
     const iterCounter = document.getElementById('iter-counter');
+    const commitCounter = document.getElementById('commit-counter');
     if (iterCounter) {
       let count = 14;
+      let commits = 9;
       setInterval(() => {
         count++;
         iterCounter.textContent = count;
@@ -744,6 +751,20 @@ pick the next task from TODO.md and implement it.</code></pre>
           iterCounter.style.transform = 'scale(1)';
           iterCounter.style.color = '';
         }, 50);
+
+        // Every 3rd iteration, bump commits
+        if (count % 3 === 0 && commitCounter) {
+          commits++;
+          commitCounter.textContent = commits;
+          commitCounter.style.transition = 'none';
+          commitCounter.style.transform = 'scale(1.15)';
+          commitCounter.style.color = '#34D399';
+          setTimeout(() => {
+            commitCounter.style.transition = 'transform 0.4s ease, color 0.6s ease';
+            commitCounter.style.transform = 'scale(1)';
+            commitCounter.style.color = '';
+          }, 50);
+        }
       }, 8000);
     }
 

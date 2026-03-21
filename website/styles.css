@@ -279,9 +279,9 @@ nav {
   right: -20%;
   bottom: 20%;
   background:
-    radial-gradient(ellipse 80% 60% at 30% 20%, rgba(139, 108, 240, 0.25) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 70% 30%, rgba(232, 123, 74, 0.14) 0%, transparent 55%),
-    radial-gradient(ellipse 90% 40% at 50% 80%, rgba(124, 77, 255, 0.10) 0%, transparent 50%);
+    radial-gradient(ellipse 80% 60% at 30% 20%, rgba(139, 108, 240, 0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 70% 30%, rgba(232, 123, 74, 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 40% at 50% 80%, rgba(124, 77, 255, 0.12) 0%, transparent 50%);
   animation: wash-drift 20s ease-in-out infinite alternate;
 }
 
@@ -297,29 +297,29 @@ nav {
 }
 
 .hero-orb-1 {
-  width: 800px;
-  height: 800px;
-  top: -30%;
-  left: 20%;
-  background: radial-gradient(circle, rgba(139, 108, 240, 0.22) 0%, transparent 60%);
+  width: 900px;
+  height: 900px;
+  top: -35%;
+  left: 15%;
+  background: radial-gradient(circle, rgba(139, 108, 240, 0.28) 0%, transparent 60%);
   animation: orb-drift-1 22s ease-in-out infinite alternate;
 }
 
 .hero-orb-2 {
-  width: 600px;
-  height: 600px;
-  top: 20%;
-  right: -5%;
-  background: radial-gradient(circle, rgba(232, 123, 74, 0.14) 0%, transparent 60%);
+  width: 700px;
+  height: 700px;
+  top: 15%;
+  right: -8%;
+  background: radial-gradient(circle, rgba(232, 123, 74, 0.18) 0%, transparent 60%);
   animation: orb-drift-2 26s ease-in-out infinite alternate;
 }
 
 .hero-orb-3 {
-  width: 500px;
-  height: 500px;
-  bottom: -10%;
-  left: -5%;
-  background: radial-gradient(circle, rgba(124, 77, 255, 0.12) 0%, transparent 60%);
+  width: 600px;
+  height: 600px;
+  bottom: -15%;
+  left: -8%;
+  background: radial-gradient(circle, rgba(124, 77, 255, 0.14) 0%, transparent 60%);
   animation: orb-drift-3 18s ease-in-out infinite alternate;
 }
 
@@ -355,13 +355,57 @@ nav {
   100% { transform: translate(25px, -30px) scale(1.06); }
 }
 
+/* --- Runner that loops across the hero --- */
+.hero-runner-track {
+  position: absolute;
+  top: 42%;
+  left: 0;
+  right: 0;
+  height: 60px;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.12;
+}
+
+.hero-runner {
+  font-size: 2.8rem;
+  display: inline-block;
+  position: absolute;
+  animation: runner-across 12s linear infinite;
+}
+
+@keyframes runner-across {
+  0% { left: -5%; transform: translateY(0); }
+  5% { transform: translateY(-8px); }
+  10% { transform: translateY(0); }
+  15% { transform: translateY(-6px); }
+  20% { transform: translateY(0); }
+  25% { transform: translateY(-8px); }
+  30% { transform: translateY(0); }
+  35% { transform: translateY(-6px); }
+  40% { transform: translateY(0); }
+  45% { transform: translateY(-8px); }
+  50% { transform: translateY(0); }
+  55% { transform: translateY(-6px); }
+  60% { transform: translateY(0); }
+  65% { transform: translateY(-8px); }
+  70% { transform: translateY(0); }
+  75% { transform: translateY(-6px); }
+  80% { transform: translateY(0); }
+  85% { transform: translateY(-8px); }
+  90% { transform: translateY(0); }
+  95% { transform: translateY(-6px); }
+  100% { left: 105%; transform: translateY(0); }
+}
+
 /* Centered hero layout */
 .hero-center {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 7rem 2rem 3rem;
+  padding: 8rem 2rem 3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -434,7 +478,7 @@ nav {
 
 .hero-line-punchline {
   display: block;
-  font-size: clamp(3.2rem, 7vw, 6rem);
+  font-size: clamp(3.2rem, 7.5vw, 6.5rem);
   font-weight: 800;
   line-height: 1.0;
   letter-spacing: -0.055em;
@@ -450,52 +494,6 @@ nav {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-/* Runner emoji with animated track */
-.runner-wrap {
-  display: inline-block;
-  position: relative;
-  vertical-align: middle;
-  margin-left: 0.3em;
-  width: clamp(2.5rem, 5vw, 5rem);
-  height: clamp(2rem, 3.5vw, 3.5rem);
-}
-
-.runner-wrap-sm {
-  width: clamp(1.5rem, 3vw, 3rem);
-  height: clamp(1.2rem, 2vw, 2rem);
-}
-
-.runner-track {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(139, 108, 240, 0.3), rgba(232, 123, 74, 0.2), transparent);
-  border-radius: 1px;
-}
-
-.runner-emoji {
-  font-size: clamp(1.8rem, 3.5vw, 3.5rem);
-  display: inline-block;
-  animation: runner-bounce 0.6s ease-in-out infinite;
-  -webkit-text-fill-color: initial;
-  position: absolute;
-  bottom: 2px;
-  left: 0;
-}
-
-.runner-emoji-sm {
-  font-size: clamp(1rem, 2vw, 1.75rem);
-}
-
-@keyframes runner-bounce {
-  0%, 100% { transform: translateY(0) translateX(0); }
-  25% { transform: translateY(-6px) translateX(1px); }
-  50% { transform: translateY(0) translateX(2px); }
-  75% { transform: translateY(-4px) translateX(1px); }
 }
 
 .hero-sub {
@@ -543,8 +541,8 @@ nav {
 
 .hero-status-dashboard {
   position: relative;
-  z-index: 1;
-  max-width: 580px;
+  z-index: 2;
+  max-width: 620px;
   width: 100%;
   margin: 0 auto;
   padding: 0 2rem 5rem;
@@ -593,6 +591,14 @@ nav {
   color: #34D399;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.status-panel-uptime {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+  margin-left: auto;
 }
 
 .status-panel-grid {
@@ -652,6 +658,43 @@ nav {
   font-size: 0.82rem;
   font-weight: 600;
   color: #34D399;
+}
+
+/* Status panel log — activity feed */
+.status-panel-log {
+  border-top: 1px solid rgba(139, 108, 240, 0.04);
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.log-line {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.log-line-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.log-time {
+  color: var(--text-muted);
+  opacity: 0.4;
+  margin-right: 0.6rem;
+  display: inline-block;
+  min-width: 52px;
+}
+
+.log-success {
+  color: #34D399;
+  font-weight: 700;
 }
 
 /* Hero horizon line */
@@ -1955,6 +1998,21 @@ nav {
   margin-bottom: 2.5rem;
 }
 
+.cta-runner {
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  display: inline-block;
+  animation: runner-bounce 0.6s ease-in-out infinite;
+  vertical-align: middle;
+  margin-left: 0.2em;
+}
+
+@keyframes runner-bounce {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-6px) translateX(1px); }
+  50% { transform: translateY(0) translateX(2px); }
+  75% { transform: translateY(-4px) translateX(1px); }
+}
+
 .cta-command {
   display: inline-flex;
   margin-bottom: 2rem;
@@ -2073,6 +2131,10 @@ footer::before {
 
   .hero-status-dashboard {
     padding: 0 1.5rem 4rem;
+  }
+
+  .hero-runner-track {
+    display: none;
   }
 
   .problem-cycle {
@@ -2212,6 +2274,14 @@ footer::before {
     border-right: none !important;
   }
 
+  .status-panel-log {
+    padding: 0.6rem 1rem;
+  }
+
+  .log-line {
+    font-size: 0.65rem;
+  }
+
   .problem,
   .fomo,
   .ralph-file,
@@ -2240,13 +2310,6 @@ footer::before {
 
   .agent-grid {
     grid-template-columns: 1fr;
-  }
-
-  .runner-wrap {
-    display: block;
-    margin: 0.25rem auto 0;
-    width: 3rem;
-    height: 2.5rem;
   }
 }
 
@@ -2284,5 +2347,10 @@ footer::before {
 
   .cycle-arrow {
     opacity: 1;
+  }
+
+  .log-line {
+    opacity: 1;
+    transform: none;
   }
 }
