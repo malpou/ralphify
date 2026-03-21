@@ -124,7 +124,7 @@ def _parse_user_args(
             try:
                 value = next(it)
             except StopIteration:
-                raise typer.BadParameter(f"Flag '--{name}' requires a value.")
+                raise typer.BadParameter(f"Flag '--{name}' requires a value.") from None
             result[name] = value
         else:
             if not declared_names:
