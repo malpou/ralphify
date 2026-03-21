@@ -47,6 +47,28 @@ class RunStatus(Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+    @property
+    def reason(self) -> str:
+        """Return the reason string for terminal statuses.
+
+        Used in ``RUN_STOPPED`` event data.  Only valid for terminal
+        statuses (``COMPLETED``, ``FAILED``, ``STOPPED``).
+
+        Raises :class:`ValueError` for non-terminal statuses.
+        """
+        try:
+            return _STATUS_REASONS[self]
+        except KeyError:
+            raise ValueError(f"{self.name} is not a terminal status") from None
+
+
+# Maps terminal run statuses to the reason string emitted in RUN_STOPPED events.
+_STATUS_REASONS: dict[RunStatus, str] = {
+    RunStatus.COMPLETED: REASON_COMPLETED,
+    RunStatus.FAILED: REASON_ERROR,
+    RunStatus.STOPPED: REASON_USER_REQUESTED,
+}
+
 
 @dataclass
 class Command:

@@ -7,6 +7,9 @@ import pytest
 
 from ralphify._run_types import (
     DEFAULT_COMMAND_TIMEOUT,
+    REASON_COMPLETED,
+    REASON_ERROR,
+    REASON_USER_REQUESTED,
     RUN_ID_LENGTH,
     Command,
     RunConfig,
@@ -160,3 +163,19 @@ class TestRunStatus:
     )
     def test_enum_values(self, status, value):
         assert status.value == value
+
+    @pytest.mark.parametrize(
+        "status,expected_reason",
+        [
+            (RunStatus.COMPLETED, REASON_COMPLETED),
+            (RunStatus.FAILED, REASON_ERROR),
+            (RunStatus.STOPPED, REASON_USER_REQUESTED),
+        ],
+    )
+    def test_reason_for_terminal_statuses(self, status, expected_reason):
+        assert status.reason == expected_reason
+
+    @pytest.mark.parametrize("status", [RunStatus.PENDING, RunStatus.RUNNING, RunStatus.PAUSED])
+    def test_reason_raises_for_non_terminal_statuses(self, status):
+        with pytest.raises(ValueError, match="not a terminal status"):
+            status.reason
