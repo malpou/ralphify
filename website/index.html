@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ralphify — Stop stressing. Ralph is always running.</title>
-  <meta name="description" content="Stop stressing over not having an agent running. Ralphify puts your AI coding agent in an autonomous loop. Write a prompt. Walk away. Ralph keeps shipping.">
+  <meta name="description" content="Stop stressing over not having an agent running. Ralphify puts your AI coding agent in an autonomous loop. Write a prompt. Walk away. Wake up to commits.">
   <meta name="keywords" content="AI coding agent, autonomous coding loop, CLI agent harness, AI agent loop, coding automation, ralphify, ralph loop, agentic engineering, AI pair programming, while true loop, agent FOMO">
   <meta name="author" content="Computerlove Technologies">
   <meta name="robots" content="index, follow">
@@ -196,39 +196,42 @@
 
   <main id="main-content">
 
-    <!-- Hero — centered, massive impact -->
+    <!-- Hero -->
     <section class="hero" aria-label="Introduction">
       <div class="hero-bg" aria-hidden="true">
         <div class="hero-gradient-orb hero-orb-1"></div>
         <div class="hero-gradient-orb hero-orb-2"></div>
-        <div class="hero-gradient-orb hero-orb-3"></div>
       </div>
 
       <div class="hero-inner">
-        <div class="hero-badge">
-          <span class="status-dot"></span>
-          Open-source &middot; pip install ralphify
-        </div>
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="status-dot"></span>
+            Open-source &middot; pip install ralphify
+          </div>
 
-        <h1 class="hero-headline">
-          Stop stressing over<br>not having an agent running.<br>
-          <span class="hero-gradient-text">Ralph is always running</span>
-          <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
-        </h1>
+          <h1 class="hero-headline">
+            Stop stressing over not having an agent running.
+          </h1>
+          <p class="hero-tagline">
+            <span class="hero-gradient-text">Ralph is always running</span>
+            <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
+          </p>
 
-        <p class="hero-sub">
-          Put your AI coding agent in a <code>while True</code> loop.<br>
-          Write a prompt. Walk away. Wake up to commits.
-        </p>
+          <p class="hero-sub">
+            Put your AI coding agent in a <code>while True</code> loop.<br>
+            Write a prompt. Walk away. Wake up to commits.
+          </p>
 
-        <div class="cta">
-          <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
-          <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
-        </div>
+          <div class="cta">
+            <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
+            <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
+          </div>
 
-        <div class="hero-install">
-          <code>uv tool install ralphify</code>
-          <button class="copy-btn" aria-label="Copy install command" onclick="copyCommand(this, 'uv tool install ralphify')">Copy</button>
+          <div class="hero-install">
+            <code>uv tool install ralphify</code>
+            <button class="copy-btn" aria-label="Copy install command" onclick="copyCommand(this, 'uv tool install ralphify')">Copy</button>
+          </div>
         </div>
 
         <div class="hero-terminal">
@@ -279,20 +282,20 @@
       </div>
     </section>
 
-    <!-- The FOMO contrast -->
+    <!-- FOMO -->
     <section class="fomo" aria-labelledby="fomo-heading">
       <div class="fomo-inner">
-        <p class="section-eyebrow fade-up">Meanwhile, at standup</p>
+        <p class="section-eyebrow fade-up">The morning standup question</p>
         <h2 id="fomo-heading" class="section-heading fade-up">
           &ldquo;What did your agent<br>ship overnight?&rdquo;
         </h2>
-        <p class="section-subtitle fade-up">Everyone in your standup has an agent running. Here's what that looks like.</p>
+        <p class="section-subtitle fade-up">You know that feeling. Everyone in standup shipped while they slept. You didn't. Not anymore.</p>
 
         <div class="fomo-contrast fade-up">
           <div class="fomo-card fomo-without">
             <div class="fomo-card-label">
               <span class="status-dot status-dot-dead"></span>
-              You, without Ralph
+              Without Ralph
             </div>
             <div class="fomo-card-body">
               <div class="fomo-line"><span class="fomo-time">11:47 PM</span> Closed laptop</div>
@@ -308,7 +311,7 @@
           <div class="fomo-card fomo-with">
             <div class="fomo-card-label">
               <span class="status-dot"></span>
-              You, with Ralph
+              With Ralph
             </div>
             <div class="fomo-card-body">
               <div class="fomo-line"><span class="fomo-time">11:47 PM</span> Closed laptop</div>
@@ -363,7 +366,7 @@ pick the next task from TODO.md and implement it.</code></pre>
       </div>
     </section>
 
-    <!-- How it works — the loop -->
+    <!-- How it works -->
     <section class="how-it-works" aria-labelledby="how-heading">
       <div class="how-inner">
         <p class="section-eyebrow fade-up">How it works</p>
@@ -400,7 +403,7 @@ pick the next task from TODO.md and implement it.</code></pre>
     <!-- Why loops -->
     <section class="why" aria-labelledby="why-heading">
       <div class="why-inner">
-        <p class="section-eyebrow fade-up">Why loops</p>
+        <p class="section-eyebrow fade-up">Why loops beat single runs</p>
         <h2 id="why-heading" class="section-heading fade-up">Single runs decay.<br>Loops compound.</h2>
         <p class="section-subtitle fade-up">A single agent conversation fills up, slows down, and loses the plot. Ralph doesn't.</p>
         <div class="why-grid fade-up">
@@ -617,7 +620,7 @@ pick the next task from TODO.md and implement it.</code></pre>
           line.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
           line.style.opacity = '1';
           line.style.transform = 'translateY(0)';
-        }, 1200 + i * 200);
+        }, 800 + i * 180);
       });
     }
 
