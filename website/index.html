@@ -192,40 +192,72 @@
       </div>
 
       <div class="hero-content">
-        <div class="hero-badge">
-          <span class="status-dot"></span>
-          Open-source &middot; pip install ralphify
-        </div>
-
-        <h1 class="hero-headline">
-          Stop stressing over<br>
-          not having an<br>
-          agent running.
-        </h1>
-
-        <p class="hero-punchline">
-          <span class="hero-gradient-text">Ralph is always running</span>
-          <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
-        </p>
-
-        <p class="hero-sub">
-          Put your AI coding agent in a <code>while True</code> loop.<br>
-          Write a prompt. Point it at an agent. Walk away.
-        </p>
-
-        <div class="cta">
-          <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
-          <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
-        </div>
-
-        <div class="agent-strip">
-          <span class="agent-strip-label">Works with</span>
-          <div class="agent-strip-list">
-            <a href="docs/agents/" class="agent-chip">Claude Code</a>
-            <a href="docs/agents/" class="agent-chip">Aider</a>
-            <a href="docs/agents/" class="agent-chip">Codex CLI</a>
-            <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
+        <div class="hero-text">
+          <div class="hero-badge">
+            <span class="status-dot"></span>
+            Open-source &middot; pip install ralphify
           </div>
+
+          <h1 class="hero-headline">
+            Stop stressing<br>
+            over not having<br>
+            an agent running.
+          </h1>
+
+          <p class="hero-punchline">
+            <span class="hero-gradient-text">Ralph is always running</span>
+            <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
+          </p>
+
+          <p class="hero-sub">
+            Put your AI coding agent in a <code>while True</code> loop.<br>
+            Write a prompt. Point it at an agent. Walk away.
+          </p>
+
+          <div class="cta">
+            <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
+            <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
+          </div>
+        </div>
+
+        <div class="hero-terminal">
+          <div class="terminal-window">
+            <div class="terminal-header">
+              <span class="terminal-dot red"></span>
+              <span class="terminal-dot yellow"></span>
+              <span class="terminal-dot green"></span>
+              <span class="terminal-title">ralph &mdash; iteration 47</span>
+            </div>
+            <pre><code><span class="prompt">$</span> ralph run
+<span class="dim">&#9484;&#9472; Iteration 46 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="success">&#x2713;</span> Iteration 46 completed <span class="dim">(38.2s)</span>
+  Checks: 2 passed
+    <span class="success">&#x2713;</span> lint
+    <span class="success">&#x2713;</span> tests <span class="dim">(47/47)</span>
+
+<span class="dim">&#9484;&#9472; Iteration 47 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="fail">&#x2717;</span> Iteration 47 failed <span class="dim">(23.1s)</span>
+  Checks: 1 passed, 1 failed
+    <span class="success">&#x2713;</span> lint
+    <span class="fail">&#x2717;</span> tests <span class="dim">(exit 1)</span>
+
+<span class="dim">&#9484;&#9472; Iteration 48 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="success">&#x2713;</span> Iteration 48 completed <span class="dim">(41.7s)</span>
+  Checks: 2 passed
+    <span class="success">&#x2713;</span> lint
+    <span class="success">&#x2713;</span> tests <span class="dim">(47/47)</span>
+<span class="cursor-blink">&#9608;</span></code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-agents">
+        <span class="agent-strip-label">Works with</span>
+        <div class="agent-strip-list">
+          <a href="docs/agents/" class="agent-chip">Claude Code</a>
+          <a href="docs/agents/" class="agent-chip">Aider</a>
+          <a href="docs/agents/" class="agent-chip">Codex CLI</a>
+          <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
         </div>
       </div>
     </section>
@@ -250,65 +282,31 @@
       </div>
     </div>
 
-    <!-- The scene -->
-    <section class="scene" aria-labelledby="scene-heading">
-      <div class="scene-inner">
-        <h2 id="scene-heading" class="section-heading">You know this feeling.</h2>
-        <div class="scene-grid">
-          <div class="scene-card">
-            <div class="scene-icon">&#x1F4AC;</div>
-            <h3>&ldquo;Do you have an agent running?&rdquo;</h3>
-            <p>The question that haunts every engineering standup. Your colleague has three agents shipping code around the clock. You have&hellip; a terminal with a blinking cursor.</p>
+    <!-- The FOMO -->
+    <section class="fomo" aria-labelledby="fomo-heading">
+      <div class="fomo-inner">
+        <p class="fomo-eyebrow">Sound familiar?</p>
+        <h2 id="fomo-heading" class="section-heading">The agent FOMO is real.</h2>
+        <p class="section-subtitle">Every engineering team has that one person whose agent shipped 14 files at 3am. You woke up to a Slack message: <em>&ldquo;Done.&rdquo;</em></p>
+
+        <div class="fomo-grid">
+          <div class="fomo-card">
+            <div class="fomo-quote">&ldquo;Do you have an agent running?&rdquo;</div>
+            <p class="fomo-context">The question that haunts every standup. Three people nod. You stare at your coffee.</p>
           </div>
-          <div class="scene-card">
-            <div class="scene-icon">&#x1F4BB;</div>
-            <h3>You close the laptop.</h3>
-            <p>The agent stops. Nothing ships until you're back. Meanwhile, someone else's agent just committed 14 files at 3am.</p>
+          <div class="fomo-card">
+            <div class="fomo-quote">&ldquo;I just let it run overnight.&rdquo;</div>
+            <p class="fomo-context">Your colleague closed their laptop, went to bed, and woke up to a PR with 23 commits. You closed your laptop and the agent died.</p>
           </div>
-          <div class="scene-card scene-card-accent">
-            <div class="scene-icon">&#x221e;</div>
-            <h3>What if it just kept going?</h3>
-            <p>Read the prompt. Do the work. Check itself. Loop &mdash; with <em>fresh context every time</em>. No babysitting. That's Ralph.</p>
+          <div class="fomo-card fomo-card-solution">
+            <div class="fomo-solution-badge">
+              <span class="status-dot"></span>
+              The fix
+            </div>
+            <div class="fomo-quote">&ldquo;Ralph has been running since Tuesday.&rdquo;</div>
+            <p class="fomo-context">An autonomous loop that reads the prompt, does the work, checks itself, and starts again. Fresh context every iteration. No babysitting.</p>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- Terminal demo -->
-    <section class="demo" aria-labelledby="demo-heading">
-      <div class="demo-inner">
-        <h2 id="demo-heading" class="section-heading">This is what Ralph looks like</h2>
-        <p class="section-subtitle">You walk away. Ralph keeps going. When something breaks, it fixes itself next iteration.</p>
-
-        <figure class="terminal">
-          <div class="terminal-window" role="img" aria-label="Terminal showing ralph run with three iterations — iteration 2 fails a test, iteration 3 automatically fixes it">
-            <div class="terminal-header">
-              <span class="terminal-dot red"></span>
-              <span class="terminal-dot yellow"></span>
-              <span class="terminal-dot green"></span>
-              <span class="terminal-title">ralph</span>
-            </div>
-            <pre><code><span class="prompt">$</span> ralph run
-<span class="dim">&#9484;&#9472; Iteration 1 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="success">&#x2713;</span> Iteration 1 completed <span class="dim">(52.3s)</span>
-  Checks: 2 passed
-    <span class="success">&#x2713;</span> lint
-    <span class="success">&#x2713;</span> tests
-
-<span class="dim">&#9484;&#9472; Iteration 2 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="fail">&#x2717;</span> Iteration 2 failed <span class="dim">(23.1s)</span>
-  Checks: 1 passed, 1 failed
-    <span class="success">&#x2713;</span> lint
-    <span class="fail">&#x2717;</span> tests <span class="dim">(exit 1)</span>
-
-<span class="dim">&#9484;&#9472; Iteration 3 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="success">&#x2713;</span> Iteration 3 completed <span class="dim">(41.7s)</span>
-  Checks: 2 passed
-    <span class="success">&#x2713;</span> lint
-    <span class="success">&#x2713;</span> tests</code></pre>
-          </div>
-          <figcaption class="terminal-caption">Iteration 2 broke a test. Iteration 3 fixed it. You didn't lift a finger.</figcaption>
-        </figure>
       </div>
     </section>
 
@@ -318,28 +316,29 @@
         <h2 id="how-heading" class="section-heading">The loop</h2>
         <p class="section-subtitle">Three steps, every iteration. Fresh context, no drift.</p>
 
-        <div class="loop-steps">
-          <div class="loop-step">
-            <div class="loop-step-number">1</div>
-            <h3>Assemble the prompt</h3>
-            <p>Ralphify reads your <a href="docs/writing-prompts/"><code>RALPH.md</code></a>, runs commands to gather live data (git log, test output, anything), and injects results into the prompt.</p>
+        <div class="loop-visual">
+          <div class="loop-steps">
+            <div class="loop-step">
+              <div class="loop-step-number">1</div>
+              <h3>Assemble the prompt</h3>
+              <p>Ralphify reads your <a href="docs/writing-prompts/"><code>RALPH.md</code></a>, runs commands to gather live data (git log, test output, anything), and injects results into the prompt.</p>
+            </div>
+            <div class="loop-connector-h" aria-hidden="true"></div>
+            <div class="loop-step">
+              <div class="loop-step-number">2</div>
+              <h3>Pipe to the agent</h3>
+              <p>The assembled prompt goes to your <a href="docs/agents/">agent</a>. It reads the codebase, does one unit of work, commits, and exits.</p>
+            </div>
+            <div class="loop-connector-h" aria-hidden="true"></div>
+            <div class="loop-step">
+              <div class="loop-step-number">3</div>
+              <h3>Repeat</h3>
+              <p>Back to step 1. Fresh context window, latest code. Edit the prompt while it runs &mdash; changes take effect next cycle.</p>
+            </div>
           </div>
-          <div class="loop-connector-h" aria-hidden="true"></div>
-          <div class="loop-step">
-            <div class="loop-step-number">2</div>
-            <h3>Pipe to the agent</h3>
-            <p>The assembled prompt goes to your <a href="docs/agents/">agent</a>. It reads the codebase, does one unit of work, commits, and exits.</p>
+          <div class="loop-return" aria-hidden="true">
+            <span class="loop-return-arrow">&#x21A9; back to step 1</span>
           </div>
-          <div class="loop-connector-h" aria-hidden="true"></div>
-          <div class="loop-step">
-            <div class="loop-step-number">3</div>
-            <h3>Repeat</h3>
-            <p>Back to step 1. Fresh context window, latest code. Edit the prompt while it runs &mdash; changes take effect next cycle.</p>
-          </div>
-        </div>
-
-        <div class="loop-return" aria-hidden="true">
-          <span class="loop-return-arrow">&#x21A9; back to step 1</span>
         </div>
       </div>
     </section>
@@ -348,8 +347,8 @@
     <section class="ralph-file" aria-labelledby="ralph-file-heading">
       <div class="ralph-file-inner">
         <div class="ralph-file-text">
-          <h2 id="ralph-file-heading" class="section-heading">A ralph is just a Markdown file</h2>
-          <p class="section-subtitle">No config files. No project scaffolding. No dashboard. One file is the whole primitive.</p>
+          <h2 id="ralph-file-heading" class="section-heading">A ralph is just<br>a Markdown file</h2>
+          <p class="section-subtitle">No config files. No project scaffolding. No dashboard.<br>One file is the whole primitive.</p>
           <ul class="ralph-features">
             <li><strong>agent</strong> &mdash; which CLI agent to run</li>
             <li><strong>commands</strong> &mdash; shell commands whose output fills placeholders</li>
@@ -414,6 +413,7 @@ pick the next task from TODO.md and implement it.</code></pre>
     <!-- Install -->
     <section class="install" aria-labelledby="install-heading">
       <h2 id="install-heading" class="section-heading">Get Ralph running</h2>
+      <p class="section-subtitle">Three commands. That's it.</p>
       <div class="install-steps">
         <div class="install-step">
           <span class="install-label">Install</span>
@@ -421,12 +421,14 @@ pick the next task from TODO.md and implement it.</code></pre>
             <code>uv tool install ralphify</code>
           </div>
         </div>
+        <div class="install-arrow" aria-hidden="true">&rarr;</div>
         <div class="install-step">
           <span class="install-label">Create a ralph</span>
           <div class="install-command">
             <code>ralph new</code>
           </div>
         </div>
+        <div class="install-arrow" aria-hidden="true">&rarr;</div>
         <div class="install-step">
           <span class="install-label">Run it</span>
           <div class="install-command">
@@ -469,7 +471,7 @@ pick the next task from TODO.md and implement it.</code></pre>
         </div>
         <h2 id="cta-bottom-heading">
           Stop stressing.<br>
-          <span class="hero-gradient-text">Let Ralph run so you don't have to.</span>
+          <span class="hero-gradient-text">Let Ralph ship while you sleep.</span>
         </h2>
         <div class="install-command cta-command">
           <code>uv tool install ralphify && ralph new && ralph run</code>

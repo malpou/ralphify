@@ -187,7 +187,7 @@ nav {
   position: relative;
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
   overflow: hidden;
 }
@@ -259,17 +259,23 @@ nav {
   100% { transform: translate(calc(-50% - 20px), calc(-50% - 30px)) scale(1.2); opacity: 1; }
 }
 
-/* Centered hero layout */
+/* Split hero layout */
 .hero-content {
   position: relative;
   z-index: 1;
-  max-width: 900px;
+  max-width: var(--max-width);
   margin: 0 auto;
-  padding: 10rem 2rem 8rem;
-  text-align: center;
+  padding: 8rem 2rem 4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.hero-text {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .hero-badge {
@@ -283,7 +289,7 @@ nav {
   border-radius: 100px;
   border: 1px solid rgba(139, 108, 240, 0.15);
   background: rgba(139, 108, 240, 0.06);
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   letter-spacing: 0.02em;
 }
 
@@ -308,25 +314,24 @@ nav {
 }
 
 .hero-headline {
-  font-size: clamp(2.75rem, 6.5vw, 5rem);
+  font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 800;
   line-height: 1.05;
   color: #fff;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   letter-spacing: -0.04em;
 }
 
 .hero-punchline {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.3em;
 }
 
 .hero-gradient-text {
   display: inline;
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1.1;
@@ -337,7 +342,7 @@ nav {
 }
 
 .runner-emoji {
-  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+  font-size: clamp(1.25rem, 3vw, 2rem);
   display: inline-block;
   animation: bounce-run 1s ease-in-out infinite;
   vertical-align: middle;
@@ -345,15 +350,14 @@ nav {
 
 @keyframes bounce-run {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-6px); }
 }
 
 .hero-sub {
-  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-size: clamp(0.95rem, 1.5vw, 1.15rem);
   color: var(--text-muted);
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   line-height: 1.7;
-  max-width: 540px;
 }
 
 .hero-sub code {
@@ -365,14 +369,42 @@ nav {
   border: 1px solid rgba(139, 108, 240, 0.15);
 }
 
-/* Agent strip */
-.agent-strip {
-  margin-top: 2.5rem;
+/* Hero terminal */
+.hero-terminal {
+  position: relative;
+}
+
+.hero-terminal .terminal-window {
+  transform: perspective(1200px) rotateY(-2deg);
+  transition: transform 0.3s ease;
+}
+
+.hero-terminal .terminal-window:hover {
+  transform: perspective(1200px) rotateY(0deg);
+}
+
+/* Cursor blink */
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+  color: var(--purple-light);
+  font-size: 0.9em;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Agent strip - below hero */
+.hero-agents {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-  justify-content: center;
+  padding: 0 2rem 4rem;
 }
 
 .agent-strip-label {
@@ -418,7 +450,6 @@ nav {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  justify-content: center;
 }
 
 .btn {
@@ -503,7 +534,7 @@ nav {
 .terminal-window pre {
   padding: 1.25rem 1.5rem;
   font-family: var(--mono);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   line-height: 1.65;
   overflow-x: auto;
 }
@@ -595,25 +626,36 @@ nav {
   100% { transform: translateX(-50%); }
 }
 
-/* ── Scene section (the problem) ─────────────────────────── */
+/* ── FOMO section ────────────────────────────────────────── */
 
-.scene {
+.fomo {
   padding: 7rem 2rem;
 }
 
-.scene-inner {
+.fomo-inner {
   max-width: var(--max-width);
   margin: 0 auto;
 }
 
-.scene-grid {
+.fomo-eyebrow {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--orange-light);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.fomo-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-top: 3.5rem;
 }
 
-.scene-card {
+.fomo-card {
   background: var(--bg-surface);
   border: 1px solid rgba(139, 108, 240, 0.08);
   border-radius: 12px;
@@ -621,78 +663,59 @@ nav {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.scene-card:hover {
+.fomo-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.scene-card-accent {
-  background: linear-gradient(135deg, rgba(139, 108, 240, 0.1), rgba(232, 123, 74, 0.06));
-  border-color: rgba(139, 108, 240, 0.25);
-}
-
-.scene-icon {
-  font-size: 2rem;
-  margin-bottom: 1.25rem;
-  line-height: 1;
-}
-
-.scene-card-accent .scene-icon {
-  background: linear-gradient(135deg, var(--purple), var(--orange-light));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 800;
-  font-family: var(--mono);
-}
-
-.scene-card h3 {
-  font-size: 1.15rem;
+.fomo-quote {
+  font-size: 1.25rem;
   font-weight: 700;
   color: #fff;
   margin-bottom: 0.75rem;
   line-height: 1.3;
+  font-style: italic;
 }
 
-.scene-card p {
+.fomo-context {
   font-size: 0.95rem;
   color: var(--text-muted);
   line-height: 1.6;
 }
 
-/* ── Terminal demo section ───────────────────────────────── */
-
-.demo {
-  padding: 7rem 2rem;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(139, 108, 240, 0.06);
-  border-bottom: 1px solid rgba(139, 108, 240, 0.06);
+.fomo-card-solution {
+  background: linear-gradient(135deg, rgba(139, 108, 240, 0.12), rgba(232, 123, 74, 0.06));
+  border-color: rgba(139, 108, 240, 0.25);
 }
 
-.demo-inner {
-  max-width: 720px;
-  margin: 0 auto;
+.fomo-card-solution .fomo-quote {
+  font-style: normal;
+  background: linear-gradient(135deg, #8B6CF0 0%, #E87B4A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.demo-inner .section-heading {
-  margin-bottom: 0;
-}
-
-.demo-inner .section-subtitle {
-  margin-bottom: 3rem;
-}
-
-.demo .terminal-window {
-  box-shadow:
-    0 0 0 1px rgba(139, 108, 240, 0.1),
-    0 16px 64px rgba(0, 0, 0, 0.5),
-    0 0 120px rgba(139, 108, 240, 0.06);
+.fomo-solution-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #34D399;
+  margin-bottom: 1rem;
+  font-weight: 600;
 }
 
 /* ── How it works ────────────────────────────────────────── */
 
 .how-it-works {
   padding: 7rem 2rem;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.06);
+  border-bottom: 1px solid rgba(139, 108, 240, 0.06);
 }
 
 .how-inner {
@@ -700,12 +723,15 @@ nav {
   margin: 0 auto;
 }
 
+.loop-visual {
+  margin-top: 3.5rem;
+}
+
 .loop-steps {
   display: flex;
   align-items: flex-start;
   justify-content: center;
   gap: 0;
-  margin-top: 3.5rem;
 }
 
 .loop-step {
@@ -769,9 +795,6 @@ nav {
 
 .ralph-file {
   padding: 7rem 2rem;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(139, 108, 240, 0.06);
-  border-bottom: 1px solid rgba(139, 108, 240, 0.06);
 }
 
 .ralph-file-inner {
@@ -826,6 +849,9 @@ nav {
 
 .why {
   padding: 7rem 2rem;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.06);
+  border-bottom: 1px solid rgba(139, 108, 240, 0.06);
 }
 
 .why-grid {
@@ -837,7 +863,7 @@ nav {
 }
 
 .why-card {
-  background: var(--bg-surface);
+  background: var(--bg);
   border: 1px solid rgba(139, 108, 240, 0.12);
   border-radius: 12px;
   padding: 2rem;
@@ -876,15 +902,13 @@ nav {
 .install {
   padding: 7rem 2rem;
   text-align: center;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(139, 108, 240, 0.06);
-  border-bottom: 1px solid rgba(139, 108, 240, 0.06);
 }
 
 .install-steps {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   justify-content: center;
+  align-items: center;
   margin-top: 3rem;
   flex-wrap: wrap;
 }
@@ -894,6 +918,13 @@ nav {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+}
+
+.install-arrow {
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  opacity: 0.4;
+  margin-top: 0.5rem;
 }
 
 .install-label {
@@ -927,6 +958,9 @@ nav {
 
 .faq {
   padding: 7rem 2rem;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.06);
+  border-bottom: 1px solid rgba(139, 108, 240, 0.06);
 }
 
 .faq-list {
@@ -963,15 +997,13 @@ nav {
   text-align: center;
   position: relative;
   overflow: hidden;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(139, 108, 240, 0.06);
 }
 
 .cta-bottom::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 60% 50% at 50% 80%, rgba(139, 108, 240, 0.1) 0%, transparent 100%);
+  background: radial-gradient(ellipse 60% 50% at 50% 80%, rgba(139, 108, 240, 0.12) 0%, transparent 100%);
   pointer-events: none;
 }
 
@@ -1083,10 +1115,33 @@ footer {
 
 @media (max-width: 900px) {
   .hero-content {
-    padding: 7rem 1.5rem 5rem;
+    grid-template-columns: 1fr;
+    padding: 6rem 1.5rem 3rem;
+    gap: 2.5rem;
   }
 
-  .scene-grid {
+  .hero-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-sub {
+    text-align: center;
+  }
+
+  .cta {
+    justify-content: center;
+  }
+
+  .hero-terminal .terminal-window {
+    transform: none;
+  }
+
+  .hero-terminal .terminal-window:hover {
+    transform: none;
+  }
+
+  .fomo-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1125,6 +1180,10 @@ footer {
     align-items: center;
   }
 
+  .install-arrow {
+    transform: rotate(90deg);
+  }
+
   .footer-nav {
     flex-direction: column;
     gap: 2rem;
@@ -1157,7 +1216,7 @@ footer {
   }
 
   .hero-content {
-    padding: 5rem 1.25rem 3rem;
+    padding: 5rem 1.25rem 2rem;
   }
 
   .hero-badge {
@@ -1174,8 +1233,7 @@ footer {
     font-size: 1.75rem;
   }
 
-  .scene,
-  .demo,
+  .fomo,
   .how-it-works,
   .ralph-file,
   .why,
@@ -1183,5 +1241,9 @@ footer {
   .faq,
   .cta-bottom {
     padding: 4rem 1.25rem;
+  }
+
+  .fomo-quote {
+    font-size: 1.1rem;
   }
 }
