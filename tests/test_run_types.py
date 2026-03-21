@@ -1,6 +1,7 @@
 """Tests for run configuration and state data types."""
 
 import threading
+from pathlib import Path
 
 import pytest
 
@@ -46,8 +47,6 @@ class TestRunConfig:
             ralph_dir=tmp_path,
             ralph_file=tmp_path / "RALPH.md",
         )
-        from pathlib import Path
-
         assert config.project_root == Path(".")
 
     def test_defaults(self, tmp_path):

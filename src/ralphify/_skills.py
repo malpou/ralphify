@@ -8,6 +8,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+SKILL_MARKER = "SKILL.md"
+"""Filename used for skill definition files inside agent skill directories."""
+
+
 @dataclass(frozen=True)
 class DetectedAgent:
     """Result of agent auto-detection."""
@@ -47,7 +51,7 @@ def _get_agent_config(agent_name: str) -> _AgentConfig:
 
 def read_bundled_skill(skill_name: str) -> str:
     """Read a bundled SKILL.md from the ``ralphify.skills`` package."""
-    pkg = importlib.resources.files("ralphify.skills").joinpath(skill_name, "SKILL.md")
+    pkg = importlib.resources.files("ralphify.skills").joinpath(skill_name, SKILL_MARKER)
     return pkg.read_text(encoding="utf-8")
 
 
@@ -73,7 +77,7 @@ def install_skill(skill_name: str, agent_name: str) -> Path:
     """Install a bundled skill into the agent's skill directory."""
     agent_config = _get_agent_config(agent_name)
     content = read_bundled_skill(skill_name)
-    dest = Path(agent_config.skill_dir) / skill_name / "SKILL.md"
+    dest = Path(agent_config.skill_dir) / skill_name / SKILL_MARKER
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(content, encoding="utf-8")
     return dest
