@@ -12,6 +12,9 @@ from helpers import ok_result, fail_result
 from ralphify import __version__
 from ralphify.cli import app, _parse_commands, _parse_user_args
 
+MOCK_WHICH = "ralphify.cli.shutil.which"
+"""Patch target for shutil.which inside the CLI module."""
+
 runner = CliRunner()
 
 
@@ -43,14 +46,15 @@ class TestVersion:
         assert f"ralphify {__version__}" in result.output
 
 
+@patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestRun:
-    def test_errors_with_nonexistent_path(self, tmp_path, monkeypatch):
+    def test_errors_with_nonexistent_path(self, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         result = runner.invoke(app, ["run", "nonexistent"])
         assert result.exit_code == 1
         assert "not" in result.output.lower()
 
-    def test_errors_without_ralph_md(self, tmp_path, monkeypatch):
+    def test_errors_without_ralph_md(self, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         empty_dir = tmp_path / "empty"
         empty_dir.mkdir()
@@ -58,7 +62,7 @@ class TestRun:
         assert result.exit_code == 1
         assert "not found" in result.output.lower()
 
-    def test_errors_without_agent_field(self, tmp_path, monkeypatch):
+    def test_errors_without_agent_field(self, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = tmp_path / "my-ralph"
         ralph_dir.mkdir()
@@ -67,15 +71,14 @@ class TestRun:
         assert result.exit_code == 1
         assert "agent" in result.output.lower()
 
-    @patch("ralphify.cli.shutil.which", return_value=None)
     def test_errors_when_agent_not_on_path(self, mock_which, tmp_path, monkeypatch):
+        mock_which.return_value = None
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
         assert result.exit_code == 1
         assert "not found on PATH" in result.output
 
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
     def test_errors_with_empty_command_name(self, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = tmp_path / "my-ralph"
@@ -87,7 +90,6 @@ class TestRun:
         assert result.exit_code == 1
         assert "name" in result.output.lower()
 
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
     def test_errors_with_empty_command_run(self, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = tmp_path / "my-ralph"
@@ -99,7 +101,6 @@ class TestRun:
         assert result.exit_code == 1
         assert "run" in result.output.lower()
 
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
     def test_errors_with_commands_not_a_list(self, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = tmp_path / "my-ralph"
@@ -111,7 +112,6 @@ class TestRun:
         assert result.exit_code == 1
         assert "must be a list" in result.output.lower()
 
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
     def test_errors_with_duplicate_command_names(self, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = tmp_path / "my-ralph"
@@ -126,8 +126,7 @@ class TestRun:
         assert "duplicate" in result.output.lower()
 
     @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_runs_when_valid(self, mock_which, mock_run, tmp_path, monkeypatch):
+    def test_runs_when_valid(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
@@ -135,8 +134,7 @@ class TestRun:
         assert mock_run.call_count == 1
 
     @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_runs_n_iterations(self, mock_which, mock_run, tmp_path, monkeypatch):
+    def test_runs_n_iterations(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path, prompt="test prompt")
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "3"])
@@ -146,8 +144,7 @@ class TestRun:
             assert call.kwargs["input"] == "test prompt"
 
     @patch("ralphify._agent.subprocess.run")
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_reads_prompt_each_iteration(self, mock_which, mock_run, tmp_path, monkeypatch):
+    def test_reads_prompt_each_iteration(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path, prompt="v1")
         ralph_file = ralph_dir / "RALPH.md"
@@ -172,8 +169,7 @@ class TestRun:
         assert mock_run.call_args_list[1].kwargs["input"] == "v2"
 
     @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_shows_success_per_iteration(self, mock_which, mock_run, tmp_path, monkeypatch):
+    def test_shows_success_per_iteration(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "2"])
@@ -183,8 +179,7 @@ class TestRun:
         assert "2 succeeded" in result.output
 
     @patch("ralphify._agent.subprocess.run", side_effect=fail_result)
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_continues_on_error_by_default(self, mock_which, mock_run, tmp_path, monkeypatch):
+    def test_continues_on_error_by_default(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "3"])
@@ -193,8 +188,7 @@ class TestRun:
         assert "3 failed" in result.output
 
     @patch("ralphify._agent.subprocess.run", side_effect=fail_result)
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_stop_on_error(self, mock_which, mock_run, tmp_path, monkeypatch):
+    def test_stop_on_error(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "5", "--stop-on-error"])
@@ -204,8 +198,7 @@ class TestRun:
         assert "1 failed" in result.output
 
     @patch("ralphify._agent.subprocess.run")
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_mixed_success_and_failure(self, mock_which, mock_run, tmp_path, monkeypatch):
+    def test_mixed_success_and_failure(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
         mock_run.side_effect = [
@@ -220,8 +213,7 @@ class TestRun:
 
     @patch("ralphify.engine.time.sleep")
     @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_delay_between_iterations(self, mock_which, mock_run, mock_sleep, tmp_path, monkeypatch):
+    def test_delay_between_iterations(self, mock_run, mock_sleep, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "3", "--delay", "5"])
@@ -232,8 +224,7 @@ class TestRun:
 
     @patch("ralphify.engine.time.sleep")
     @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_no_delay_with_single_iteration(self, mock_which, mock_run, mock_sleep, tmp_path, monkeypatch):
+    def test_no_delay_with_single_iteration(self, mock_run, mock_sleep, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1", "--delay", "5"])
@@ -241,8 +232,7 @@ class TestRun:
         mock_sleep.assert_not_called()
 
     @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
-    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
-    def test_accepts_ralph_md_file_path(self, mock_which, mock_run, tmp_path, monkeypatch):
+    def test_accepts_ralph_md_file_path(self, mock_run, mock_which, tmp_path, monkeypatch):
         """Can pass path to RALPH.md file directly."""
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -250,7 +240,7 @@ class TestRun:
         assert result.exit_code == 0
 
 
-@patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+@patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestRunLogging:
     @patch("ralphify._agent.subprocess.run")
     def test_creates_log_files(self, mock_run, mock_which, tmp_path, monkeypatch):
@@ -291,7 +281,7 @@ class TestRunLogging:
         assert not (tmp_path / "logs").exists()
 
 
-@patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+@patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestRunTimeout:
     @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
     def test_timeout_passed_to_subprocess(self, mock_run, mock_which, tmp_path, monkeypatch):
@@ -391,7 +381,7 @@ class TestParseUserArgs:
         assert result == {}
 
 
-@patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+@patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestRunWithUserArgs:
     @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
     def test_named_args_resolved_in_prompt(self, mock_run, mock_which, tmp_path, monkeypatch):
