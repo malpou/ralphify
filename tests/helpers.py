@@ -1,0 +1,64 @@
+"""Shared constants and helpers for ralphify tests.
+
+Import these directly: ``from helpers import MOCK_SUBPROCESS, ok_result``
+Fixtures stay in conftest.py — pytest discovers them automatically.
+"""
+
+import subprocess
+from pathlib import Path
+
+from ralphify._run_types import RunConfig, RunState
+
+
+# ── Patch targets ─────────────────────────────────────────────────────
+
+MOCK_SUBPROCESS = "ralphify._agent.subprocess.run"
+"""Patch target for subprocess.run inside the agent module."""
+
+MOCK_RUNNER_SUBPROCESS = "ralphify._runner.subprocess.run"
+"""Patch target for subprocess.run inside the runner module."""
+
+
+# ── Factory helpers ───────────────────────────────────────────────────
+
+
+def make_config(tmp_path, **overrides):
+    """Create a RunConfig pointing at a temp ralph directory."""
+    ralph_dir = tmp_path / "my-ralph"
+    ralph_dir.mkdir(exist_ok=True)
+    ralph_file = ralph_dir / "RALPH.md"
+    if not ralph_file.exists():
+        ralph_file.write_text("test prompt")
+
+    defaults = dict(
+        agent="echo",
+        ralph_dir=ralph_dir,
+        ralph_file=ralph_file,
+        max_iterations=1,
+        project_root=tmp_path,
+    )
+    defaults.update(overrides)
+    return RunConfig(**defaults)
+
+
+def make_state():
+    """Create a RunState with a fixed test run ID."""
+    return RunState(run_id="test-run-001")
+
+
+def ok_result(*args, **kwargs):
+    """Subprocess side_effect that returns exit code 0."""
+    return subprocess.CompletedProcess(args=args, returncode=0)
+
+
+def fail_result(*args, **kwargs):
+    """Subprocess side_effect that returns exit code 1."""
+    return subprocess.CompletedProcess(args=args, returncode=1)
+
+
+def drain_events(emitter):
+    """Drain all events from a QueueEmitter and return them as a list."""
+    events = []
+    while not emitter.queue.empty():
+        events.append(emitter.queue.get())
+    return events

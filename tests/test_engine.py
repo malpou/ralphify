@@ -5,7 +5,7 @@ import threading
 import time
 from unittest.mock import patch
 
-from conftest import MOCK_SUBPROCESS, drain_events, fail_result, make_config, make_state, ok_result
+from helpers import MOCK_SUBPROCESS, drain_events, fail_result, make_config, make_state, ok_result
 
 from ralphify._events import EventType, NullEmitter, QueueEmitter
 from ralphify._run_types import RunStatus

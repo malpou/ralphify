@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from conftest import MOCK_RUNNER_SUBPROCESS
+from helpers import MOCK_RUNNER_SUBPROCESS
 from ralphify._runner import run_command
 
 

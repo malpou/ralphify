@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from conftest import MOCK_SUBPROCESS
+from helpers import MOCK_SUBPROCESS
 
 from ralphify._agent import (
     AgentResult,
