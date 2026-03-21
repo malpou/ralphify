@@ -111,3 +111,36 @@
 - Insight #1 (fresh context) + #8 (40-60% utilization) → combined context management insight
 - Insight #11 ($47K unbounded autonomy) + #17 (make cost observable) → combined cost control insight
 - Insight #16 (ecosystem immature) → fold into intro paragraph, not a numbered insight
+
+## Iteration 7 — 2026-03-22
+
+**Decision: RESEARCH** (back to research after refine cycle)
+
+**Focus area:** Three under-explored threads:
+1. **Reddit/YouTube practitioner voices** — research has been HN-heavy, need Reddit r/ClaudeAI, r/LocalLLaMA, r/ChatGPTCoding, YouTube transcripts
+2. **Autonomy scaling patterns** — open question on trust thresholds and gradual autonomy increase
+3. **Harness testing & non-deterministic verification** — open questions on testing the harness itself and handling subjective quality
+
+**What was done:**
+- Searched across web for autonomy scaling, harness testing, spec+ralph convergence, LangChain middleware, Block testing pyramid
+- Found Anthropic's "Measuring AI Agent Autonomy" study — the first empirical data on trust accumulation (20%→40% auto-approve over 750 sessions)
+- Found Block Engineering's 4-layer agent testing pyramid with record/playback pattern — first actionable framework for testing harness configs
+- Found LangChain's composable middleware architecture and Terminal Bench improvement (Top 30 → Top 5 via harness alone)
+- Found the trust equation (Trust = Competence × Consistency × Recoverability / Consequence) from Pascal Biese
+- Found spec+ralph convergence: speckit-ralph, smart-ralph, ASDLC.io — formalized integrated workflows
+- Found Datadog's 5-layer verification pyramid with production results (87% memory reduction)
+- Found Eugene Yan's LLM-as-judge data: 85% agreement, severe verbosity/position biases, PoLL outperforms single judge
+- Created chapter 11 (Trust, Testing, Convergence), added 16 new sources, 13 new insights, answered 4 questions
+
+**Key surprises:**
+- Experienced users interrupt MORE, not less — counterintuitive but validated by Anthropic data
+- One failure erases weeks of trust (GitLab) — asymmetric cost of agent mistakes
+- "Overeagerness" and "brute-force fixes" have NO KNOWN MITIGATION (Bockeler/Thoughtworks) — only containment via gates
+- LangChain's harness change alone moved them from Top 30 to Top 5 — the model wasn't the bottleneck
+- "Build your harness to be rippable" — middleware is temporary scaffolding, expect to remove layers as models improve
+- Block never runs live LLM tests in CI — "too expensive, too slow, and too flaky"
+
+**Next iteration should focus on:**
+- Refine cycle (iteration 8): tighten REPORT.md to ~15 insights (currently 17), merge overlapping threads
+- Update Ch06 (implications) with trust ladder, harness testing, spec+ralph recommendations
+- Consider whether chapters can be consolidated (11 chapters may be too many)

@@ -59,6 +59,27 @@
 - **BMAD+Ralph combines structured planning with autonomous execution.** Phases 1-3 (plan) produce specs; Phase 4 (ralph) picks stories one by one and implements with TDD. The split mirrors the three-phase architecture.
 - **Project-specific ralph configs are the monorepo solution.** Each project gets its own verification commands, context files, and completion criteria — not a single global config (Mario Giancini's plugin pattern).
 
+## Trust & Autonomy Scaling (NEW — Iteration 7)
+- **Trust accumulates through micro-interactions, not configuration.** Anthropic's data: 20%→40% auto-approve over 750 sessions. Experienced users auto-approve more but also interrupt more — shifting from action-by-action approval to outcome-focused monitoring.
+- **Trust = (Competence × Consistency × Recoverability) / Consequence.** Pascal Biese's trust equation produces a 4-level ladder: Observe → Draft → Act with Boundaries → Autonomous. Each level requires defined scope, success metrics, and graduation criteria.
+- **A single failure erases weeks of accumulated trust.** GitLab's user research: trust follows compound growth through micro-inflection points, but failures are disproportionately destructive. The cost of agent mistakes is asymmetric.
+- **Agent overeagerness and brute-force fixes have no known mitigation.** Bockeler (Thoughtworks): these two failure modes "recur despite prompting." Only verification gates and scope constraints contain them.
+- **The appropriate autonomy level depends on the task, not the capability.** Level 5 (fully autonomous) for test coverage; Level 2 (chat-assisted) for security-critical auth logic. Higher is not always better.
+
+## Harness Testing (NEW — Iteration 7)
+- **Test layers represent uncertainty tolerance, not test types.** Block's 4-layer pyramid: deterministic foundations (CI) → reproducible reality (record/playback) → probabilistic performance (benchmarks) → vibes and judgment (LLM judge + human).
+- **Record/playback is the key testing pattern for agent harnesses.** Block's TestProvider captures real LLM interactions to JSON, then replays deterministically. Tests the harness without burning tokens.
+- **Live LLM testing never runs in CI.** Too expensive, too slow, too flaky. CI validates deterministic layers; humans validate probabilistic layers when it matters.
+- **LangChain improved from Top 30 to Top 5 by changing only the harness.** 52.8% → 66.5% on Terminal Bench 2.0 with composable middleware (LocalContext, LoopDetection, ReasoningSandwich, PreCompletionChecklist). No model changes.
+- **"Build your harness to be rippable."** Remove smart logic when the model gets smart enough not to need it. Middleware layers are temporary scaffolding, not permanent architecture.
+- **GPT-4 as judge agrees with humans 85% of the time but has severe biases.** Verbosity bias >90%, position bias up to 70%. Panel-of-judges (PoLL) outperforms any single LLM judge. Calibrate frequently against human judgment.
+- **Datadog's harness-first approach: "invest in automated checks, not code reading."** 5-layer verification from TLA+ specs to production telemetry. 87% memory reduction on redis-rust via agent-guided optimization with strong verification.
+
+## Spec+Ralph Convergence (NEW — Iteration 7)
+- **Specs define what to build; ralphs provide relentless execution.** The integrated workflow converged independently across 5+ implementations (speckit-ralph, smart-ralph, BMAD+Ralph, ASDLC.io). Neither works well alone.
+- **The Agentic Software Development Lifecycle (ASDLC) has been formalized.** ASDLC.io defines ralph loop as a pattern within a structured lifecycle. The industry is moving from "vibe coding" to spec-driven ralph execution.
+- **LangChain's composable middleware formalizes the harness as stackable layers.** Each middleware adds capability without modifying core agent logic. LoopDetectionMiddleware tracks per-file edit counts and injects course-correction prompts.
+
 ## Ralphify-Specific
 - **Ralphify's command system naturally supports the "commands as verifiers" pattern.** Running tests/metrics as commands and injecting results into the prompt is exactly what Spotify and Karpathy do — ralphify just needs to formalize verification as a first-class concept.
 - **Agent skills as portable packages is a validated trend.** Ralphify's skill system aligns with the industry direction of installable, reusable instruction sets.

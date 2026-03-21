@@ -1,14 +1,17 @@
 # Research Questions
 
 ## Open
-- [ ] How do practitioners handle non-deterministic verification (e.g., subjective quality in writing/design tasks)?
-- [ ] What patterns exist for gradually increasing agent autonomy as trust builds?
-- [ ] What's the real-world false negative rate for LLM-as-judge verification beyond Spotify's 25%?
+- [x] How do practitioners handle non-deterministic verification (e.g., subjective quality in writing/design tasks)? — Block's 4-layer testing pyramid: deterministic foundation + record/playback + probabilistic benchmarks + LLM-as-judge with rubrics (3 rounds, majority vote). See chapter 11.
+- [x] What patterns exist for gradually increasing agent autonomy as trust builds? — Trust Equation (Competence × Consistency × Recoverability / Consequence), 4-level trust ladder, Anthropic's empirical data (20%→40% auto-approve over 750 sessions). See chapter 11.
+- [x] What's the real-world false negative rate for LLM-as-judge verification beyond Spotify's 25%? — GPT-4 agrees with human experts 85% (MT-Bench), but faithfulness correlation only ρ=0.55. Verbosity bias >90%, position bias up to 70%. Panel-of-judges outperforms single judge. See chapter 11.
 - [ ] How does cross-company model diversity (Opus architect, Sonnet dev, Codex reviewer) compare to same-family self-review in measurable quality?
 - [ ] What's the optimal balance between plan-mode time and execution time? Boris Cherny iterates on plans extensively — is there a sweet spot?
 - [ ] How will agent skills interoperability evolve — will SKILL.md become a true standard or fragment?
 - [ ] What tooling exists for A/B testing ralph loop configurations? (Different prompts, different context strategies, same task set)
-- [ ] How do practitioners test their harness/loop configurations themselves (not the agent output, but the harness)?
+- [x] How do practitioners test their harness/loop configurations themselves (not the agent output, but the harness)? — Block's TestProvider (record/playback pattern), LangChain's composable middleware with per-layer testing, Datadog's 5-layer verification pyramid. Key rule: live LLM tests never run in CI. See chapter 11.
+- [ ] What's the optimal ratio of spec-writing time to execution time in the spec+ralph integrated workflow?
+- [ ] How do teams handle the asymmetric trust problem (one failure erases weeks of accumulated confidence)?
+- [ ] What does a "rippable" harness look like in practice — which middleware layers get removed first as models improve?
 
 ## Answered
 - [x] What are the most effective patterns for keeping agents on track during long-running loops? — Fresh context resets + file-based state + verification gates. See chapters 01-02.

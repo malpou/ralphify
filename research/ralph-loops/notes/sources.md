@@ -88,6 +88,23 @@
 - https://agent-wars.com/news/2026-03-16-how-one-developer-uses-multi-agent-llm-workflows-architect-developer-reviewers — Agent Wars — Stavros Korokithakis: multi-model diversity (Opus architect, Sonnet dev, Codex+Gemini reviewers) — **high**
 - https://blog.lpains.net/posts/2026-01-31-real-world-example-ralph/ — LPains — Real-world production feature built with Ralph Wiggum Loop using GitHub Copilot CLI — **high**
 
+- https://www.anthropic.com/research/measuring-agent-autonomy — Anthropic — Empirical study of trust accumulation: 20%→40% auto-approve over 750 sessions, turn duration doubling, experienced users interrupt more — **high**
+- https://martinfowler.com/articles/pushing-ai-autonomy.html — Birgitta Bockeler / Thoughtworks — Autonomy complexity thresholds: 3-5 entity CRUD works, 10+ entities needs intervention, production not recommended. Overeagerness/brute-force have no known mitigation — **high**
+- https://www.llmwatch.com/p/guided-autonomy-progressive-trust — Pascal Biese / LLM Watch — Trust Equation: Trust = (Competence × Consistency × Recoverability) / Consequence. 4-level trust ladder with graduation criteria — **high**
+- https://about.gitlab.com/blog/building-trust-in-agentic-tools-what-we-learned-from-our-users/ — Erika Feldman, Will Leidheiser / GitLab — Trust as "micro-inflection points" — compound growth, single failure erases weeks. 13 participants across company sizes — **medium**
+- https://www.swarmia.com/blog/five-levels-ai-agent-autonomy/ — Swarmia — 5 autonomy levels for coding agents. Higher is not always better — appropriate level depends on task — **medium**
+- https://engineering.block.xyz/blog/testing-pyramid-for-ai-agents — Angie Jones / Block — 4-layer agent testing pyramid: deterministic → reproducible (record/playback) → probabilistic → vibes. Live LLM tests never in CI — **high**
+- https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents — Anthropic — Three grader types (code/model/human), pass@k and pass^k metrics, rubric calibration against human judgment — **high**
+- https://www.datadoghq.com/blog/ai/harness-first-agents/ — Datadog — Harness-first engineering with 5-layer verification pyramid (TLA+ to production telemetry). 87% memory reduction on redis-rust — **high**
+- https://eugeneyan.com/writing/llm-evaluators/ — Eugene Yan — LLM-as-judge survey: GPT-4 85% agreement with humans, verbosity bias >90%, position bias up to 70%, PoLL outperforms single judge — **high**
+- https://blog.langchain.com/the-anatomy-of-an-agent-harness/ — LangChain — Composable middleware architecture: Agent = Model + Harness. "Build your harness to be rippable" — **high**
+- https://blog.langchain.com/improving-deep-agents-with-harness-engineering/ — LangChain — 52.8%→66.5% on Terminal Bench via harness changes alone. LoopDetectionMiddleware, ReasoningSandwich, PreCompletionChecklist — **high**
+- https://redreamality.com/blog/ralph-wiggum-loop-vs-open-spec/ — Redreamality — Ralph vs Open Spec convergence into integrated ASDLC workflow. Specs define what; ralph provides execution — **high**
+- https://asdlc.io/patterns/ralph-loop/ — ASDLC.io — Formalized Agentic SDLC with ralph loop as a pattern — **medium**
+- https://github.com/tzachbon/smart-ralph — tzachbon — Spec-driven development with smart compaction for Claude Code — **medium**
+- https://github.com/merllinsbeard/speckit-ralph — merllinsbeard — Execution engine for Spec Kit workflows with ralph loop — **medium**
+- https://cloudsecurityalliance.org/blog/2026/02/02/the-agentic-trust-framework-zero-trust-governance-for-ai-agents — CSA — Agentic Trust Framework: 4 maturity levels with 5 promotion gates — **medium**
+
 ## Lower Relevance
 
 - https://www.permit.io/blog/human-in-the-loop-for-ai-agents-best-practices-frameworks-use-cases-and-demo — Permit.io — Human-in-the-loop patterns for AI agents — **low**

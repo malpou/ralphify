@@ -34,6 +34,10 @@
 
 15. **Measure iterations in actions, not time.** Successful agents complete tasks in 3-7 meaningful actions. Beyond 15 actions, success probability drops sharply. Action count is a better circuit breaker signal than wall clock time.
 
+16. **Trust is earned through hundreds of micro-interactions, not configured.** Anthropic's data: auto-approve rises from 20% to 40% over 750 sessions. Experienced users interrupt *more*, not less — shifting from action-by-action approval to outcome-focused monitoring. But one failure erases weeks of accumulated confidence (GitLab). The Trust Equation: Trust = (Competence × Consistency × Recoverability) / Consequence.
+
+17. **Test the harness, not the agent output.** Block's record/playback pattern captures real LLM interactions to JSON, then replays deterministically — testing harness logic without burning tokens. LangChain improved from Top 30 to Top 5 on Terminal Bench by changing only the harness. Live LLM tests never run in CI: "too expensive, too slow, and too flaky."
+
 ## Chapters
 
 | # | Chapter | Summary |
@@ -48,14 +52,14 @@
 | 8 | [Specification Files](chapters/08-specification-files.md) | CLAUDE.md, AGENTS.md patterns from 2,500+ repos and real-world configs |
 | 9 | [Prompt Assembly & Context Engineering](chapters/09-prompt-assembly.md) | Three-phase architecture, context management, double-loop model, steering injection |
 | 10 | [Operational Reality](chapters/10-operational-reality.md) | Ecosystem landscape, cost control, circuit breakers, daily practitioner workflows |
+| 11 | [Trust, Testing, and Convergence](chapters/11-trust-testing-convergence.md) | Autonomy scaling data, harness testing pyramids, spec+ralph integration |
 
 ## Open Questions
 
-- How do practitioners handle non-deterministic verification (subjective quality)?
-- What trust thresholds trigger the transition from agent-assisted to agent-autonomous?
-- What's the real-world false negative rate for LLM-as-judge beyond Spotify's 25%?
-- How do cross-company model diversity reviewers compare to same-family self-review?
-- What's the optimal balance between plan-mode time and execution time?
+- How do cross-company model diversity reviewers compare to same-family self-review in measurable quality?
+- What's the optimal ratio of spec-writing time to execution time in spec+ralph integrated workflows?
+- How do teams handle the asymmetric trust problem (one failure erases weeks of accumulated confidence)?
+- What does a "rippable" harness look like in practice — which middleware layers get removed first as models improve?
 - How will agent skills interoperability evolve — will SKILL.md become a true standard?
 
 ## Key Sources
@@ -78,3 +82,9 @@
 - [Boris Cherny's Workflow](https://www.infoq.com/news/2026/01/claude-code-creator-workflow/) — InfoQ
 - [Agent Budget Guard MCP](https://earezki.com/ai-news/2026-03-02-i-built-an-mcp-server-so-my-ai-agent-can-track-its-own-spending/) — earezki
 - [BMAD + Ralph Framework](https://www.vibesparking.com/en/blog/ai/2026-02-14-bmad-ralph-execution-loop-claude-code/) — Vibe Sparking AI
+- [Measuring AI Agent Autonomy in Practice](https://www.anthropic.com/research/measuring-agent-autonomy) — Anthropic
+- [Testing Pyramid for AI Agents](https://engineering.block.xyz/blog/testing-pyramid-for-ai-agents) — Block Engineering (Angie Jones)
+- [The Anatomy of an Agent Harness](https://blog.langchain.com/the-anatomy-of-an-agent-harness/) — LangChain
+- [Guided Autonomy: Progressive Trust](https://www.llmwatch.com/p/guided-autonomy-progressive-trust) — Pascal Biese / LLM Watch
+- [Harness-First Agents](https://www.datadoghq.com/blog/ai/harness-first-agents/) — Datadog
+- [LLM Evaluators](https://eugeneyan.com/writing/llm-evaluators/) — Eugene Yan
