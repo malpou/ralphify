@@ -115,7 +115,7 @@ Look at `git log --oneline` for examples of the style.
 
 Ralphify is minimal by design:
 
-- **Runtime:** `typer` (CLI framework) and `rich` (terminal formatting) — nothing else
+- **Runtime:** `typer` (CLI framework), `rich` (terminal formatting), and `pyyaml` (YAML frontmatter parsing)
 - **Dev:** `pytest`, `mkdocs`, `mkdocs-material`
 
 Think carefully before adding a new dependency. If it can be done with the standard library, prefer that.
