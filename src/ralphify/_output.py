@@ -27,9 +27,12 @@ def collect_output(
 
 
 def truncate_output(text: str, max_len: int = MAX_OUTPUT_LEN) -> str:
-    """Truncate *text* to *max_len* characters, appending an indicator if trimmed."""
+    """Truncate *text* so the total result is at most *max_len* characters.
+
+    When truncated, a short indicator is appended within the budget.
+    """
     if len(text) > max_len:
-        return text[:max_len] + _TRUNCATION_INDICATOR
+        return text[: max_len - len(_TRUNCATION_INDICATOR)] + _TRUNCATION_INDICATOR
     return text
 
 
