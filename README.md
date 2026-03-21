@@ -36,13 +36,13 @@ Any of these gives you the `ralph` command.
 
 ## Quickstart
 
-A ralph is a directory with a `RALPH.md` file. Create one:
+A ralph is a directory with a `RALPH.md` file. Scaffold one:
 
 ```bash
-mkdir my-ralph
+ralph init my-ralph
 ```
 
-Create `my-ralph/RALPH.md`:
+Then edit `my-ralph/RALPH.md`:
 
 ```markdown
 ---
@@ -130,7 +130,7 @@ my-ralph/
 
 **Commands** run before each iteration. Their output replaces `{{ commands.<name> }}` placeholders in the prompt. Use them for test results, git history, lint output — anything that changes between iterations.
 
-**No project-level configuration.** No `ralph.toml`. No `.ralphify/` directory. No `ralph init`. A ralph is fully self-contained.
+**No project-level configuration.** No `ralph.toml`. No `.ralphify/` directory. A ralph is fully self-contained.
 
 ## AI-guided setup
 
