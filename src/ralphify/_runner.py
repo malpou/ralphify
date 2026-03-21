@@ -59,6 +59,8 @@ def run_command(
         cmd = [str(script)]
     elif command:
         cmd = shlex.split(command)
+        if not cmd:
+            raise ValueError(f"Command string produced no tokens after parsing: {command!r}")
     else:
         raise ValueError("Either 'script' or 'command' must be provided")
 

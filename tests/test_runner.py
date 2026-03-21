@@ -98,3 +98,7 @@ class TestRunCommand:
     def test_raises_when_no_script_or_command(self):
         with pytest.raises(ValueError, match="Either 'script' or 'command' must be provided"):
             run_command(script=None, command=None, cwd=Path("/project"), timeout=60)
+
+    def test_raises_when_command_is_whitespace_only(self):
+        with pytest.raises(ValueError, match="no tokens after parsing"):
+            run_command(script=None, command="   ", cwd=Path("/project"), timeout=60)
