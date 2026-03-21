@@ -136,7 +136,7 @@ def _run_agent_streaming(
     """
     stream_cmd = cmd + ["--output-format", "stream-json", "--verbose"]
     start = time.monotonic()
-    deadline = (start + timeout) if timeout else None
+    deadline = (start + timeout) if timeout is not None else None
 
     proc = subprocess.Popen(
         stream_cmd,

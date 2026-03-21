@@ -49,8 +49,10 @@ def run_command(
     """
     if script:
         cmd = [str(script)]
-    else:
+    elif command:
         cmd = shlex.split(command)
+    else:
+        raise ValueError("Either 'script' or 'command' must be provided")
 
     merged_env = {**os.environ, **env} if env else None
 

@@ -10,6 +10,8 @@ prompt.  This forces explicit placement and avoids accidental data dumps.
 
 import re
 
+_ARGS_CLEANUP_RE = re.compile(r"\{\{\s*args\.[a-zA-Z0-9_-]+\s*\}\}")
+
 
 def resolve_placeholders(
     prompt: str,
@@ -54,5 +56,5 @@ def resolve_args(prompt: str, user_args: dict[str, str]) -> str:
     placeholders so they don't leak into the assembled prompt.
     """
     if not user_args:
-        return re.sub(r"\{\{\s*args\.[a-zA-Z0-9_-]+\s*\}\}", "", prompt)
+        return _ARGS_CLEANUP_RE.sub("", prompt)
     return resolve_placeholders(prompt, user_args, "args")
