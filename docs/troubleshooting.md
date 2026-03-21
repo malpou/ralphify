@@ -95,6 +95,26 @@ Common causes:
 - There's no concrete task source (no TODO.md, PLAN.md, or failing tests to fix)
 - The agent can't find what it's supposed to work on
 
+## Frontmatter issues
+
+### "'commands' must be a list" or "'args' must be a list of strings"
+
+YAML scalars and lists look similar. A common mistake is writing a plain string where a list is expected:
+
+```yaml
+# ✗ Wrong — this is a string, not a list
+args: focus
+commands: uv run pytest -x
+
+# ✓ Correct — use list syntax
+args: [focus]
+commands:
+  - name: tests
+    run: uv run pytest -x
+```
+
+`args` must be a list of strings (`[focus]` or `- focus`). `commands` must be a list of `{name, run}` mappings.
+
 ## Command issues
 
 ### Command with pipes or redirections not working
