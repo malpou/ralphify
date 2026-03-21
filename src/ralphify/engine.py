@@ -237,12 +237,20 @@ def _run_iteration(
 
 
 def _delay_if_needed(config: RunConfig, state: RunState, emit: _BoundEmitter) -> None:
-    """Sleep between iterations when a delay is configured."""
+    """Sleep between iterations when a delay is configured.
+
+    The sleep is broken into small chunks so that stop requests are
+    respected promptly rather than blocking for the full delay.
+    """
     if config.delay > 0 and (
         config.max_iterations is None or state.iteration < config.max_iterations
     ):
         emit(EventType.LOG_MESSAGE, LogMessageData(message=f"Waiting {config.delay}s...", level="info"))
-        time.sleep(config.delay)
+        remaining = config.delay
+        while remaining > 0 and not state.stop_requested:
+            chunk = min(remaining, _PAUSE_POLL_INTERVAL)
+            time.sleep(chunk)
+            remaining -= chunk
 
 
 def run_loop(

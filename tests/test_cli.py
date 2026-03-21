@@ -257,9 +257,11 @@ class TestRun:
         ralph_dir = make_ralph(tmp_path)
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "3", "--delay", "5"])
         assert result.exit_code == 0
-        assert mock_sleep.call_count == 2
-        for call in mock_sleep.call_args_list:
-            assert call.args[0] == 5
+        # Delay is split into small chunks for stop-responsiveness;
+        # verify total requested sleep time sums to 2 × 5s (delays
+        # after iterations 1 and 2, none after the last).
+        total_sleep = sum(call.args[0] for call in mock_sleep.call_args_list)
+        assert abs(total_sleep - 10.0) < 0.01
 
     @patch(MOCK_ENGINE_SLEEP)
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)

@@ -568,6 +568,28 @@ class TestDelayIfNeeded:
 
         assert elapsed >= 0.1
 
+    def test_delay_exits_early_on_stop_request(self, tmp_path):
+        """Stop requests during delay should be respected, not blocked
+        for the full delay duration."""
+        config = make_config(tmp_path, delay=5.0, max_iterations=None)
+        state = make_state()
+        state.iteration = 1
+        q = QueueEmitter()
+        emit = _BoundEmitter(q, state.run_id)
+
+        # Request stop from another thread after a short interval
+        def stop_soon():
+            time.sleep(0.1)
+            state.request_stop()
+        threading.Thread(target=stop_soon, daemon=True).start()
+
+        start = time.monotonic()
+        _delay_if_needed(config, state, emit)
+        elapsed = time.monotonic() - start
+
+        # Should exit well before the full 5s delay
+        assert elapsed < 2.0
+
 
 class TestHandleControlSignals:
     """Unit tests for _handle_control_signals — stop and pause logic."""
