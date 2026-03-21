@@ -16,7 +16,7 @@ from typing import Any, Protocol, runtime_checkable
 class EventType(Enum):
     """All event types emitted by the run loop.
 
-    Events fall into three groups:
+    Events fall into five groups:
 
     **Run lifecycle** — emitted once per run start/stop/pause/resume:
     ``RUN_STARTED``, ``RUN_STOPPED``, ``RUN_PAUSED``, ``RUN_RESUMED``.
@@ -25,8 +25,17 @@ class EventType(Enum):
     ``ITERATION_STARTED``, ``ITERATION_COMPLETED``, ``ITERATION_FAILED``,
     ``ITERATION_TIMED_OUT``.
 
-    **Commands** — emitted during command execution:
+    **Commands** — emitted around command execution:
     ``COMMANDS_STARTED``, ``COMMANDS_COMPLETED``.
+
+    **Prompt assembly** — emitted after the prompt is built:
+    ``PROMPT_ASSEMBLED``.
+
+    **Agent activity** — emitted during agent execution (streaming only):
+    ``AGENT_ACTIVITY``.
+
+    The ``LOG_MESSAGE`` type is used for general informational and error
+    messages (e.g. delay notifications, crash reports).
     """
 
     # ── Run lifecycle ───────────────────────────────────────────

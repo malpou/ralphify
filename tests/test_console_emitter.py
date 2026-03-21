@@ -48,8 +48,16 @@ class TestIterationLifecycle:
     def test_iteration_started_prints_header(self):
         emitter, console = _capture_emitter()
         emitter.emit(_make_event(EventType.ITERATION_STARTED, iteration=1))
+        emitter._stop_live()  # clean up the Live display started by the handler
         output = console.export_text()
         assert "Iteration 1" in output
+
+    def test_iteration_started_uses_fallback_when_iteration_missing(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.ITERATION_STARTED))
+        emitter._stop_live()
+        output = console.export_text()
+        assert "Iteration ?" in output
 
     @pytest.mark.parametrize("event_type,detail,expected", [
         (EventType.ITERATION_COMPLETED, "completed (5s)", "completed (5s)"),
@@ -164,3 +172,88 @@ class TestRunStopped:
         output = console.export_text()
         # Non-completed runs don't print the summary line
         assert "iteration(s)" not in output
+
+    def test_run_stopped_stops_active_live_display(self):
+        emitter, console = _capture_emitter()
+        # Start a live display via iteration_started, then stop via run_stopped
+        emitter.emit(_make_event(EventType.ITERATION_STARTED, iteration=1))
+        assert emitter._live is not None
+        emitter.emit(_make_event(
+            EventType.RUN_STOPPED,
+            reason=REASON_USER_REQUESTED, total=1, completed=0, failed=0, timed_out=0,
+        ))
+        assert emitter._live is None
+
+    def test_completed_all_succeeded(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STOPPED,
+            reason=REASON_COMPLETED, total=3, completed=3, failed=0, timed_out=0,
+        ))
+        output = console.export_text()
+        assert "3 succeeded" in output
+        assert "failed" not in output
+        assert "timed out" not in output
+
+
+class TestMissingEventData:
+    """Verify handlers degrade gracefully when event data keys are missing."""
+
+    def test_run_started_with_empty_data(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.RUN_STARTED))
+        output = console.export_text()
+        # No timeout or commands → no output
+        assert output.strip() == ""
+
+    def test_run_started_with_none_timeout(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.RUN_STARTED, timeout=None, commands=2))
+        output = console.export_text()
+        # None timeout treated as 0 via `or 0` → no timeout line
+        assert "Timeout" not in output
+        assert "2 configured" in output
+
+    def test_iteration_ended_with_empty_data(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.ITERATION_COMPLETED))
+        output = console.export_text()
+        assert "Iteration ?" in output
+
+    def test_log_message_with_empty_data(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.LOG_MESSAGE))
+        # Should not raise — defaults to empty message, info level
+
+    def test_commands_completed_with_empty_data(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.COMMANDS_COMPLETED))
+        output = console.export_text()
+        # count defaults to 0 → no output
+        assert output.strip() == ""
+
+    def test_run_stopped_with_empty_data(self):
+        emitter, console = _capture_emitter()
+        # reason won't match REASON_COMPLETED, so handler returns early
+        emitter.emit(_make_event(EventType.RUN_STOPPED))
+        output = console.export_text()
+        assert output.strip() == ""
+
+
+class TestIterationSpinner:
+    def test_stop_live_is_idempotent(self):
+        emitter, _ = _capture_emitter()
+        # Calling _stop_live when no Live is active should not raise
+        assert emitter._live is None
+        emitter._stop_live()
+        assert emitter._live is None
+
+    def test_full_iteration_lifecycle_cleans_up_live(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.ITERATION_STARTED, iteration=1))
+        assert emitter._live is not None
+        emitter.emit(_make_event(
+            EventType.ITERATION_COMPLETED,
+            iteration=1, detail="completed (1s)", log_file=None, result_text=None,
+        ))
+        assert emitter._live is None
