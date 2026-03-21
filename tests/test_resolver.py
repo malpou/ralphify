@@ -7,10 +7,6 @@ class TestEmptyAvailable:
     def test_returns_prompt_unchanged_when_no_items(self):
         assert resolve_placeholders("Hello world", {}, "commands") == "Hello world"
 
-    def test_returns_prompt_unchanged_when_available_is_empty(self):
-        prompt = "Some prompt text"
-        assert resolve_placeholders(prompt, {}, "commands") == prompt
-
 
 class TestNamedPlaceholders:
     def test_single_named_replacement(self):

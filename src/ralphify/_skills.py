@@ -4,18 +4,20 @@ from __future__ import annotations
 
 import importlib.resources
 import shutil
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import NamedTuple
 
 
-class DetectedAgent(NamedTuple):
+@dataclass(frozen=True)
+class DetectedAgent:
     """Result of agent auto-detection."""
 
     name: str
     path: str
 
 
-class _AgentConfig(NamedTuple):
+@dataclass(frozen=True)
+class _AgentConfig:
     """Skill integration settings for a supported agent."""
 
     skill_dir: str
@@ -60,7 +62,7 @@ def detect_agent() -> DetectedAgent:
     for name in _AGENTS:
         resolved = shutil.which(name)
         if resolved:
-            return DetectedAgent(name, resolved)
+            return DetectedAgent(name=name, path=resolved)
 
     raise RuntimeError(
         "No agent found. Install Claude Code or Codex."

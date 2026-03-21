@@ -23,7 +23,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import IO, NamedTuple
+from typing import IO
 
 from ralphify._output import collect_output
 
@@ -44,7 +44,8 @@ class AgentResult:
     timed_out: bool = False
 
 
-class _StreamResult(NamedTuple):
+@dataclass(frozen=True)
+class _StreamResult:
     """Accumulated output from reading the agent's JSON stream."""
 
     stdout_lines: list[str]
@@ -101,7 +102,7 @@ def _read_agent_stream(
 
     for line in stdout:
         if deadline is not None and time.monotonic() > deadline:
-            return _StreamResult(stdout_lines, result_text, timed_out=True)
+            return _StreamResult(stdout_lines=stdout_lines, result_text=result_text, timed_out=True)
 
         stdout_lines.append(line)
         stripped = line.strip()
@@ -116,7 +117,7 @@ def _read_agent_stream(
         if on_activity is not None:
             on_activity(parsed)
 
-    return _StreamResult(stdout_lines, result_text, timed_out=False)
+    return _StreamResult(stdout_lines=stdout_lines, result_text=result_text, timed_out=False)
 
 
 def _run_agent_streaming(
