@@ -20,6 +20,9 @@ from rich.console import Console
 from ralphify import __version__
 from ralphify._console_emitter import ConsoleEmitter
 from ralphify._frontmatter import (
+    CMD_FIELD_NAME,
+    CMD_FIELD_RUN,
+    CMD_FIELD_TIMEOUT,
     FIELD_AGENT,
     FIELD_ARGS,
     FIELD_COMMANDS,
@@ -285,6 +288,8 @@ def _build_run_config(
     declared_names = fm.get(FIELD_ARGS)
     if declared_names is not None and not isinstance(declared_names, list):
         _exit_error(f"'{FIELD_ARGS}' must be a list of strings.")
+    if declared_names is not None and not all(isinstance(a, str) for a in declared_names):
+        _exit_error(f"'{FIELD_ARGS}' items must be strings, got non-string value.")
     ralph_args: dict[str, str] = {}
     if extra_args:
         ralph_args = _parse_user_args(extra_args, declared_names)

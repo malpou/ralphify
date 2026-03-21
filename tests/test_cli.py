@@ -122,6 +122,23 @@ class TestRun:
         assert result.exit_code == 1
         assert "must be a list" in result.output.lower()
 
+    @pytest.mark.parametrize("args_yaml,id_label", [
+        ("[1, 2]", "integers"),
+        ("[true, false]", "booleans"),
+        ("[1.5]", "floats"),
+    ], ids=lambda x: x if isinstance(x, str) else None)
+    def test_errors_with_non_string_args_items(self, mock_which, tmp_path, monkeypatch, args_yaml, id_label):
+        """args list items that aren't strings (e.g. YAML integers) must be rejected."""
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir()
+        (ralph_dir / "RALPH.md").write_text(
+            f"---\nagent: claude -p\nargs: {args_yaml}\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "string" in result.output.lower()
+
     @pytest.mark.parametrize("n_value", ["-1", "0", "-100"])
     def test_errors_with_non_positive_n(self, mock_which, tmp_path, monkeypatch, n_value):
         monkeypatch.chdir(tmp_path)
