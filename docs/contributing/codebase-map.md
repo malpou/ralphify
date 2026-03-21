@@ -135,6 +135,6 @@ Minimal by design:
 
 - **typer** — CLI framework
 - **rich** — Terminal formatting (used via typer's console)
-- No other runtime dependencies
+- **pyyaml** — YAML frontmatter parsing in `_frontmatter.py`
 
 Dev dependencies: pytest, mkdocs, mkdocs-material.
