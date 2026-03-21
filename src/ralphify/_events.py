@@ -16,6 +16,9 @@ from typing import Any, Literal, NotRequired, Protocol, TypedDict, runtime_check
 LogLevel = Literal["info", "error"]
 """Valid log levels for :class:`LogMessageData` events."""
 
+StopReason = Literal["completed", "error", "user_requested"]
+"""Valid reason strings for :class:`RunStoppedData` events."""
+
 
 class EventType(Enum):
     """All event types emitted by the run loop.
@@ -79,7 +82,7 @@ class RunStartedData(TypedDict):
 
 
 class RunStoppedData(TypedDict):
-    reason: str
+    reason: StopReason
     total: int
     completed: int
     failed: int

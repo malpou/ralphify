@@ -32,6 +32,7 @@ from ralphify._events import (
     FanoutEmitter,
     NullEmitter,
     QueueEmitter,
+    StopReason,
 )
 from ralphify.manager import ManagedRun, RunManager
 
@@ -54,6 +55,7 @@ __all__ = [
     "FanoutEmitter",
     "NullEmitter",
     "QueueEmitter",
+    "StopReason",
     "ManagedRun",
     "RunManager",
 ]

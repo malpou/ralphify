@@ -26,7 +26,6 @@ from ralphify._events import (
     RunStoppedData,
 )
 from ralphify._output import format_duration
-from ralphify._run_types import RunStatus
 
 _ICON_SUCCESS = "✓"
 _ICON_FAILURE = "✗"
@@ -133,7 +132,7 @@ class ConsoleEmitter:
 
     def _on_run_stopped(self, data: RunStoppedData) -> None:
         self._stop_live()
-        if data["reason"] != RunStatus.COMPLETED.reason:
+        if data["reason"] != "completed":
             return
 
         total = data["total"]

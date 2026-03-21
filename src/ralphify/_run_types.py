@@ -14,6 +14,8 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
+from ralphify._events import StopReason
+
 
 DEFAULT_COMMAND_TIMEOUT: float = 60
 """Default timeout in seconds for commands defined in RALPH.md frontmatter."""
@@ -43,7 +45,7 @@ class RunStatus(Enum):
     FAILED = "failed"
 
     @property
-    def reason(self) -> str:
+    def reason(self) -> StopReason:
         """Return the reason string for terminal statuses.
 
         Used in ``RUN_STOPPED`` event data.  Only valid for terminal
@@ -58,7 +60,7 @@ class RunStatus(Enum):
 
 
 # Maps terminal run statuses to the reason string emitted in RUN_STOPPED events.
-_STATUS_REASONS: dict[RunStatus, str] = {
+_STATUS_REASONS: dict[RunStatus, StopReason] = {
     RunStatus.COMPLETED: "completed",
     RunStatus.FAILED: "error",
     RunStatus.STOPPED: "user_requested",
