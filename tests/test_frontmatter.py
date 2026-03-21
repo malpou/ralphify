@@ -102,6 +102,16 @@ class TestParseFrontmatter:
         assert fm == {}
         assert body == "Body"
 
+    def test_non_dict_frontmatter_raises_value_error(self):
+        text = "---\n- item1\n- item2\n---\nBody"
+        with pytest.raises(ValueError, match="must be a YAML mapping"):
+            parse_frontmatter(text)
+
+    def test_scalar_frontmatter_raises_value_error(self):
+        text = "---\njust a string\n---\nBody"
+        with pytest.raises(ValueError, match="must be a YAML mapping"):
+            parse_frontmatter(text)
+
 
 class TestSerializeFrontmatter:
     def test_roundtrip(self):

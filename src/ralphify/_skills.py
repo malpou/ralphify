@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import importlib.resources
 import shutil
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 
