@@ -4,9 +4,12 @@ Import these directly: ``from helpers import MOCK_SUBPROCESS, ok_result``
 Fixtures stay in conftest.py — pytest discovers them automatically.
 """
 
+from __future__ import annotations
+
 import io
 import subprocess
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
 from ralphify._events import Event, QueueEmitter
@@ -91,27 +94,37 @@ def make_state() -> RunState:
 
 
 def _make_completed_process(
-    *args, returncode: int = 0, stdout: str = "", stderr: str = "", **kwargs,
+    returncode: int = 0, stdout: str = "", stderr: str = "",
 ) -> subprocess.CompletedProcess:
-    """Build a CompletedProcess with the given exit code.
+    """Build a CompletedProcess with the given values."""
+    return subprocess.CompletedProcess(args=[], returncode=returncode, stdout=stdout, stderr=stderr)
 
-    Works both as a ``side_effect`` callable (receives mock call args) and
-    as a direct factory: ``_make_completed_process(stdout="out\\n")``.
+
+def ok_result(
+    *_args: Any, stdout: str = "", stderr: str = "", **_kwargs: Any,
+) -> subprocess.CompletedProcess:
+    """Subprocess result with exit code 0.
+
+    Works as a direct factory — ``ok_result(stdout="out\\n")`` — and as a
+    ``side_effect`` callable where mock call args are silently absorbed.
     """
-    return subprocess.CompletedProcess(args=args, returncode=returncode, stdout=stdout, stderr=stderr)
+    return _make_completed_process(returncode=0, stdout=stdout, stderr=stderr)
 
 
-def ok_result(*args, **kwargs) -> subprocess.CompletedProcess:
-    """Subprocess side_effect that returns exit code 0."""
-    return _make_completed_process(*args, returncode=0, **kwargs)
+def fail_result(
+    *_args: Any, stdout: str = "", stderr: str = "", **_kwargs: Any,
+) -> subprocess.CompletedProcess:
+    """Subprocess result with exit code 1.
+
+    Works as a direct factory and as a ``side_effect`` callable (see
+    :func:`ok_result`).
+    """
+    return _make_completed_process(returncode=1, stdout=stdout, stderr=stderr)
 
 
-def fail_result(*args, **kwargs) -> subprocess.CompletedProcess:
-    """Subprocess side_effect that returns exit code 1."""
-    return _make_completed_process(*args, returncode=1, **kwargs)
-
-
-def make_mock_popen(stdout_lines="", stderr_text="", returncode=0):
+def make_mock_popen(
+    stdout_lines: str = "", stderr_text: str = "", returncode: int = 0,
+) -> MagicMock:
     """Create a MagicMock that mimics subprocess.Popen for the streaming path."""
     proc = MagicMock()
     proc.stdin = MagicMock()
