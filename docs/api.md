@@ -12,12 +12,13 @@ All public API is available from the top-level `ralphify` package.
 ## Quick start
 
 ```python
+from pathlib import Path
 from ralphify import run_loop, RunConfig, RunState
 
 config = RunConfig(
     agent="claude -p --dangerously-skip-permissions",
-    ralph_dir="my-ralph",
-    ralph_file="my-ralph/RALPH.md",
+    ralph_dir=Path("my-ralph"),
+    ralph_file=Path("my-ralph/RALPH.md"),
     commands=[],
     max_iterations=3,
 )
@@ -46,12 +47,13 @@ The main loop. Reads RALPH.md, runs commands, assembles prompts, pipes them to t
 All settings for a single run. Fields match the CLI options.
 
 ```python
+from pathlib import Path
 from ralphify import RunConfig, Command
 
 config = RunConfig(
     agent="claude -p --dangerously-skip-permissions",
-    ralph_dir="my-ralph",
-    ralph_file="my-ralph/RALPH.md",
+    ralph_dir=Path("my-ralph"),
+    ralph_file=Path("my-ralph/RALPH.md"),
     commands=[
         Command(name="tests", run="uv run pytest -x"),
         Command(name="lint", run="uv run ruff check ."),
@@ -61,7 +63,7 @@ config = RunConfig(
     delay=2.0,
     timeout=300,
     stop_on_error=True,
-    log_dir="ralph_logs",
+    log_dir=Path("ralph_logs"),
     project_root=Path("."),
 )
 ```
@@ -69,16 +71,15 @@ config = RunConfig(
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `agent` | `str` | -- | Full agent command string |
-| `ralph_dir` | `str` | -- | Path to the ralph directory |
-| `ralph_file` | `str` | -- | Path to the RALPH.md file |
+| `ralph_dir` | `Path` | -- | Path to the ralph directory |
+| `ralph_file` | `Path` | -- | Path to the RALPH.md file |
 | `commands` | `list[Command]` | `[]` | Commands to run each iteration |
 | `args` | `dict[str, str]` | `{}` | User argument values |
-| `prompt_text` | `str | None` | `None` | Pass prompt text directly instead of reading from `ralph_file` |
 | `max_iterations` | `int | None` | `None` | Max iterations (`None` = unlimited) |
 | `delay` | `float` | `0` | Seconds to wait between iterations |
 | `timeout` | `float | None` | `None` | Max seconds per iteration |
 | `stop_on_error` | `bool` | `False` | Stop loop if agent exits non-zero |
-| `log_dir` | `str | None` | `None` | Directory for iteration log files |
+| `log_dir` | `Path | None` | `None` | Directory for iteration log files |
 | `credit` | `bool` | `True` | Append co-author trailer instruction to prompt |
 | `project_root` | `Path` | `Path(".")` | Project root directory |
 
@@ -188,6 +189,7 @@ The loop emits structured events at each step. Implement the `EventEmitter` prot
 ### Custom emitter
 
 ```python
+from pathlib import Path
 from ralphify import Event, EventType, RunConfig, RunState, run_loop
 
 
@@ -198,8 +200,8 @@ class MyEmitter:
 
 
 config = RunConfig(
-    agent="claude -p", ralph_dir="my-ralph",
-    ralph_file="my-ralph/RALPH.md", commands=[], max_iterations=3,
+    agent="claude -p", ralph_dir=Path("my-ralph"),
+    ralph_file=Path("my-ralph/RALPH.md"), commands=[], max_iterations=3,
 )
 state = RunState(run_id="observed-run")
 run_loop(config, state, emitter=MyEmitter())
@@ -288,19 +290,20 @@ run_loop(config, state, emitter=fanout)
 `RunManager` is a thread-safe registry for launching and controlling multiple ralph loops concurrently. Each run gets its own daemon thread and event queue.
 
 ```python
+from pathlib import Path
 from ralphify import RunManager, RunConfig, Command
 
 manager = RunManager()
 
 docs_config = RunConfig(
-    agent="claude -p", ralph_dir="docs-ralph",
-    ralph_file="docs-ralph/RALPH.md",
+    agent="claude -p", ralph_dir=Path("docs-ralph"),
+    ralph_file=Path("docs-ralph/RALPH.md"),
     commands=[Command(name="build", run="mkdocs build --strict")],
     max_iterations=5,
 )
 tests_config = RunConfig(
-    agent="claude -p", ralph_dir="tests-ralph",
-    ralph_file="tests-ralph/RALPH.md",
+    agent="claude -p", ralph_dir=Path("tests-ralph"),
+    ralph_file=Path("tests-ralph/RALPH.md"),
     commands=[Command(name="tests", run="uv run pytest -x")],
     max_iterations=3,
 )
