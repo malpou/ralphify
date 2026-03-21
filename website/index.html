@@ -558,6 +558,7 @@ pick the next task from TODO.md and implement it.</code></pre>
           <span class="install-label">Install</span>
           <div class="install-command">
             <code>uv tool install ralphify</code>
+            <button class="copy-btn" aria-label="Copy install command" onclick="copyCommand(this, 'uv tool install ralphify')">Copy</button>
           </div>
         </div>
         <div class="install-arrow" aria-hidden="true">&rarr;</div>
@@ -565,6 +566,7 @@ pick the next task from TODO.md and implement it.</code></pre>
           <span class="install-label">Create a ralph</span>
           <div class="install-command">
             <code>ralph new</code>
+            <button class="copy-btn" aria-label="Copy new command" onclick="copyCommand(this, 'ralph new')">Copy</button>
           </div>
         </div>
         <div class="install-arrow" aria-hidden="true">&rarr;</div>
@@ -572,6 +574,7 @@ pick the next task from TODO.md and implement it.</code></pre>
           <span class="install-label">Run it</span>
           <div class="install-command">
             <code>ralph run</code>
+            <button class="copy-btn" aria-label="Copy run command" onclick="copyCommand(this, 'ralph run')">Copy</button>
           </div>
         </div>
       </div>
@@ -619,6 +622,7 @@ pick the next task from TODO.md and implement it.</code></pre>
         </h2>
         <div class="install-command cta-command">
           <code>uv tool install ralphify && ralph new && ralph run</code>
+          <button class="copy-btn" aria-label="Copy full command" onclick="copyCommand(this, 'uv tool install ralphify && ralph new && ralph run')">Copy</button>
         </div>
         <div class="cta cta-center">
           <a href="docs/getting-started/" class="btn btn-primary">Read the guide</a>
@@ -708,6 +712,18 @@ pick the next task from TODO.md and implement it.</code></pre>
         });
       }, { threshold: 0.2 });
       fomoObs.observe(fomoContrast);
+    }
+
+    // Copy to clipboard
+    function copyCommand(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
     }
 
     // Quote cards staggered reveal
