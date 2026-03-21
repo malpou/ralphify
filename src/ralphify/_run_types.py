@@ -15,7 +15,7 @@ from enum import Enum
 from pathlib import Path
 
 
-DEFAULT_COMMAND_TIMEOUT: int = 60
+DEFAULT_COMMAND_TIMEOUT: float = 60
 """Default timeout in seconds for commands defined in RALPH.md frontmatter."""
 
 RUN_ID_LENGTH: int = 12
@@ -54,7 +54,7 @@ class Command:
 
     name: str
     run: str
-    timeout: int = DEFAULT_COMMAND_TIMEOUT
+    timeout: float = DEFAULT_COMMAND_TIMEOUT
 
 
 @dataclass

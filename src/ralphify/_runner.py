@@ -39,7 +39,7 @@ def run_command(
     script: Path | None,
     command: str | None,
     cwd: Path,
-    timeout: int,
+    timeout: float,
     env: dict[str, str] | None = None,
 ) -> RunResult:
     """Run a script or shell command and return the result.
