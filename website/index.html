@@ -182,7 +182,7 @@
 
   <main id="main-content">
 
-    <!-- ── Hero ──────────────────────────────────────────── -->
+    <!-- Hero -->
     <section class="hero" aria-label="Introduction">
       <div class="hero-bg" aria-hidden="true">
         <div class="hero-orb hero-orb-1"></div>
@@ -191,43 +191,77 @@
         <div class="hero-grid-overlay"></div>
       </div>
 
-      <div class="hero-content">
-        <div class="hero-badge">
-          <span class="status-dot"></span>
-          Open-source &middot; pip install ralphify
-        </div>
-
-        <p class="hero-eyebrow">&ldquo;Do you have an agent running?&rdquo;</p>
-
-        <h1 class="hero-headline">
-          Stop stressing.<br>
-          <span class="hero-gradient-text">Ralph is always running</span>
-          <span class="runner-inline" aria-hidden="true">&#x1F3C3;</span>
-        </h1>
-
-        <p class="hero-sub">
-          Put your AI coding agent in a <code>while True</code> loop.<br>
-          Write a prompt. Point it at an agent. Walk away.
-        </p>
-
-        <div class="cta">
-          <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
-          <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
-        </div>
-
-        <div class="agent-strip">
-          <span class="agent-strip-label">Works with</span>
-          <div class="agent-strip-list">
-            <a href="docs/agents/" class="agent-chip">Claude Code</a>
-            <a href="docs/agents/" class="agent-chip">Aider</a>
-            <a href="docs/agents/" class="agent-chip">Codex CLI</a>
-            <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
+      <div class="hero-split">
+        <div class="hero-text">
+          <div class="hero-badge">
+            <span class="status-dot"></span>
+            Open-source &middot; pip install ralphify
           </div>
+
+          <p class="hero-eyebrow">&ldquo;Do you have an agent running?&rdquo;</p>
+
+          <h1 class="hero-headline">
+            Stop stressing.<br>
+            <span class="hero-gradient-text">Ralph is always running</span>
+            <span class="runner-inline" aria-hidden="true">&#x1F3C3;</span>
+          </h1>
+
+          <p class="hero-sub">
+            Put your AI coding agent in a <code>while True</code> loop.<br>
+            Write a prompt. Point it at an agent. Walk away.
+          </p>
+
+          <div class="cta">
+            <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
+            <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
+          </div>
+
+          <div class="agent-strip">
+            <span class="agent-strip-label">Works with</span>
+            <div class="agent-strip-list">
+              <a href="docs/agents/" class="agent-chip">Claude Code</a>
+              <a href="docs/agents/" class="agent-chip">Aider</a>
+              <a href="docs/agents/" class="agent-chip">Codex CLI</a>
+              <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-terminal">
+          <figure class="terminal">
+            <div class="terminal-window" role="img" aria-label="Terminal showing ralph run with three iterations — iteration 2 fails a test, iteration 3 automatically fixes it">
+              <div class="terminal-header">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+                <span class="terminal-title">ralph</span>
+              </div>
+              <pre><code><span class="prompt">$</span> ralph run
+<span class="dim">&#9484;&#9472; Iteration 1 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="success">&#x2713;</span> Iteration 1 completed <span class="dim">(52.3s)</span>
+  Checks: 2 passed
+    <span class="success">&#x2713;</span> lint
+    <span class="success">&#x2713;</span> tests
+
+<span class="dim">&#9484;&#9472; Iteration 2 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="fail">&#x2717;</span> Iteration 2 failed <span class="dim">(23.1s)</span>
+  Checks: 1 passed, 1 failed
+    <span class="success">&#x2713;</span> lint
+    <span class="fail">&#x2717;</span> tests <span class="dim">(exit 1)</span>
+
+<span class="dim">&#9484;&#9472; Iteration 3 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="success">&#x2713;</span> Iteration 3 completed <span class="dim">(41.7s)</span>
+  Checks: 2 passed
+    <span class="success">&#x2713;</span> lint
+    <span class="success">&#x2713;</span> tests</code></pre>
+            </div>
+            <figcaption class="terminal-caption">Iteration 2 broke a test. Iteration 3 fixed it. You didn't lift a finger.</figcaption>
+          </figure>
         </div>
       </div>
     </section>
 
-    <!-- ── Activity ticker ────────────────────────────────── -->
+    <!-- Activity ticker -->
     <div class="ticker" aria-hidden="true">
       <div class="ticker-track">
         <span class="ticker-item"><span class="ticker-dot"></span>Iteration 14 completed &mdash; 3 files changed</span>
@@ -247,166 +281,83 @@
       </div>
     </div>
 
-    <!-- ── Social proof / FOMO ──────────────────────────── -->
-    <section class="fomo" aria-labelledby="fomo-heading">
-      <h2 id="fomo-heading" class="sr-only">The new normal</h2>
-      <div class="fomo-inner">
-        <p class="fomo-lead">The question every developer is asking in 2025.</p>
-        <div class="fomo-cards">
-          <div class="fomo-card">
-            <div class="fomo-card-icon">
-              <span class="pulse-ring"></span>
-              <span class="pulse-dot"></span>
-            </div>
-            <p class="fomo-card-text">Someone shipped a feature while you were reading this.</p>
+    <!-- The problem -->
+    <section class="problem" aria-labelledby="problem-heading">
+      <div class="problem-inner">
+        <h2 id="problem-heading" class="section-heading">You know the drill.</h2>
+        <div class="problem-grid">
+          <div class="problem-card">
+            <div class="problem-number">1</div>
+            <h3>The agent finishes.</h3>
+            <p>It did the thing. Now it's sitting there, waiting for you to type another prompt. So you do. And again. And again. You've become a prompt-typing machine.</p>
           </div>
-          <div class="fomo-card">
-            <div class="fomo-card-icon">
-              <span class="pulse-ring"></span>
-              <span class="pulse-dot"></span>
-            </div>
-            <p class="fomo-card-text">Three PRs merged overnight. The author was asleep.</p>
+          <div class="problem-card">
+            <div class="problem-number">2</div>
+            <h3>You close the laptop.</h3>
+            <p>The agent stops. Nothing happens until you're back. Meanwhile, someone else's agent is committing code at 3am.</p>
           </div>
-          <div class="fomo-card">
-            <div class="fomo-card-icon">
-              <span class="pulse-ring"></span>
-              <span class="pulse-dot"></span>
-            </div>
-            <p class="fomo-card-text">Your backlog isn't shrinking because your agent isn't looping.</p>
+          <div class="problem-card problem-card-answer">
+            <div class="problem-number">&#x221e;</div>
+            <h3>What if it just kept going?</h3>
+            <p>Read the prompt. Do the work. Check itself. Loop &mdash; with <em>fresh context every time</em>. No babysitting. That's Ralph.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ── Terminal demo ─────────────────────────────────── -->
-    <section class="demo" aria-label="CLI demo">
-      <div class="demo-inner">
-        <div class="demo-text">
-          <h2 class="demo-heading">Three commands.<br>Then walk away.</h2>
-          <p class="demo-sub">Install. Create a ralph. Run it. The loop reads your prompt, pipes it to your agent, and repeats &mdash; with fresh context every iteration.</p>
-          <p class="demo-sub demo-sub-bold">When something breaks, the next iteration sees the failure and fixes it. You don't babysit. You steer.</p>
+    <!-- How the loop works -->
+    <section class="how-it-works" aria-labelledby="how-heading">
+      <div class="how-inner">
+        <h2 id="how-heading" class="section-heading">The loop</h2>
+        <p class="section-subtitle">Three steps, every iteration. Fresh context, no drift.</p>
+
+        <div class="loop-steps">
+          <div class="loop-step">
+            <div class="loop-step-number">1</div>
+            <h3>Assemble the prompt</h3>
+            <p>Ralphify reads your <a href="docs/writing-prompts/"><code>RALPH.md</code></a>, runs commands to gather live data (git log, test output, anything), and injects results into the prompt.</p>
+          </div>
+          <div class="loop-connector-h" aria-hidden="true"></div>
+          <div class="loop-step">
+            <div class="loop-step-number">2</div>
+            <h3>Pipe to the agent</h3>
+            <p>The assembled prompt goes to your <a href="docs/agents/">agent</a>. It reads the codebase, does one unit of work, commits, and exits.</p>
+          </div>
+          <div class="loop-connector-h" aria-hidden="true"></div>
+          <div class="loop-step">
+            <div class="loop-step-number">3</div>
+            <h3>Repeat</h3>
+            <p>Back to step 1. Fresh context window, latest code. Edit the prompt while it runs &mdash; changes take effect next cycle.</p>
+          </div>
         </div>
 
-        <figure class="terminal">
-          <div class="terminal-window" role="img" aria-label="Terminal showing ralph new and ralph run commands with three iterations — iteration 2 fails a test, iteration 3 automatically fixes it">
+        <div class="loop-return" aria-hidden="true">
+          <span class="loop-return-arrow">&#x21A9; back to step 1</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- A ralph is just a file -->
+    <section class="ralph-file" aria-labelledby="ralph-file-heading">
+      <div class="ralph-file-inner">
+        <div class="ralph-file-text">
+          <h2 id="ralph-file-heading" class="section-heading">A ralph is just a Markdown file</h2>
+          <p class="section-subtitle">No config files. No project scaffolding. No dashboard. One file is the whole primitive.</p>
+          <ul class="ralph-features">
+            <li><strong>agent</strong> &mdash; which CLI agent to run</li>
+            <li><strong>commands</strong> &mdash; shell commands whose output fills placeholders</li>
+            <li><strong>The prompt body</strong> &mdash; what the agent sees every iteration</li>
+          </ul>
+        </div>
+        <div class="ralph-file-demo">
+          <div class="terminal-window terminal-small">
             <div class="terminal-header">
               <span class="terminal-dot red"></span>
               <span class="terminal-dot yellow"></span>
               <span class="terminal-dot green"></span>
-              <span class="terminal-title">ralph</span>
+              <span class="terminal-title">RALPH.md</span>
             </div>
-            <pre><code><span class="prompt">$</span> uv tool install ralphify
-<span class="dim">Installed 1 package</span>
-
-<span class="prompt">$</span> ralph new
-<span class="dim">Created RALPH.md</span>
-
-<span class="prompt">$</span> ralph run
-<span class="dim">&#9484;&#9472; Iteration 1 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="success">&#x2713;</span> Iteration 1 completed <span class="dim">(52.3s)</span>
-  Checks: 2 passed
-    <span class="success">&#x2713;</span> lint
-    <span class="success">&#x2713;</span> tests
-
-<span class="dim">&#9484;&#9472; Iteration 2 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="fail">&#x2717;</span> Iteration 2 failed with exit code 1 <span class="dim">(23.1s)</span>
-  Checks: 1 passed, 1 failed
-    <span class="success">&#x2713;</span> lint
-    <span class="fail">&#x2717;</span> tests <span class="dim">(exit 1)</span>
-
-<span class="dim">&#9484;&#9472; Iteration 3 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="success">&#x2713;</span> Iteration 3 completed <span class="dim">(41.7s)</span>
-  Checks: 2 passed
-    <span class="success">&#x2713;</span> lint
-    <span class="success">&#x2713;</span> tests
-
-<span class="dim">Done: 3 iteration(s) &mdash; 2 succeeded, 1 failed</span></code></pre>
-          </div>
-          <figcaption class="terminal-caption">Iteration 2 broke a test. Iteration 3 saw the failure and fixed it. You didn't lift a finger.</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <!-- ── The tension ────────────────────────────────────── -->
-    <section class="tension" aria-labelledby="tension-heading">
-      <h2 id="tension-heading" class="tension-section-title">You know the feeling.</h2>
-      <div class="tension-grid">
-        <div class="tension-card">
-          <div class="tension-number">1</div>
-          <h3 class="tension-title">The agent finished.</h3>
-          <p class="tension-text">It did the thing. Great. Now it's sitting there, cursor blinking, waiting for you to type another prompt. So you do. And again. And again.</p>
-        </div>
-        <div class="tension-card">
-          <div class="tension-number">2</div>
-          <h3 class="tension-title">You close the laptop.</h3>
-          <p class="tension-text">The agent stops. Nothing happens until you come back. Meanwhile, someone's agent is committing code at 4am.</p>
-        </div>
-        <div class="tension-card accent">
-          <div class="tension-number">&#x221e;</div>
-          <h3 class="tension-title">What if it just kept going?</h3>
-          <p class="tension-text">Read the prompt. Do the work. Check itself. Loop &mdash; with <em>fresh context every time</em>. No babysitting. That's Ralph.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── How the loop works ────────────────────────────── -->
-    <section class="how-it-works" aria-labelledby="how-it-works-heading">
-      <h2 id="how-it-works-heading">The loop</h2>
-      <p class="section-subtitle">Three steps, every iteration. Fresh context, no conversation history, no drift.</p>
-
-      <div class="loop-visual" aria-hidden="true">
-        <div class="loop-track">
-          <div class="loop-step-wrap">
-            <div class="loop-node">1</div>
-            <div class="loop-label">Assemble prompt</div>
-          </div>
-          <div class="loop-connector"></div>
-          <div class="loop-step-wrap">
-            <div class="loop-node">2</div>
-            <div class="loop-label">Pipe to agent</div>
-          </div>
-          <div class="loop-connector"></div>
-          <div class="loop-step-wrap">
-            <div class="loop-node">3</div>
-            <div class="loop-label">Repeat</div>
-          </div>
-          <div class="loop-connector loop-connector-return"></div>
-          <div class="loop-return-label">&#x21A9;</div>
-        </div>
-      </div>
-
-      <div class="steps">
-        <div class="step">
-          <div class="step-number">1</div>
-          <h3>Assemble the prompt</h3>
-          <p>Ralphify reads your <a href="docs/writing-prompts/"><code>RALPH.md</code></a>, runs commands to gather live data (git log, test output, anything), and injects results into the prompt.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <h3>Pipe to the agent</h3>
-          <p>The assembled prompt goes to your <a href="docs/agents/">agent</a>. It reads the codebase, does one unit of work, commits, and exits.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <h3>Repeat</h3>
-          <p>Back to step 1. Fresh context window, latest code, latest prompt. Edit the prompt while it runs &mdash; changes apply next cycle.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── What is a ralph ───────────────────────────────── -->
-    <section class="what-is-ralph" aria-labelledby="what-is-ralph-heading">
-      <h2 id="what-is-ralph-heading">A ralph is just a Markdown file</h2>
-      <p class="section-subtitle">No config files, no project scaffolding, no dashboard. One file is the whole primitive.</p>
-      <div class="ralph-demo">
-        <div class="terminal-window terminal-small">
-          <div class="terminal-header">
-            <span class="terminal-dot red"></span>
-            <span class="terminal-dot yellow"></span>
-            <span class="terminal-dot green"></span>
-            <span class="terminal-title">RALPH.md</span>
-          </div>
-          <pre><code><span class="dim">---</span>
+            <pre><code><span class="dim">---</span>
 <span class="yaml-key">agent</span>: claude-code
 <span class="yaml-key">commands</span>:
   - <span class="yaml-key">name</span>: tests
@@ -420,41 +371,42 @@ Test results from the last run:
 
 Fix any failing tests. If all tests pass,
 pick the next task from TODO.md and implement it.</code></pre>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ── Why loops beat single runs ────────────────────── -->
+    <!-- Why loops beat single runs -->
     <section class="why" aria-labelledby="why-heading">
-      <h2 id="why-heading">Why loops beat single runs</h2>
+      <h2 id="why-heading" class="section-heading">Why loops beat single runs</h2>
       <p class="section-subtitle">A single agent conversation fills up, slows down, and loses the plot. Ralph doesn't.</p>
       <div class="why-grid">
-        <div class="why-item">
+        <div class="why-card">
           <div class="why-icon">&gt;_</div>
           <h3>Fresh context, no decay</h3>
-          <p>Each iteration starts with a clean context window. No conversation bloat, no hallucinated memories. The agent reads the actual codebase every loop.</p>
+          <p>Each iteration starts with a clean context window. No conversation bloat. The agent reads the actual codebase every loop.</p>
         </div>
-        <div class="why-item">
+        <div class="why-card">
           <div class="why-icon">&lt;/&gt;</div>
           <h3>Self-healing feedback</h3>
           <p>When something breaks, the failure output feeds into the next iteration automatically. The agent sees what went wrong and fixes it.</p>
         </div>
-        <div class="why-item">
+        <div class="why-card">
           <div class="why-icon">~/</div>
           <h3>Steer while it runs</h3>
-          <p>The prompt is re-read every iteration. Edit it while the loop runs and the agent follows your new direction on the next cycle.</p>
+          <p>The prompt is re-read every iteration. Edit it while the loop runs and the agent follows your new direction next cycle.</p>
         </div>
-        <div class="why-item">
+        <div class="why-card">
           <div class="why-icon">&#x221e;</div>
           <h3>Progress lives in git</h3>
-          <p>Every iteration commits. If something goes sideways, <code>git log</code> shows exactly what happened and <code>git reset</code> rolls it back.</p>
+          <p>Every iteration commits. If something goes sideways, <code>git log</code> shows exactly what happened.</p>
         </div>
       </div>
     </section>
 
-    <!-- ── Install ───────────────────────────────────────── -->
+    <!-- Install -->
     <section class="install" aria-labelledby="install-heading">
-      <h2 id="install-heading">Get Ralph running</h2>
+      <h2 id="install-heading" class="section-heading">Get Ralph running</h2>
       <div class="install-steps">
         <div class="install-step">
           <span class="install-label">Install</span>
@@ -478,9 +430,9 @@ pick the next task from TODO.md and implement it.</code></pre>
       <p class="install-alt">Also available via <code>pip install ralphify</code> or <code>pipx install ralphify</code></p>
     </section>
 
-    <!-- ── FAQ ───────────────────────────────────────────── -->
+    <!-- FAQ -->
     <section class="faq" aria-labelledby="faq-heading">
-      <h2 id="faq-heading">FAQ</h2>
+      <h2 id="faq-heading" class="section-heading">FAQ</h2>
       <dl class="faq-list">
         <div class="faq-item">
           <dt>What AI coding agents work with Ralphify?</dt>
@@ -501,7 +453,7 @@ pick the next task from TODO.md and implement it.</code></pre>
       </dl>
     </section>
 
-    <!-- ── Bottom CTA ────────────────────────────────────── -->
+    <!-- Bottom CTA -->
     <section class="cta-bottom" aria-labelledby="cta-bottom-heading">
       <div class="cta-bottom-inner">
         <div class="cta-bottom-status">
