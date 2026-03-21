@@ -146,7 +146,6 @@ def _run_agent_phase(
     prompt: str,
     config: RunConfig,
     state: RunState,
-    log_path_dir: Path | None,
     emit: _BoundEmitter,
 ) -> bool:
     """Run the agent subprocess, update state counters, and emit the result event.
@@ -162,7 +161,7 @@ def _run_agent_phase(
 
     try:
         agent = execute_agent(
-            cmd, prompt, config.timeout, log_path_dir, state.iteration,
+            cmd, prompt, config.timeout, config.log_dir, state.iteration,
             on_activity=lambda data: emit(EventType.AGENT_ACTIVITY, AgentActivityData(raw=data, iteration=state.iteration)),
         )
     except FileNotFoundError as exc:
@@ -200,7 +199,6 @@ def _run_agent_phase(
 def _run_iteration(
     config: RunConfig,
     state: RunState,
-    log_path_dir: Path | None,
     emit: _BoundEmitter,
 ) -> bool:
     """Execute one iteration of the agent loop.
@@ -229,7 +227,7 @@ def _run_iteration(
     emit(EventType.PROMPT_ASSEMBLED, PromptAssembledData(iteration=iteration, prompt_length=len(prompt)))
 
     # Run agent
-    agent_succeeded = _run_agent_phase(prompt, config, state, log_path_dir, emit)
+    agent_succeeded = _run_agent_phase(prompt, config, state, emit)
 
     if not agent_succeeded and config.stop_on_error:
         emit(EventType.LOG_MESSAGE, LogMessageData(message="Stopping due to --stop-on-error.", level="error"))
@@ -263,10 +261,8 @@ def run_loop(
     state.status = RunStatus.RUNNING
     state.started_at = datetime.now(timezone.utc)
 
-    log_path_dir: Path | None = None
     if config.log_dir:
-        log_path_dir = config.log_dir
-        log_path_dir.mkdir(parents=True, exist_ok=True)
+        config.log_dir.mkdir(parents=True, exist_ok=True)
 
     emit(EventType.RUN_STARTED, RunStartedData(
         commands=len(config.commands),
@@ -284,7 +280,7 @@ def run_loop(
             if config.max_iterations is not None and state.iteration > config.max_iterations:
                 break
 
-            should_continue = _run_iteration(config, state, log_path_dir, emit)
+            should_continue = _run_iteration(config, state, emit)
             if not should_continue:
                 break
 
