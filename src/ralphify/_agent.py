@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import IO, Any
 
-from ralphify._output import collect_output
+from ralphify._output import SUBPROCESS_TEXT_KWARGS, collect_output
 
 # Agent binary name that supports --output-format stream-json.
 _CLAUDE_BINARY = "claude"
@@ -170,9 +170,7 @@ def _run_agent_streaming(
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
+        **SUBPROCESS_TEXT_KWARGS,
     )
     try:
         # Popen with PIPE guarantees non-None streams; guard explicitly
@@ -228,9 +226,7 @@ def _run_agent_blocking(
         result = subprocess.run(
             cmd,
             input=prompt,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
+            **SUBPROCESS_TEXT_KWARGS,
             timeout=timeout,
             capture_output=log_path_dir is not None,
         )

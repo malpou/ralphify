@@ -13,7 +13,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._output import collect_output
+from ralphify._output import SUBPROCESS_TEXT_KWARGS, collect_output
 
 TIMEOUT_EXIT_CODE: int = -1
 """Sentinel exit code returned when a command times out.
@@ -63,9 +63,7 @@ def run_command(
         result = subprocess.run(
             cmd,
             capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
+            **SUBPROCESS_TEXT_KWARGS,
             cwd=cwd,
             timeout=timeout,
             env=merged_env,

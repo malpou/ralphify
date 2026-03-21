@@ -2,6 +2,17 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+# Shared subprocess kwargs for text-mode execution with UTF-8 decoding.
+# Every subprocess.run / subprocess.Popen call that reads text output should
+# unpack these to ensure consistent encoding behavior across the codebase.
+SUBPROCESS_TEXT_KWARGS: dict[str, Any] = {
+    "text": True,
+    "encoding": "utf-8",
+    "errors": "replace",
+}
+
 
 def collect_output(
     stdout: str | bytes | None,
