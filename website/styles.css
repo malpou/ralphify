@@ -486,10 +486,25 @@ nav {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 150%;
-  height: 200%;
-  background: radial-gradient(ellipse, rgba(139, 108, 240, 0.06) 0%, transparent 50%);
+  width: 140%;
+  height: 180%;
+  background: radial-gradient(ellipse, rgba(139, 108, 240, 0.08) 0%, rgba(232, 123, 74, 0.02) 40%, transparent 60%);
   pointer-events: none;
+}
+
+.hero-terminal .terminal-window {
+  animation: terminal-appear 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
+}
+
+@keyframes terminal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* -- CTA buttons ---------------------------------------------- */
@@ -652,6 +667,39 @@ nav {
   50% { opacity: 0; }
 }
 
+/* -- Hero horizon glow ---------------------------------------- */
+
+.hero::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 108, 240, 0.0) 10%,
+    rgba(139, 108, 240, 0.5) 35%,
+    rgba(232, 123, 74, 0.4) 50%,
+    rgba(139, 108, 240, 0.5) 65%,
+    rgba(139, 108, 240, 0.0) 90%,
+    transparent 100%
+  );
+  z-index: 2;
+}
+
+.hero .hero-horizon-glow {
+  position: absolute;
+  bottom: -2px;
+  left: 10%;
+  right: 10%;
+  height: 80px;
+  background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(139, 108, 240, 0.08) 0%, transparent 80%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* -- Ticker strip --------------------------------------------- */
 
 .ticker-section {
@@ -736,11 +784,23 @@ nav {
 .fomo-without {
   background: rgba(248, 113, 113, 0.03);
   border: 1px solid rgba(248, 113, 113, 0.10);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fomo-without:hover {
+  border-color: rgba(248, 113, 113, 0.20);
+  box-shadow: 0 0 40px rgba(248, 113, 113, 0.04);
 }
 
 .fomo-with {
   background: rgba(52, 211, 153, 0.03);
   border: 1px solid rgba(52, 211, 153, 0.10);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fomo-with:hover {
+  border-color: rgba(52, 211, 153, 0.20);
+  box-shadow: 0 0 40px rgba(52, 211, 153, 0.04);
 }
 
 .fomo-card-label {
