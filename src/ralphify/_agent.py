@@ -30,6 +30,10 @@ from ralphify._output import collect_output
 # Agent binary name that supports --output-format stream-json.
 _CLAUDE_BINARY = "claude"
 
+# CLI flags appended when streaming mode is used.
+_OUTPUT_FORMAT_FLAG = "stream-json"
+_VERBOSE_FLAG = "verbose"
+
 
 @dataclass
 class AgentResult:
@@ -143,7 +147,7 @@ def _run_agent_streaming(
     this function owns the subprocess lifecycle (spawn, stdin delivery,
     timeout kill, and cleanup via ``try/finally``).
     """
-    stream_cmd = cmd + ["--output-format", "stream-json", "--verbose"]
+    stream_cmd = cmd + ["--output-format", _OUTPUT_FORMAT_FLAG, "--verbose"]
     start = time.monotonic()
     deadline = (start + timeout) if timeout is not None else None
 

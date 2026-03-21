@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from helpers import MOCK_SUBPROCESS, drain_events, make_config, ok_result
 
-from ralphify._events import EventType, QueueEmitter
+from ralphify._events import EventType, FanoutEmitter, QueueEmitter
 from ralphify._run_types import RUN_ID_LENGTH, RunStatus
 from ralphify.manager import ManagedRun, RunManager
 
@@ -172,6 +172,28 @@ class TestRunManagerListAndGet:
     def test_get_run_returns_none_for_unknown_id(self):
         manager = RunManager()
         assert manager.get_run("nonexistent") is None
+
+
+class TestManagedRunBuildEmitter:
+    def test_build_emitter_returns_queue_emitter_without_extras(self, tmp_path):
+        manager = RunManager()
+        config = make_config(tmp_path)
+        managed = manager.create_run(config)
+
+        emitter = managed.build_emitter()
+        assert emitter is managed.emitter
+        assert isinstance(emitter, QueueEmitter)
+
+    def test_build_emitter_returns_fanout_with_extras(self, tmp_path):
+        manager = RunManager()
+        config = make_config(tmp_path)
+        managed = manager.create_run(config)
+
+        extra = QueueEmitter()
+        managed.add_listener(extra)
+
+        emitter = managed.build_emitter()
+        assert isinstance(emitter, FanoutEmitter)
 
 
 class TestRunManagerExtraListeners:

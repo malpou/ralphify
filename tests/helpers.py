@@ -90,22 +90,25 @@ def make_state() -> RunState:
     return RunState(run_id="test-run-001")
 
 
-def ok_result(*args, stdout="", stderr="", **kwargs) -> subprocess.CompletedProcess:
-    """Subprocess side_effect that returns exit code 0.
+def _make_completed_process(
+    *args, returncode: int = 0, stdout: str = "", stderr: str = "", **kwargs,
+) -> subprocess.CompletedProcess:
+    """Build a CompletedProcess with the given exit code.
 
     Works both as a ``side_effect`` callable (receives mock call args) and
-    as a direct factory: ``ok_result(stdout="out\\n")``.
+    as a direct factory: ``_make_completed_process(stdout="out\\n")``.
     """
-    return subprocess.CompletedProcess(args=args, returncode=0, stdout=stdout, stderr=stderr)
+    return subprocess.CompletedProcess(args=args, returncode=returncode, stdout=stdout, stderr=stderr)
 
 
-def fail_result(*args, stdout="", stderr="", **kwargs) -> subprocess.CompletedProcess:
-    """Subprocess side_effect that returns exit code 1.
+def ok_result(*args, **kwargs) -> subprocess.CompletedProcess:
+    """Subprocess side_effect that returns exit code 0."""
+    return _make_completed_process(*args, returncode=0, **kwargs)
 
-    Works both as a ``side_effect`` callable (receives mock call args) and
-    as a direct factory: ``fail_result(stderr="err\\n")``.
-    """
-    return subprocess.CompletedProcess(args=args, returncode=1, stdout=stdout, stderr=stderr)
+
+def fail_result(*args, **kwargs) -> subprocess.CompletedProcess:
+    """Subprocess side_effect that returns exit code 1."""
+    return _make_completed_process(*args, returncode=1, **kwargs)
 
 
 def make_mock_popen(stdout_lines="", stderr_text="", returncode=0):
