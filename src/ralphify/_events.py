@@ -195,3 +195,23 @@ class FanoutEmitter:
     def emit(self, event: Event) -> None:
         for e in self._emitters:
             e.emit(event)
+
+
+class BoundEmitter:
+    """Wraps an EventEmitter with a fixed run_id for concise emission.
+
+    Instead of constructing :class:`Event` objects manually at every call
+    site, callers create a ``BoundEmitter`` once with the run ID and then
+    emit events with just the type and optional data payload.
+    """
+
+    def __init__(self, emitter: EventEmitter, run_id: str) -> None:
+        self._emitter = emitter
+        self._run_id = run_id
+
+    def __call__(
+        self, event_type: EventType, data: EventData | None = None,
+    ) -> None:
+        self._emitter.emit(Event(
+            type=event_type, run_id=self._run_id, data=data if data is not None else {},
+        ))

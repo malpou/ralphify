@@ -26,6 +26,7 @@ except PackageNotFoundError:
 from ralphify.engine import run_loop
 from ralphify._run_types import Command, RunConfig, RunState, RunStatus
 from ralphify._events import (
+    BoundEmitter,
     Event,
     EventEmitter,
     EventType,
@@ -45,6 +46,7 @@ def main() -> None:
 __all__ = [
     "__version__",
     "run_loop",
+    "BoundEmitter",
     "Command",
     "RunConfig",
     "RunState",

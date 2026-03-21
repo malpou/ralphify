@@ -18,10 +18,9 @@ from pathlib import Path
 from ralphify._agent import execute_agent
 from ralphify._events import (
     AgentActivityData,
+    BoundEmitter,
     CommandsCompletedData,
     CommandsStartedData,
-    Event,
-    EventData,
     EventEmitter,
     EventType,
     IterationEndedData,
@@ -56,22 +55,7 @@ _CREDIT_INSTRUCTION = (
 )
 
 
-class _BoundEmitter:
-    """Wraps an EventEmitter with a fixed run_id for concise emission."""
-
-    def __init__(self, emitter: EventEmitter, run_id: str) -> None:
-        self._emitter = emitter
-        self._run_id = run_id
-
-    def __call__(
-        self, event_type: EventType, data: EventData | None = None,
-    ) -> None:
-        self._emitter.emit(Event(
-            type=event_type, run_id=self._run_id, data=data if data is not None else {},
-        ))
-
-
-def _wait_for_resume(state: RunState, emit: _BoundEmitter) -> bool:
+def _wait_for_resume(state: RunState, emit: BoundEmitter) -> bool:
     """Block until the run is resumed or a stop is requested."""
     emit(EventType.RUN_PAUSED)
     while not state.wait_for_unpause(timeout=_PAUSE_POLL_INTERVAL):
@@ -84,7 +68,7 @@ def _wait_for_resume(state: RunState, emit: _BoundEmitter) -> bool:
     return True
 
 
-def _handle_control_signals(state: RunState, emit: _BoundEmitter) -> bool:
+def _handle_control_signals(state: RunState, emit: BoundEmitter) -> bool:
     """Handle stop and pause requests at the top of each iteration."""
     if state.stop_requested:
         state.status = RunStatus.STOPPED
@@ -146,7 +130,7 @@ def _run_agent_phase(
     prompt: str,
     config: RunConfig,
     state: RunState,
-    emit: _BoundEmitter,
+    emit: BoundEmitter,
 ) -> bool:
     """Run the agent subprocess, update state counters, and emit the result event.
 
@@ -199,7 +183,7 @@ def _run_agent_phase(
 def _run_iteration(
     config: RunConfig,
     state: RunState,
-    emit: _BoundEmitter,
+    emit: BoundEmitter,
 ) -> bool:
     """Execute one iteration of the agent loop.
 
@@ -236,7 +220,7 @@ def _run_iteration(
     return True
 
 
-def _delay_if_needed(config: RunConfig, state: RunState, emit: _BoundEmitter) -> None:
+def _delay_if_needed(config: RunConfig, state: RunState, emit: BoundEmitter) -> None:
     """Sleep between iterations when a delay is configured.
 
     The sleep is broken into small chunks so that stop requests are
@@ -265,7 +249,7 @@ def run_loop(
     if emitter is None:
         emitter = NullEmitter()
 
-    emit = _BoundEmitter(emitter, state.run_id)
+    emit = BoundEmitter(emitter, state.run_id)
     state.status = RunStatus.RUNNING
     state.started_at = datetime.now(timezone.utc)
 

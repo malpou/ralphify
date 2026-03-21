@@ -7,10 +7,9 @@ from unittest.mock import patch
 
 from helpers import MOCK_RUN_COMMAND, MOCK_SUBPROCESS, drain_events, fail_result, make_config, make_state, ok_result, ok_run_result
 
-from ralphify._events import EventType, NullEmitter, QueueEmitter
+from ralphify._events import BoundEmitter, EventType, NullEmitter, QueueEmitter
 from ralphify._run_types import Command, RunStatus
 from ralphify.engine import (
-    _BoundEmitter,
     _assemble_prompt,
     _delay_if_needed,
     _handle_control_signals,
@@ -22,7 +21,7 @@ from ralphify.engine import (
 class TestBoundEmitter:
     def test_emits_event_with_fixed_run_id(self):
         q = QueueEmitter()
-        emit = _BoundEmitter(q, "run-abc")
+        emit = BoundEmitter(q, "run-abc")
         emit(EventType.ITERATION_STARTED, {"iteration": 1})
 
         events = drain_events(q)
@@ -33,7 +32,7 @@ class TestBoundEmitter:
 
     def test_emits_empty_data_when_none_provided(self):
         q = QueueEmitter()
-        emit = _BoundEmitter(q, "run-xyz")
+        emit = BoundEmitter(q, "run-xyz")
         emit(EventType.RUN_PAUSED)
 
         events = drain_events(q)
@@ -42,7 +41,7 @@ class TestBoundEmitter:
 
     def test_multiple_events_share_run_id(self):
         q = QueueEmitter()
-        emit = _BoundEmitter(q, "run-123")
+        emit = BoundEmitter(q, "run-123")
         emit(EventType.RUN_STARTED)
         emit(EventType.ITERATION_STARTED, {"iteration": 1})
         emit(EventType.RUN_STOPPED)
@@ -515,7 +514,7 @@ class TestDelayIfNeeded:
         state = make_state()
         state.iteration = 1
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         start = time.monotonic()
         _delay_if_needed(config, state, emit)
@@ -529,7 +528,7 @@ class TestDelayIfNeeded:
         state = make_state()
         state.iteration = 1
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         start = time.monotonic()
         _delay_if_needed(config, state, emit)
@@ -546,7 +545,7 @@ class TestDelayIfNeeded:
         state = make_state()
         state.iteration = 3  # last iteration
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         start = time.monotonic()
         _delay_if_needed(config, state, emit)
@@ -560,7 +559,7 @@ class TestDelayIfNeeded:
         state = make_state()
         state.iteration = 100
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         start = time.monotonic()
         _delay_if_needed(config, state, emit)
@@ -575,7 +574,7 @@ class TestDelayIfNeeded:
         state = make_state()
         state.iteration = 1
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         # Request stop from another thread after a short interval
         def stop_soon():
@@ -597,7 +596,7 @@ class TestHandleControlSignals:
     def test_returns_true_when_no_signals(self):
         state = make_state()
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         result = _handle_control_signals(state, emit)
 
@@ -608,7 +607,7 @@ class TestHandleControlSignals:
         state = make_state()
         state.request_stop()
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         result = _handle_control_signals(state, emit)
 
@@ -619,7 +618,7 @@ class TestHandleControlSignals:
         state = make_state()
         state.request_pause()
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         def resume_soon():
             time.sleep(0.05)
@@ -639,7 +638,7 @@ class TestHandleControlSignals:
         state = make_state()
         state.request_pause()
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         def stop_soon():
             time.sleep(0.05)
@@ -667,7 +666,7 @@ class TestHandleControlSignals:
         state = make_state()
         state.request_pause()
         q = QueueEmitter()
-        emit = _BoundEmitter(q, state.run_id)
+        emit = BoundEmitter(q, state.run_id)
 
         def set_stop_flag():
             time.sleep(0.01)
