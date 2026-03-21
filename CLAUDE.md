@@ -26,7 +26,7 @@ Key modules:
 - `resolver.py` — Template placeholder resolution (`{{ commands.name }}`, `{{ args.name }}`)
 - `_agent.py` — Run agent subprocesses (streaming + blocking modes, log writing)
 - `_runner.py` — Generic command execution with timeout
-- `_events.py` — Event types and emitter protocol (NullEmitter, QueueEmitter, FanoutEmitter)
+- `_events.py` — Event types, emitter protocol (NullEmitter, QueueEmitter, FanoutEmitter), and BoundEmitter convenience wrapper
 - `_console_emitter.py` — Rich terminal rendering of events
 - `_output.py` — Combine stdout+stderr, format durations
 - `_skills.py` — Skill installation, agent detection, and command building for `ralph new`

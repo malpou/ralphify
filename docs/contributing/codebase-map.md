@@ -28,7 +28,7 @@ src/ralphify/           # All source code
 ├── _frontmatter.py     # Parse YAML frontmatter from RALPH.md, marker constants
 ├── _skills.py          # Skill installation and agent detection for `ralph new`
 ├── _console_emitter.py # Rich console renderer for run-loop events (ConsoleEmitter)
-├── _events.py          # Event types and emitter protocol (NullEmitter, QueueEmitter, FanoutEmitter)
+├── _events.py          # Event types, emitter protocol, and BoundEmitter convenience wrapper
 ├── _output.py          # Combine stdout+stderr, format durations
 └── skills/             # Bundled skill definitions (installed into agent skill dirs)
     └── new-ralph/      # AI-guided ralph creation skill for `ralph new`
@@ -94,6 +94,7 @@ Emitter implementations:
 - **`NullEmitter`** — discards events (used in tests)
 - **`QueueEmitter`** — pushes events into a `queue.Queue` for async consumption
 - **`FanoutEmitter`** — broadcasts events to multiple emitters
+- **`BoundEmitter`** — wraps any emitter with a fixed run ID, so callers don't have to pass the ID on every emit. The engine creates one per run and threads it through all internal functions.
 
 The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders events to the terminal with Rich formatting.
 
