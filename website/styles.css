@@ -207,7 +207,7 @@ nav {
   text-decoration: none;
 }
 
-/* ── Hero — centered layout ──────────────────────────────── */
+/* ── Hero — centered layout with floating activity feed ── */
 
 .hero {
   position: relative;
@@ -226,37 +226,37 @@ nav {
 .hero-glow::before {
   content: "";
   position: absolute;
-  width: 900px;
-  height: 900px;
-  top: -25%;
-  left: 20%;
-  background: radial-gradient(circle, rgba(139, 108, 240, 0.25) 0%, rgba(124, 77, 255, 0.08) 35%, transparent 60%);
+  width: 1000px;
+  height: 1000px;
+  top: -30%;
+  left: 15%;
+  background: radial-gradient(circle, rgba(139, 108, 240, 0.3) 0%, rgba(124, 77, 255, 0.1) 30%, transparent 60%);
   animation: drift-1 18s ease-in-out infinite alternate;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(100px);
 }
 
 .hero-glow::after {
   content: "";
   position: absolute;
-  width: 700px;
-  height: 700px;
-  bottom: -15%;
-  right: 15%;
-  background: radial-gradient(circle, rgba(232, 123, 74, 0.15) 0%, rgba(224, 96, 48, 0.04) 40%, transparent 60%);
+  width: 800px;
+  height: 800px;
+  bottom: -20%;
+  right: 10%;
+  background: radial-gradient(circle, rgba(232, 123, 74, 0.18) 0%, rgba(224, 96, 48, 0.05) 35%, transparent 60%);
   animation: drift-2 22s ease-in-out infinite alternate;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(100px);
 }
 
 @keyframes drift-1 {
   0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(30px, -20px) scale(1.1); }
+  100% { transform: translate(40px, -30px) scale(1.15); }
 }
 
 @keyframes drift-2 {
   0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-20px, 15px) scale(1.06); }
+  100% { transform: translate(-30px, 20px) scale(1.1); }
 }
 
 .hero-center {
@@ -264,11 +264,24 @@ nav {
   z-index: 1;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 8rem 2rem 4rem;
+  padding: 8rem 2rem 5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+}
+
+@media (min-width: 1101px) {
+  .hero-center {
+    align-items: flex-start;
+    text-align: left;
+    max-width: 1320px;
+    padding-right: 400px;
+  }
+
+  .hero-sub {
+    margin-left: 0;
+  }
 }
 
 .hero-badge {
@@ -314,7 +327,7 @@ nav {
 }
 
 .hero-headline {
-  font-size: clamp(2.5rem, 5.5vw, 4.25rem);
+  font-size: clamp(2.5rem, 5.5vw, 4.5rem);
   font-weight: 800;
   line-height: 1.06;
   color: #fff;
@@ -323,7 +336,7 @@ nav {
 }
 
 .hero-punchline {
-  font-size: clamp(2.75rem, 6vw, 4.75rem);
+  font-size: clamp(2.75rem, 5vw, 4.25rem);
   font-weight: 800;
   line-height: 1.06;
   letter-spacing: -0.04em;
@@ -372,22 +385,77 @@ nav {
   border: 1px solid rgba(139, 108, 240, 0.15);
 }
 
-/* Hero terminal — full width below text */
-.hero-terminal-wrap {
-  position: relative;
-  z-index: 1;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 0 2rem 4rem;
+/* ── Hero activity feed — floating card ─────────────────── */
+
+.hero-activity {
+  position: absolute;
+  right: max(2rem, calc((100vw - var(--max-width)) / 2 + 2rem));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 320px;
+  background: rgba(10, 10, 22, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(139, 108, 240, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(139, 108, 240, 0.08),
+    0 24px 80px rgba(0, 0, 0, 0.6),
+    0 0 120px rgba(139, 108, 240, 0.1);
 }
 
-.terminal-hero {
-  transform: perspective(1200px) rotateX(2deg);
-  transition: transform 0.4s ease;
+.activity-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(139, 108, 240, 0.1);
+  background: rgba(139, 108, 240, 0.04);
 }
 
-.terminal-hero:hover {
-  transform: perspective(1200px) rotateX(0deg);
+.activity-title {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.activity-feed {
+  padding: 0.5rem 0;
+}
+
+.activity-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.activity-time {
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 52px;
+  font-size: 0.68rem;
+  opacity: 0.7;
+}
+
+.activity-msg {
+  color: var(--text);
+}
+
+.activity-msg .success {
+  color: #34D399;
+  font-weight: 700;
+}
+
+.activity-msg .fail {
+  color: #F87171;
+  font-weight: 700;
 }
 
 /* ── Agent strip ────────────────────────────────────────── */
@@ -564,10 +632,6 @@ nav {
 .yaml-key { color: var(--purple-light); }
 .placeholder { color: var(--orange-light); }
 
-.terminal-body {
-  min-height: 260px;
-}
-
 .cursor-blink {
   animation: blink 1s step-end infinite;
   color: var(--purple-light);
@@ -682,7 +746,12 @@ nav {
 
 .fomo-dim {
   color: var(--text-muted);
-  opacity: 0.6;
+  opacity: 0.4;
+}
+
+.fomo-nothing {
+  color: var(--text-muted);
+  opacity: 0.5;
   font-style: italic;
 }
 
@@ -1350,25 +1419,24 @@ footer {
     transform: none;
     transition: none;
   }
+
+  .activity-item {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
 
+@media (max-width: 1100px) {
+  .hero-activity {
+    display: none;
+  }
+}
+
 @media (max-width: 900px) {
   .hero-center {
     padding: 5rem 1.5rem 3rem;
-  }
-
-  .hero-terminal-wrap {
-    padding: 0 1.5rem 3rem;
-  }
-
-  .terminal-hero {
-    transform: none;
-  }
-
-  .terminal-hero:hover {
-    transform: none;
   }
 
   .fomo-contrast {

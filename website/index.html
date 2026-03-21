@@ -188,7 +188,7 @@
 
   <main id="main-content">
 
-    <!-- Hero — centered, dramatic -->
+    <!-- Hero -->
     <section class="hero" aria-label="Introduction">
       <div class="hero-glow" aria-hidden="true"></div>
 
@@ -217,34 +217,29 @@
         </div>
       </div>
 
-      <!-- Terminal demo below hero text -->
-      <div class="hero-terminal-wrap">
-        <div class="terminal-window terminal-hero">
-          <div class="terminal-header">
-            <span class="terminal-dot red"></span>
-            <span class="terminal-dot yellow"></span>
-            <span class="terminal-dot green"></span>
-            <span class="terminal-title">ralph &mdash; autonomous loop</span>
+      <!-- Live activity feed floating beside hero -->
+      <div class="hero-activity" aria-label="Live agent activity feed">
+        <div class="activity-header">
+          <span class="status-dot"></span>
+          <span class="activity-title">ralph &mdash; live</span>
+        </div>
+        <div class="activity-feed">
+          <div class="activity-item">
+            <span class="activity-time">just now</span>
+            <span class="activity-msg"><span class="success">&#x2713;</span> Iteration 48 &mdash; 48/48 tests</span>
           </div>
-          <pre class="terminal-body"><code><span class="prompt">$</span> ralph run
-<span class="dim">&#9484;&#9472; Iteration 46 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="success">&#x2713;</span> Iteration 46 completed <span class="dim">(38.2s)</span>
-  Commands: 2 passed
-    <span class="success">&#x2713;</span> lint
-    <span class="success">&#x2713;</span> tests <span class="dim">(47/47)</span>
-
-<span class="dim">&#9484;&#9472; Iteration 47 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="fail">&#x2717;</span> Iteration 47 failed <span class="dim">(23.1s)</span>
-  Commands: 1 passed, 1 failed
-    <span class="success">&#x2713;</span> lint
-    <span class="fail">&#x2717;</span> tests <span class="dim">(exit 1)</span>
-
-<span class="dim">&#9484;&#9472; Iteration 48 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="success">&#x2713;</span> Iteration 48 completed <span class="dim">(41.7s)</span>
-  Commands: 2 passed
-    <span class="success">&#x2713;</span> lint
-    <span class="success">&#x2713;</span> tests <span class="dim">(48/48)</span>
-<span class="cursor-blink">&#9608;</span></code></pre>
+          <div class="activity-item">
+            <span class="activity-time">2m ago</span>
+            <span class="activity-msg"><span class="fail">&#x2717;</span> Iteration 47 &mdash; 1 test failed</span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-time">4m ago</span>
+            <span class="activity-msg"><span class="success">&#x2713;</span> Iteration 46 &mdash; 47/47 tests</span>
+          </div>
+          <div class="activity-item">
+            <span class="activity-time">7m ago</span>
+            <span class="activity-msg"><span class="success">&#x2713;</span> Iteration 45 &mdash; 47/47 tests</span>
+          </div>
         </div>
       </div>
 
@@ -262,7 +257,7 @@
       </div>
     </section>
 
-    <!-- The FOMO — contrast section -->
+    <!-- The FOMO -->
     <section class="fomo" aria-labelledby="fomo-heading">
       <div class="fomo-inner">
         <p class="section-eyebrow fade-up">The reality</p>
@@ -282,10 +277,10 @@
             </div>
             <div class="fomo-card-body">
               <div class="fomo-line"><span class="fomo-time">11:47 PM</span> Closed laptop</div>
-              <div class="fomo-line"><span class="fomo-time">11:48 PM</span> &hellip;</div>
-              <div class="fomo-line"><span class="fomo-time">7:00 AM</span> &hellip;</div>
+              <div class="fomo-line fomo-dim"><span class="fomo-time">11:48 PM</span> &hellip;</div>
+              <div class="fomo-line fomo-dim"><span class="fomo-time">7:00 AM</span> &hellip;</div>
               <div class="fomo-line"><span class="fomo-time">7:01 AM</span> Opened laptop</div>
-              <div class="fomo-line fomo-dim"><span class="fomo-time"></span> 0 commits. 0 PRs. Same backlog.</div>
+              <div class="fomo-line fomo-nothing"><span class="fomo-time"></span> 0 commits. 0 PRs. Same backlog.</div>
             </div>
           </div>
 
@@ -373,7 +368,7 @@
             <div class="git-time">6:01 AM</div>
             <div class="git-msg">
               <span class="git-hash">iteration 52</span>
-              still running...
+              still running&hellip;
               <span class="git-meta"><span class="status-dot"></span> 23 commits &middot; 3 PRs ready</span>
             </div>
           </div>
@@ -597,33 +592,18 @@ pick the next task from TODO.md and implement it.</code></pre>
 
     document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
-    // Terminal typing effect
-    const terminalBody = document.querySelector('.terminal-body code');
-    if (terminalBody) {
-      const fullHTML = terminalBody.innerHTML;
-      const lines = fullHTML.split('\n');
-      terminalBody.innerHTML = '';
-      terminalBody.style.visibility = 'visible';
-
-      let lineIndex = 0;
-      const typeLine = () => {
-        if (lineIndex < lines.length) {
-          terminalBody.innerHTML += (lineIndex > 0 ? '\n' : '') + lines[lineIndex];
-          lineIndex++;
-          const delay = lineIndex <= 1 ? 400 : (lineIndex === lines.length ? 0 : 65);
-          setTimeout(typeLine, delay);
-        }
-      };
-
-      const termObs = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            setTimeout(typeLine, 300);
-            termObs.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.3 });
-      termObs.observe(terminalBody.closest('.terminal-window'));
+    // Activity feed typing animation
+    const activityItems = document.querySelectorAll('.activity-item');
+    if (activityItems.length) {
+      activityItems.forEach((item, i) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(8px)';
+        setTimeout(() => {
+          item.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+          item.style.opacity = '1';
+          item.style.transform = 'translateX(0)';
+        }, 800 + i * 300);
+      });
     }
 
     // Git timeline staggered reveal
