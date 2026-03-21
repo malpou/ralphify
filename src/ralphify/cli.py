@@ -187,10 +187,9 @@ def _build_run_config(
     for cmd_def in fm.get("commands", []):
         if not isinstance(cmd_def, dict) or "name" not in cmd_def or "run" not in cmd_def:
             _exit_error("Each command must have 'name' and 'run' fields.")
-        if not cmd_def["name"] or not isinstance(cmd_def["name"], str):
-            _exit_error("Command 'name' must be a non-empty string.")
-        if not cmd_def["run"] or not isinstance(cmd_def["run"], str):
-            _exit_error("Command 'run' must be a non-empty string.")
+        for field in ("name", "run"):
+            if not cmd_def[field] or not isinstance(cmd_def[field], str):
+                _exit_error(f"Command '{field}' must be a non-empty string.")
         commands.append(Command(
             name=cmd_def["name"],
             run=cmd_def["run"],
