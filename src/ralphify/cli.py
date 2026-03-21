@@ -94,13 +94,13 @@ def new(
 
     try:
         agent = detect_agent()
-    except RuntimeError as e:
-        _exit_error(str(e))
+    except RuntimeError as exc:
+        _exit_error(str(exc))
 
     try:
         install_skill("new-ralph", agent.name)
-    except RuntimeError as e:
-        _exit_error(str(e))
+    except RuntimeError as exc:
+        _exit_error(str(exc))
 
     cmd = build_agent_command(agent.name, "new-ralph", name)
     os.execvp(cmd[0], cmd)
@@ -196,7 +196,7 @@ def _build_run_config(
     if not ralph_file.exists():
         _exit_error(f"RALPH.md not found at '{ralph_file}'.")
 
-    ralph_text = ralph_file.read_text()
+    ralph_text = ralph_file.read_text(encoding="utf-8")
     fm, _ = parse_frontmatter(ralph_text)
 
     # Validate required agent field

@@ -111,7 +111,7 @@ def _assemble_prompt(
     Reads the RALPH.md body, resolves user args and command output
     placeholders.
     """
-    raw = config.ralph_file.read_text()
+    raw = config.ralph_file.read_text(encoding="utf-8")
     _, prompt = parse_frontmatter(raw)
     prompt = resolve_args(prompt, config.args)
     prompt = resolve_commands(prompt, command_outputs)

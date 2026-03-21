@@ -35,8 +35,9 @@ _OUTPUT_FORMAT_FLAG = "--output-format"
 _STREAM_FORMAT = "stream-json"
 _VERBOSE_FLAG = "--verbose"
 
-# JSON stream event type and field for result extraction.
-_RESULT_TYPE = "result"
+# JSON stream event types and fields for result extraction.
+_RESULT_EVENT_TYPE = "result"
+_RESULT_FIELD = "result"
 
 
 @dataclass
@@ -78,7 +79,7 @@ def _write_log(
     """Write iteration output to a timestamped log file and return the path."""
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     log_file = log_path_dir / f"{iteration:03d}_{timestamp}.log"
-    log_file.write_text(collect_output(stdout, stderr))
+    log_file.write_text(collect_output(stdout, stderr), encoding="utf-8")
     return log_file
 
 
@@ -128,8 +129,8 @@ def _read_agent_stream(
             parsed = json.loads(stripped)
         except json.JSONDecodeError:
             continue
-        if parsed.get("type") == _RESULT_TYPE and _RESULT_TYPE in parsed:
-            result_text = parsed[_RESULT_TYPE]
+        if parsed.get("type") == _RESULT_EVENT_TYPE and _RESULT_FIELD in parsed:
+            result_text = parsed[_RESULT_FIELD]
         if on_activity is not None:
             on_activity(parsed)
 
@@ -222,10 +223,10 @@ def _run_agent_blocking(
             timeout=timeout,
             capture_output=bool(log_path_dir),
         )
-    except subprocess.TimeoutExpired as e:
+    except subprocess.TimeoutExpired as exc:
         log_file = None
         if log_path_dir:
-            log_file = _write_log(log_path_dir, iteration, e.stdout, e.stderr)
+            log_file = _write_log(log_path_dir, iteration, exc.stdout, exc.stderr)
         return AgentResult(
             returncode=None,
             elapsed=time.monotonic() - start,
