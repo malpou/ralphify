@@ -75,6 +75,18 @@ class TestFormatDuration:
         assert format_duration(90.5) == "1m 30s"
         assert format_duration(3599) == "59m 59s"
 
+    def test_zero(self):
+        assert format_duration(0.0) == "0.0s"
+
+    def test_boundary_at_60(self):
+        assert format_duration(59.94) == "59.9s"
+        assert format_duration(59.95) == "1m 0s"  # rounds to 60.0, so use minute format
+        assert format_duration(60) == "1m 0s"
+        assert format_duration(60.4) == "1m 0s"
+
     def test_hours(self):
         assert format_duration(3600) == "1h 0m"
         assert format_duration(5400) == "1h 30m"
+
+    def test_multi_day(self):
+        assert format_duration(90000) == "25h 0m"

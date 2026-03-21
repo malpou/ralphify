@@ -24,6 +24,8 @@ _ICON_TIMEOUT = "\u23f1"  # ⏱
 _ICON_ARROW = "\u2192"    # →
 _ICON_DASH = "\u2014"     # —
 
+_LIVE_REFRESH_RATE = 4  # Hz — how often the spinner redraws
+
 
 class _IterationSpinner:
     """Rich renderable that shows a spinner with elapsed time."""
@@ -76,7 +78,7 @@ class ConsoleEmitter:
             spinner,
             console=self._console,
             transient=True,
-            refresh_per_second=4,
+            refresh_per_second=_LIVE_REFRESH_RATE,
         )
         self._live.start()
 

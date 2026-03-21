@@ -43,12 +43,14 @@ def format_duration(seconds: float) -> str:
     and ``"1h 15m"`` for longer durations.  Used in CLI output and
     event data for iteration timing.
     """
-    if seconds < 60:
+    if round(seconds, 1) < 60:
         return f"{seconds:.1f}s"
-    minutes = int(seconds // 60)
-    secs = seconds % 60
+    # Use rounded total to avoid edge cases like 59.95 → "0m 60s"
+    total = round(seconds)
+    minutes = total // 60
+    secs = total % 60
     if minutes < 60:
-        return f"{minutes}m {secs:.0f}s"
+        return f"{minutes}m {secs}s"
     hours = minutes // 60
     mins = minutes % 60
     return f"{hours}h {mins}m"

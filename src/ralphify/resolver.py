@@ -10,7 +10,6 @@ prompt.  This forces explicit placement and avoids accidental data dumps.
 
 import re
 
-_ARGS_CLEANUP_RE = re.compile(r"\{\{\s*args\.[a-zA-Z0-9_-]+\s*\}\}")
 _PATTERN_CACHE: dict[str, re.Pattern[str]] = {}
 
 
@@ -66,5 +65,5 @@ def resolve_args(prompt: str, user_args: dict[str, str]) -> str:
     placeholders so they don't leak into the assembled prompt.
     """
     if not user_args:
-        return _ARGS_CLEANUP_RE.sub("", prompt)
+        return _get_pattern("args").sub("", prompt)
     return resolve_placeholders(prompt, user_args, "args")
