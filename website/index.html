@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ralphify — Stop stressing. Ralph is always running.</title>
-  <meta name="description" content="Ralphify puts your AI coding agent in an autonomous while-true loop. Write a prompt, point it at Claude Code or any CLI agent, walk away. Ralph keeps shipping.">
+  <meta name="description" content="Stop stressing over not having an agent running. Ralphify puts your AI coding agent in an autonomous while-true loop. Write a prompt, point it at any CLI agent, walk away. Ralph keeps shipping.">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Ralphify — Stop stressing. Ralph is always running.">
-  <meta property="og:description" content="Ralphify puts your AI coding agent in an autonomous while-true loop. Write a prompt, point it at Claude Code or any CLI agent, walk away. Ralph keeps shipping.">
+  <meta property="og:description" content="Stop stressing over not having an agent running. Ralphify puts your AI coding agent in an autonomous while-true loop. Write a prompt, Walk away. Ralph keeps shipping.">
   <meta property="og:url" content="https://computerlovetech.github.io/ralphify/">
   <meta property="og:site_name" content="Ralphify">
   <meta property="og:image" content="https://computerlovetech.github.io/ralphify/docs/assets/cli-banner.png">
@@ -21,7 +21,7 @@
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Ralphify — Stop stressing. Ralph is always running.">
-  <meta name="twitter:description" content="Ralphify puts your AI coding agent in an autonomous while-true loop. Write a prompt, point it at Claude Code or any CLI agent, walk away. Ralph keeps shipping.">
+  <meta name="twitter:description" content="Stop stressing over not having an agent running. Ralphify puts your AI coding agent in an autonomous while-true loop. Walk away. Ralph keeps shipping.">
   <meta name="twitter:image" content="https://computerlovetech.github.io/ralphify/docs/assets/cli-banner.png">
   <meta name="twitter:image:alt" content="Ralphify CLI showing an autonomous AI coding loop with three iterations — the agent detects a test failure and self-corrects">
 
@@ -37,7 +37,7 @@
     "@type": "WebSite",
     "name": "Ralphify",
     "url": "https://computerlovetech.github.io/ralphify/",
-    "description": "Minimal CLI harness for autonomous AI coding loops. Put your AI coding agent in a while-true loop and let it ship.",
+    "description": "Stop stressing over not having an agent running. Ralphify puts your AI coding agent in an autonomous while-true loop and lets it ship.",
     "publisher": {
       "@type": "Organization",
       "name": "Computerlove Technologies",
@@ -50,7 +50,7 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Ralphify",
-    "description": "Ralphify puts your AI coding agent in an autonomous while-true loop. Write a prompt, point it at any CLI agent, walk away. Ralph keeps shipping.",
+    "description": "Stop stressing over not having an agent running. Ralphify puts your AI coding agent in an autonomous while-true loop. Write a prompt, point it at any CLI agent, walk away. Ralph keeps shipping.",
     "url": "https://computerlovetech.github.io/ralphify/",
     "applicationCategory": "DeveloperApplication",
     "operatingSystem": "Linux, macOS, Windows",
@@ -191,72 +191,41 @@
         <div class="hero-grid-overlay"></div>
       </div>
 
-      <div class="hero-split">
-        <div class="hero-text">
-          <div class="hero-badge">
-            <span class="status-dot"></span>
-            Open-source &middot; pip install ralphify
-          </div>
-
-          <p class="hero-eyebrow">&ldquo;Do you have an agent running?&rdquo;</p>
-
-          <h1 class="hero-headline">
-            Stop stressing.<br>
-            <span class="hero-gradient-text">Ralph is always running</span>
-            <span class="runner-inline" aria-hidden="true">&#x1F3C3;</span>
-          </h1>
-
-          <p class="hero-sub">
-            Put your AI coding agent in a <code>while True</code> loop.<br>
-            Write a prompt. Point it at an agent. Walk away.
-          </p>
-
-          <div class="cta">
-            <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
-            <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
-          </div>
-
-          <div class="agent-strip">
-            <span class="agent-strip-label">Works with</span>
-            <div class="agent-strip-list">
-              <a href="docs/agents/" class="agent-chip">Claude Code</a>
-              <a href="docs/agents/" class="agent-chip">Aider</a>
-              <a href="docs/agents/" class="agent-chip">Codex CLI</a>
-              <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
-            </div>
-          </div>
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="status-dot"></span>
+          Open-source &middot; pip install ralphify
         </div>
 
-        <div class="hero-terminal">
-          <figure class="terminal">
-            <div class="terminal-window" role="img" aria-label="Terminal showing ralph run with three iterations — iteration 2 fails a test, iteration 3 automatically fixes it">
-              <div class="terminal-header">
-                <span class="terminal-dot red"></span>
-                <span class="terminal-dot yellow"></span>
-                <span class="terminal-dot green"></span>
-                <span class="terminal-title">ralph</span>
-              </div>
-              <pre><code><span class="prompt">$</span> ralph run
-<span class="dim">&#9484;&#9472; Iteration 1 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="success">&#x2713;</span> Iteration 1 completed <span class="dim">(52.3s)</span>
-  Checks: 2 passed
-    <span class="success">&#x2713;</span> lint
-    <span class="success">&#x2713;</span> tests
+        <h1 class="hero-headline">
+          Stop stressing over<br>
+          not having an<br>
+          agent running.
+        </h1>
 
-<span class="dim">&#9484;&#9472; Iteration 2 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="fail">&#x2717;</span> Iteration 2 failed <span class="dim">(23.1s)</span>
-  Checks: 1 passed, 1 failed
-    <span class="success">&#x2713;</span> lint
-    <span class="fail">&#x2717;</span> tests <span class="dim">(exit 1)</span>
+        <p class="hero-punchline">
+          <span class="hero-gradient-text">Ralph is always running</span>
+          <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
+        </p>
 
-<span class="dim">&#9484;&#9472; Iteration 3 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
-<span class="success">&#x2713;</span> Iteration 3 completed <span class="dim">(41.7s)</span>
-  Checks: 2 passed
-    <span class="success">&#x2713;</span> lint
-    <span class="success">&#x2713;</span> tests</code></pre>
-            </div>
-            <figcaption class="terminal-caption">Iteration 2 broke a test. Iteration 3 fixed it. You didn't lift a finger.</figcaption>
-          </figure>
+        <p class="hero-sub">
+          Put your AI coding agent in a <code>while True</code> loop.<br>
+          Write a prompt. Point it at an agent. Walk away.
+        </p>
+
+        <div class="cta">
+          <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
+          <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
+        </div>
+
+        <div class="agent-strip">
+          <span class="agent-strip-label">Works with</span>
+          <div class="agent-strip-list">
+            <a href="docs/agents/" class="agent-chip">Claude Code</a>
+            <a href="docs/agents/" class="agent-chip">Aider</a>
+            <a href="docs/agents/" class="agent-chip">Codex CLI</a>
+            <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
+          </div>
         </div>
       </div>
     </section>
@@ -281,27 +250,65 @@
       </div>
     </div>
 
-    <!-- The problem -->
-    <section class="problem" aria-labelledby="problem-heading">
-      <div class="problem-inner">
-        <h2 id="problem-heading" class="section-heading">You know the drill.</h2>
-        <div class="problem-grid">
-          <div class="problem-card">
-            <div class="problem-number">1</div>
-            <h3>The agent finishes.</h3>
-            <p>It did the thing. Now it's sitting there, waiting for you to type another prompt. So you do. And again. And again. You've become a prompt-typing machine.</p>
+    <!-- The scene -->
+    <section class="scene" aria-labelledby="scene-heading">
+      <div class="scene-inner">
+        <h2 id="scene-heading" class="section-heading">You know this feeling.</h2>
+        <div class="scene-grid">
+          <div class="scene-card">
+            <div class="scene-icon">&#x1F4AC;</div>
+            <h3>&ldquo;Do you have an agent running?&rdquo;</h3>
+            <p>The question that haunts every engineering standup. Your colleague has three agents shipping code around the clock. You have&hellip; a terminal with a blinking cursor.</p>
           </div>
-          <div class="problem-card">
-            <div class="problem-number">2</div>
+          <div class="scene-card">
+            <div class="scene-icon">&#x1F4BB;</div>
             <h3>You close the laptop.</h3>
-            <p>The agent stops. Nothing happens until you're back. Meanwhile, someone else's agent is committing code at 3am.</p>
+            <p>The agent stops. Nothing ships until you're back. Meanwhile, someone else's agent just committed 14 files at 3am.</p>
           </div>
-          <div class="problem-card problem-card-answer">
-            <div class="problem-number">&#x221e;</div>
+          <div class="scene-card scene-card-accent">
+            <div class="scene-icon">&#x221e;</div>
             <h3>What if it just kept going?</h3>
             <p>Read the prompt. Do the work. Check itself. Loop &mdash; with <em>fresh context every time</em>. No babysitting. That's Ralph.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- Terminal demo -->
+    <section class="demo" aria-labelledby="demo-heading">
+      <div class="demo-inner">
+        <h2 id="demo-heading" class="section-heading">This is what Ralph looks like</h2>
+        <p class="section-subtitle">You walk away. Ralph keeps going. When something breaks, it fixes itself next iteration.</p>
+
+        <figure class="terminal">
+          <div class="terminal-window" role="img" aria-label="Terminal showing ralph run with three iterations — iteration 2 fails a test, iteration 3 automatically fixes it">
+            <div class="terminal-header">
+              <span class="terminal-dot red"></span>
+              <span class="terminal-dot yellow"></span>
+              <span class="terminal-dot green"></span>
+              <span class="terminal-title">ralph</span>
+            </div>
+            <pre><code><span class="prompt">$</span> ralph run
+<span class="dim">&#9484;&#9472; Iteration 1 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="success">&#x2713;</span> Iteration 1 completed <span class="dim">(52.3s)</span>
+  Checks: 2 passed
+    <span class="success">&#x2713;</span> lint
+    <span class="success">&#x2713;</span> tests
+
+<span class="dim">&#9484;&#9472; Iteration 2 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="fail">&#x2717;</span> Iteration 2 failed <span class="dim">(23.1s)</span>
+  Checks: 1 passed, 1 failed
+    <span class="success">&#x2713;</span> lint
+    <span class="fail">&#x2717;</span> tests <span class="dim">(exit 1)</span>
+
+<span class="dim">&#9484;&#9472; Iteration 3 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="success">&#x2713;</span> Iteration 3 completed <span class="dim">(41.7s)</span>
+  Checks: 2 passed
+    <span class="success">&#x2713;</span> lint
+    <span class="success">&#x2713;</span> tests</code></pre>
+          </div>
+          <figcaption class="terminal-caption">Iteration 2 broke a test. Iteration 3 fixed it. You didn't lift a finger.</figcaption>
+        </figure>
       </div>
     </section>
 
@@ -460,7 +467,10 @@ pick the next task from TODO.md and implement it.</code></pre>
           <span class="status-dot status-dot-lg"></span>
           <span class="cta-bottom-status-text">Ralph is running</span>
         </div>
-        <h2 id="cta-bottom-heading">Let Ralph run<br>so you don't have to.</h2>
+        <h2 id="cta-bottom-heading">
+          Stop stressing.<br>
+          <span class="hero-gradient-text">Let Ralph run so you don't have to.</span>
+        </h2>
         <div class="install-command cta-command">
           <code>uv tool install ralphify && ralph new && ralph run</code>
         </div>

@@ -188,6 +188,7 @@ nav {
   min-height: 100vh;
   display: flex;
   align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
@@ -205,29 +206,30 @@ nav {
 }
 
 .hero-orb-1 {
-  width: 800px;
-  height: 800px;
-  top: -20%;
-  left: -10%;
-  background: radial-gradient(circle, rgba(139, 108, 240, 0.25) 0%, transparent 70%);
+  width: 900px;
+  height: 900px;
+  top: -30%;
+  left: -15%;
+  background: radial-gradient(circle, rgba(139, 108, 240, 0.3) 0%, transparent 70%);
   animation: drift-1 14s ease-in-out infinite alternate;
 }
 
 .hero-orb-2 {
-  width: 600px;
-  height: 600px;
-  bottom: -15%;
-  right: -5%;
-  background: radial-gradient(circle, rgba(232, 123, 74, 0.18) 0%, transparent 70%);
+  width: 700px;
+  height: 700px;
+  bottom: -20%;
+  right: -10%;
+  background: radial-gradient(circle, rgba(232, 123, 74, 0.2) 0%, transparent 70%);
   animation: drift-2 18s ease-in-out infinite alternate;
 }
 
 .hero-orb-3 {
   width: 500px;
   height: 500px;
-  top: 40%;
-  left: 45%;
-  background: radial-gradient(circle, rgba(124, 77, 255, 0.12) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(124, 77, 255, 0.1) 0%, transparent 70%);
   animation: drift-3 20s ease-in-out infinite alternate;
 }
 
@@ -238,8 +240,8 @@ nav {
     linear-gradient(rgba(139, 108, 240, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(139, 108, 240, 0.03) 1px, transparent 1px);
   background-size: 64px 64px;
-  mask-image: radial-gradient(ellipse 80% 70% at 30% 50%, black 0%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 30% 50%, black 0%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 0%, transparent 100%);
 }
 
 @keyframes drift-1 {
@@ -253,26 +255,21 @@ nav {
 }
 
 @keyframes drift-3 {
-  0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
-  100% { transform: translate(-20px, -30px) scale(1.2); opacity: 1; }
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  100% { transform: translate(calc(-50% - 20px), calc(-50% - 30px)) scale(1.2); opacity: 1; }
 }
 
-/* Split layout */
-.hero-split {
+/* Centered hero layout */
+.hero-content {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-  max-width: var(--max-width);
+  max-width: 900px;
   margin: 0 auto;
-  padding: 8rem 3rem 6rem;
-  width: 100%;
-}
-
-.hero-text {
-  max-width: 560px;
+  padding: 10rem 2rem 8rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-badge {
@@ -286,7 +283,7 @@ nav {
   border-radius: 100px;
   border: 1px solid rgba(139, 108, 240, 0.15);
   background: rgba(139, 108, 240, 0.06);
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   letter-spacing: 0.02em;
 }
 
@@ -310,16 +307,8 @@ nav {
   50% { opacity: 0.6; box-shadow: 0 0 16px rgba(52, 211, 153, 0.3); }
 }
 
-.hero-eyebrow {
-  font-size: clamp(1rem, 2vw, 1.35rem);
-  color: var(--text-muted);
-  font-style: italic;
-  margin-bottom: 1.25rem;
-  letter-spacing: -0.01em;
-}
-
 .hero-headline {
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-size: clamp(2.75rem, 6.5vw, 5rem);
   font-weight: 800;
   line-height: 1.05;
   color: #fff;
@@ -327,19 +316,29 @@ nav {
   letter-spacing: -0.04em;
 }
 
+.hero-punchline {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+}
+
 .hero-gradient-text {
-  display: block;
+  display: inline;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
   background: linear-gradient(135deg, #8B6CF0 0%, #E87B4A 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.runner-inline {
-  -webkit-text-fill-color: initial;
+.runner-emoji {
+  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
   display: inline-block;
-  font-size: 0.6em;
-  margin-left: 0.1em;
   animation: bounce-run 1s ease-in-out infinite;
   vertical-align: middle;
 }
@@ -350,10 +349,11 @@ nav {
 }
 
 .hero-sub {
-  font-size: 1.15rem;
+  font-size: clamp(1rem, 2vw, 1.25rem);
   color: var(--text-muted);
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   line-height: 1.7;
+  max-width: 540px;
 }
 
 .hero-sub code {
@@ -372,6 +372,7 @@ nav {
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .agent-strip-label {
@@ -387,6 +388,7 @@ nav {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .agent-chip {
@@ -410,19 +412,13 @@ nav {
   text-decoration: none;
 }
 
-/* Hero terminal */
-.hero-terminal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* ── Buttons ─────────────────────────────────────────────── */
 
 .cta {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .btn {
@@ -599,74 +595,104 @@ nav {
   100% { transform: translateX(-50%); }
 }
 
-/* ── Problem section ─────────────────────────────────────── */
+/* ── Scene section (the problem) ─────────────────────────── */
 
-.problem {
-  padding: 6rem 2rem;
+.scene {
+  padding: 7rem 2rem;
 }
 
-.problem-inner {
+.scene-inner {
   max-width: var(--max-width);
   margin: 0 auto;
 }
 
-.problem-grid {
+.scene-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-top: 3.5rem;
 }
 
-.problem-card {
+.scene-card {
   background: var(--bg-surface);
   border: 1px solid rgba(139, 108, 240, 0.08);
   border-radius: 12px;
-  padding: 2rem;
+  padding: 2.25rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.problem-card:hover {
+.scene-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.problem-card-answer {
-  background: linear-gradient(135deg, rgba(139, 108, 240, 0.08), rgba(232, 123, 74, 0.06));
-  border-color: rgba(139, 108, 240, 0.2);
+.scene-card-accent {
+  background: linear-gradient(135deg, rgba(139, 108, 240, 0.1), rgba(232, 123, 74, 0.06));
+  border-color: rgba(139, 108, 240, 0.25);
 }
 
-.problem-number {
-  font-family: var(--mono);
+.scene-icon {
   font-size: 2rem;
-  font-weight: 800;
+  margin-bottom: 1.25rem;
+  line-height: 1;
+}
+
+.scene-card-accent .scene-icon {
   background: linear-gradient(135deg, var(--purple), var(--orange-light));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 1rem;
-  line-height: 1;
+  font-weight: 800;
+  font-family: var(--mono);
 }
 
-.problem-card h3 {
-  font-size: 1.2rem;
+.scene-card h3 {
+  font-size: 1.15rem;
   font-weight: 700;
   color: #fff;
   margin-bottom: 0.75rem;
+  line-height: 1.3;
 }
 
-.problem-card p {
+.scene-card p {
   font-size: 0.95rem;
   color: var(--text-muted);
   line-height: 1.6;
 }
 
-/* ── How it works ────────────────────────────────────────── */
+/* ── Terminal demo section ───────────────────────────────── */
 
-.how-it-works {
-  padding: 6rem 2rem;
+.demo {
+  padding: 7rem 2rem;
   background: var(--bg-surface);
   border-top: 1px solid rgba(139, 108, 240, 0.06);
   border-bottom: 1px solid rgba(139, 108, 240, 0.06);
+}
+
+.demo-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.demo-inner .section-heading {
+  margin-bottom: 0;
+}
+
+.demo-inner .section-subtitle {
+  margin-bottom: 3rem;
+}
+
+.demo .terminal-window {
+  box-shadow:
+    0 0 0 1px rgba(139, 108, 240, 0.1),
+    0 16px 64px rgba(0, 0, 0, 0.5),
+    0 0 120px rgba(139, 108, 240, 0.06);
+}
+
+/* ── How it works ────────────────────────────────────────── */
+
+.how-it-works {
+  padding: 7rem 2rem;
 }
 
 .how-inner {
@@ -742,7 +768,10 @@ nav {
 /* ── Ralph file section ──────────────────────────────────── */
 
 .ralph-file {
-  padding: 6rem 2rem;
+  padding: 7rem 2rem;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.06);
+  border-bottom: 1px solid rgba(139, 108, 240, 0.06);
 }
 
 .ralph-file-inner {
@@ -796,10 +825,7 @@ nav {
 /* ── Why section ─────────────────────────────────────────── */
 
 .why {
-  padding: 6rem 2rem;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(139, 108, 240, 0.06);
-  border-bottom: 1px solid rgba(139, 108, 240, 0.06);
+  padding: 7rem 2rem;
 }
 
 .why-grid {
@@ -811,7 +837,7 @@ nav {
 }
 
 .why-card {
-  background: rgba(8, 8, 15, 0.8);
+  background: var(--bg-surface);
   border: 1px solid rgba(139, 108, 240, 0.12);
   border-radius: 12px;
   padding: 2rem;
@@ -848,8 +874,11 @@ nav {
 /* ── Install ─────────────────────────────────────────────── */
 
 .install {
-  padding: 6rem 2rem;
+  padding: 7rem 2rem;
   text-align: center;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.06);
+  border-bottom: 1px solid rgba(139, 108, 240, 0.06);
 }
 
 .install-steps {
@@ -877,7 +906,7 @@ nav {
 }
 
 .install-command {
-  background: var(--bg-surface);
+  background: rgba(8, 8, 15, 0.8);
   border: 1px solid rgba(139, 108, 240, 0.12);
   border-radius: var(--radius);
   padding: 0.85rem 1.5rem;
@@ -897,9 +926,7 @@ nav {
 /* ── FAQ ──────────────────────────────────────────────────── */
 
 .faq {
-  padding: 6rem 2rem;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(139, 108, 240, 0.06);
+  padding: 7rem 2rem;
 }
 
 .faq-list {
@@ -932,17 +959,19 @@ nav {
 /* ── Bottom CTA ──────────────────────────────────────────── */
 
 .cta-bottom {
-  padding: 6rem 2rem;
+  padding: 7rem 2rem;
   text-align: center;
   position: relative;
   overflow: hidden;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.06);
 }
 
 .cta-bottom::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 60% 50% at 50% 80%, rgba(139, 108, 240, 0.08) 0%, transparent 100%);
+  background: radial-gradient(ellipse 60% 50% at 50% 80%, rgba(139, 108, 240, 0.1) 0%, transparent 100%);
   pointer-events: none;
 }
 
@@ -974,13 +1003,14 @@ nav {
   margin-bottom: 2rem;
 }
 
+.cta-bottom .hero-gradient-text {
+  font-size: inherit;
+  display: block;
+}
+
 .cta-command {
   display: inline-block;
   margin-bottom: 2rem;
-}
-
-.cta .btn + .btn {
-  /* spacing handled by gap */
 }
 
 .cta-bottom .cta {
@@ -992,7 +1022,7 @@ nav {
 footer {
   padding: 3rem 2rem 2rem;
   border-top: 1px solid rgba(139, 108, 240, 0.06);
-  background: var(--bg-surface);
+  background: var(--bg);
 }
 
 .footer-nav {
@@ -1052,26 +1082,11 @@ footer {
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 900px) {
-  .hero-split {
-    grid-template-columns: 1fr;
-    padding: 6rem 1.5rem 4rem;
-    gap: 3rem;
+  .hero-content {
+    padding: 7rem 1.5rem 5rem;
   }
 
-  .hero-text {
-    max-width: 100%;
-    text-align: center;
-  }
-
-  .hero-text .cta {
-    justify-content: center;
-  }
-
-  .hero-text .agent-strip {
-    justify-content: center;
-  }
-
-  .problem-grid {
+  .scene-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1118,11 +1133,11 @@ footer {
 
 @media (max-width: 600px) {
   .hero-headline {
-    font-size: 2rem;
+    font-size: 2.25rem;
   }
 
-  .hero-eyebrow {
-    font-size: 0.95rem;
+  .hero-gradient-text {
+    font-size: 1.75rem;
   }
 
   .nav-links {
@@ -1141,7 +1156,7 @@ footer {
     font-size: 0.95rem;
   }
 
-  .hero-split {
+  .hero-content {
     padding: 5rem 1.25rem 3rem;
   }
 
@@ -1159,7 +1174,8 @@ footer {
     font-size: 1.75rem;
   }
 
-  .problem,
+  .scene,
+  .demo,
   .how-it-works,
   .ralph-file,
   .why,
