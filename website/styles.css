@@ -72,6 +72,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  position: relative;
 }
 
 ::selection {
@@ -99,6 +100,19 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+/* ── Dot grid background ──────────────────────────────── */
+
+.dot-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(139, 108, 240, 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(0,0,0,0.5) 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(0,0,0,0.5) 0%, transparent 100%);
 }
 
 /* ── Section shared ────────────────────────────────────── */
@@ -193,7 +207,7 @@ nav {
   text-decoration: none;
 }
 
-/* ── Hero — Cinematic, dramatic ───────────────────────── */
+/* ── Hero ───────────────────────────────────────────────── */
 
 .hero {
   position: relative;
@@ -203,48 +217,41 @@ nav {
   justify-content: center;
   overflow: hidden;
   padding-bottom: 0;
+  z-index: 1;
 }
 
-.hero-bg {
+.hero-glow {
   position: absolute;
   inset: 0;
   z-index: 0;
   overflow: hidden;
+  pointer-events: none;
 }
 
-.hero-orb {
+.hero-glow::before {
+  content: "";
   position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-}
-
-.hero-orb-1 {
-  width: 900px;
-  height: 900px;
-  top: -30%;
-  left: -10%;
-  background: radial-gradient(circle, rgba(139, 108, 240, 0.35) 0%, rgba(124, 77, 255, 0.1) 40%, transparent 70%);
+  width: 1000px;
+  height: 1000px;
+  top: -35%;
+  left: -15%;
+  background: radial-gradient(circle, rgba(139, 108, 240, 0.25) 0%, rgba(124, 77, 255, 0.08) 35%, transparent 65%);
   animation: drift-1 16s ease-in-out infinite alternate;
+  border-radius: 50%;
+  filter: blur(60px);
 }
 
-.hero-orb-2 {
+.hero-glow::after {
+  content: "";
+  position: absolute;
   width: 700px;
   height: 700px;
-  bottom: -20%;
-  right: -5%;
-  background: radial-gradient(circle, rgba(232, 123, 74, 0.2) 0%, rgba(224, 96, 48, 0.06) 50%, transparent 70%);
+  bottom: -25%;
+  right: -10%;
+  background: radial-gradient(circle, rgba(232, 123, 74, 0.15) 0%, rgba(224, 96, 48, 0.04) 45%, transparent 65%);
   animation: drift-2 20s ease-in-out infinite alternate;
-}
-
-.hero-grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(139, 108, 240, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 108, 240, 0.03) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 0%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 0%, transparent 100%);
+  border-radius: 50%;
+  filter: blur(60px);
 }
 
 @keyframes drift-1 {
@@ -293,11 +300,18 @@ nav {
   display: inline-block;
   animation: pulse-glow 2s ease-in-out infinite;
   box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+  flex-shrink: 0;
 }
 
 .status-dot-lg {
   width: 12px;
   height: 12px;
+}
+
+.status-dot-dead {
+  background: #F87171;
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.3);
+  animation: none;
 }
 
 @keyframes pulse-glow {
@@ -410,6 +424,8 @@ nav {
   border-bottom: 1px solid rgba(139, 108, 240, 0.06);
   background: rgba(139, 108, 240, 0.02);
   padding: 1.25rem 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 .agent-strip-inner {
@@ -464,6 +480,7 @@ nav {
 .demo {
   position: relative;
   padding: 4rem 2rem 5rem;
+  z-index: 1;
 }
 
 .demo-inner {
@@ -622,10 +639,123 @@ nav {
 .yaml-key { color: var(--purple-light); }
 .placeholder { color: var(--orange-light); }
 
+/* Terminal body for typing animation */
+.terminal-body {
+  min-height: 260px;
+}
+
+/* ── Morning After section ──────────────────────────────── */
+
+.morning {
+  padding: 7rem 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.morning-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.morning .section-heading {
+  margin-bottom: 0;
+}
+
+.morning-grid {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 3.5rem;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.morning-card {
+  flex: 1;
+  padding: 3rem 2.5rem;
+  border-radius: 16px;
+  text-align: center;
+  position: relative;
+}
+
+.morning-card-them {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.06) 0%, rgba(139, 108, 240, 0.06) 100%);
+  border: 1px solid rgba(52, 211, 153, 0.15);
+}
+
+.morning-card-you {
+  background: rgba(248, 113, 113, 0.03);
+  border: 1px solid rgba(248, 113, 113, 0.1);
+}
+
+.morning-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.morning-stat {
+  font-size: clamp(3.5rem, 8vw, 5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.morning-card-them .morning-stat {
+  background: linear-gradient(135deg, #34D399, var(--purple-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.morning-card-you .morning-stat {
+  color: #F87171;
+}
+
+.morning-stat-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.morning-detail {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.morning-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 0 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
 /* ── FOMO section ────────────────────────────────────────── */
 
 .fomo {
   padding: 7rem 2rem;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.04);
+  border-bottom: 1px solid rgba(139, 108, 240, 0.04);
+  position: relative;
+  z-index: 1;
 }
 
 .fomo-inner {
@@ -648,47 +778,73 @@ nav {
   margin-bottom: 0;
 }
 
-.fomo-grid {
+/* FOMO content: slack + quotes side by side */
+.fomo-content {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1.4fr 1fr;
   gap: 1.5rem;
   margin-top: 3.5rem;
 }
 
-.fomo-card {
-  background: var(--bg-surface);
-  border: 1px solid rgba(139, 108, 240, 0.06);
-  border-radius: 12px;
-  padding: 2.25rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.fomo-quotes {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.fomo-card:hover {
+.fomo-quote-card {
+  background: var(--bg);
+  border: 1px solid rgba(139, 108, 240, 0.08);
+  border-radius: 12px;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex: 1;
+}
+
+.fomo-quote-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+.fomo-quote-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(248, 113, 113, 0.35), transparent);
+}
+
+.fomo-tension-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1;
+}
+
 .fomo-quote {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   line-height: 1.3;
   font-style: italic;
 }
 
 .fomo-context {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
   line-height: 1.6;
 }
 
 /* Slack-style message card */
 .fomo-card-slack {
-  grid-column: 1 / -1;
   padding: 0;
   background: #0A0A16;
-  border-color: rgba(139, 108, 240, 0.1);
+  border: 1px solid rgba(139, 108, 240, 0.1);
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -782,39 +938,19 @@ nav {
   border-radius: 0 6px 6px 0;
 }
 
-/* Tension cards */
-.fomo-card-tension {
-  position: relative;
-  overflow: hidden;
-}
-
-.fomo-card-tension::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(248, 113, 113, 0.35), transparent);
-}
-
-.fomo-tension-icon {
-  font-size: 1.75rem;
-  margin-bottom: 1rem;
-  line-height: 1;
-}
-
-.fomo-card-solution {
-  grid-column: 1 / -1;
-  background: linear-gradient(135deg, rgba(139, 108, 240, 0.1), rgba(232, 123, 74, 0.04));
-  border-color: rgba(139, 108, 240, 0.2);
+/* Solution card */
+.fomo-solution {
   text-align: center;
-  padding: 3rem 2.25rem;
+  margin-top: 3rem;
+  padding: 3.5rem 2.5rem;
+  background: linear-gradient(135deg, rgba(139, 108, 240, 0.08), rgba(232, 123, 74, 0.03));
+  border: 1px solid rgba(139, 108, 240, 0.15);
+  border-radius: 16px;
   position: relative;
   overflow: hidden;
 }
 
-.fomo-card-solution::before {
+.fomo-solution::before {
   content: "";
   position: absolute;
   top: 0;
@@ -822,20 +958,6 @@ nav {
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, var(--purple), var(--orange-light));
-}
-
-.fomo-card-solution .fomo-quote {
-  font-style: normal;
-  font-size: 1.5rem;
-  background: linear-gradient(135deg, #8B6CF0 0%, #E87B4A 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.fomo-card-solution .fomo-context {
-  max-width: 560px;
-  margin: 0 auto;
 }
 
 .fomo-solution-badge {
@@ -847,17 +969,38 @@ nav {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #34D399;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   font-weight: 600;
+}
+
+.fomo-solution-text {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem;
+}
+
+.fomo-solution-text .hero-gradient-text {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.fomo-solution-sub {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.6;
 }
 
 /* ── Ralph file section ──────────────────────────────────── */
 
 .ralph-file {
   padding: 7rem 2rem;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(139, 108, 240, 0.04);
-  border-bottom: 1px solid rgba(139, 108, 240, 0.04);
+  background: var(--bg);
+  position: relative;
+  z-index: 1;
 }
 
 .ralph-file-inner {
@@ -916,6 +1059,11 @@ nav {
 
 .how-it-works {
   padding: 7rem 2rem;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.04);
+  border-bottom: 1px solid rgba(139, 108, 240, 0.04);
+  position: relative;
+  z-index: 1;
 }
 
 .how-inner {
@@ -995,9 +1143,9 @@ nav {
 
 .why {
   padding: 7rem 2rem;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(139, 108, 240, 0.04);
-  border-bottom: 1px solid rgba(139, 108, 240, 0.04);
+  background: var(--bg);
+  position: relative;
+  z-index: 1;
 }
 
 .why-inner {
@@ -1014,7 +1162,7 @@ nav {
 }
 
 .why-card {
-  background: var(--bg);
+  background: var(--bg-surface);
   border: 1px solid rgba(139, 108, 240, 0.08);
   border-radius: 12px;
   padding: 2rem;
@@ -1053,6 +1201,11 @@ nav {
 .install {
   padding: 7rem 2rem;
   text-align: center;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.04);
+  border-bottom: 1px solid rgba(139, 108, 240, 0.04);
+  position: relative;
+  z-index: 1;
 }
 
 .install-steps {
@@ -1109,9 +1262,9 @@ nav {
 
 .faq {
   padding: 7rem 2rem;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(139, 108, 240, 0.04);
-  border-bottom: 1px solid rgba(139, 108, 240, 0.04);
+  background: var(--bg);
+  position: relative;
+  z-index: 1;
 }
 
 .faq-list {
@@ -1148,35 +1301,38 @@ nav {
   text-align: center;
   position: relative;
   overflow: hidden;
+  z-index: 1;
 }
 
-.cta-bottom-bg {
+.cta-bottom-glow {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: hidden;
 }
 
-.cta-orb {
+.cta-bottom-glow::before {
+  content: "";
   position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-}
-
-.cta-orb-1 {
   width: 600px;
   height: 600px;
   bottom: -30%;
   left: 20%;
-  background: radial-gradient(circle, rgba(139, 108, 240, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(139, 108, 240, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
 }
 
-.cta-orb-2 {
+.cta-bottom-glow::after {
+  content: "";
+  position: absolute;
   width: 400px;
   height: 400px;
   bottom: -20%;
   right: 25%;
-  background: radial-gradient(circle, rgba(232, 123, 74, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(232, 123, 74, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
 }
 
 .cta-bottom-inner {
@@ -1227,6 +1383,8 @@ footer {
   padding: 3rem 2rem 2rem;
   border-top: 1px solid rgba(139, 108, 240, 0.04);
   background: var(--bg);
+  position: relative;
+  z-index: 1;
 }
 
 .footer-nav {
@@ -1297,17 +1455,19 @@ footer {
 }
 
 /* Stagger children in grids */
-.fomo-grid.visible .fomo-card,
+.morning-grid.visible .morning-card {
+  animation: fade-in-up 0.5s ease forwards;
+  opacity: 0;
+}
+
+.morning-grid.visible .morning-card:nth-child(1) { animation-delay: 0s; }
+.morning-grid.visible .morning-card:nth-child(3) { animation-delay: 0.2s; }
+
 .why-grid.visible .why-card,
 .install-steps.visible .install-step {
   animation: fade-in-up 0.5s ease forwards;
   opacity: 0;
 }
-
-.fomo-grid.visible .fomo-card:nth-child(1) { animation-delay: 0s; }
-.fomo-grid.visible .fomo-card:nth-child(2) { animation-delay: 0.1s; }
-.fomo-grid.visible .fomo-card:nth-child(3) { animation-delay: 0.2s; }
-.fomo-grid.visible .fomo-card:nth-child(4) { animation-delay: 0.3s; }
 
 .why-grid.visible .why-card:nth-child(1) { animation-delay: 0s; }
 .why-grid.visible .why-card:nth-child(2) { animation-delay: 0.1s; }
@@ -1337,7 +1497,7 @@ footer {
     transition: none;
   }
 
-  .fomo-grid.visible .fomo-card,
+  .morning-grid.visible .morning-card,
   .why-grid.visible .why-card,
   .install-steps.visible .install-step {
     animation: none;
@@ -1360,16 +1520,23 @@ footer {
     font-size: 2.75rem;
   }
 
-  .fomo-grid {
+  .fomo-content {
     grid-template-columns: 1fr;
   }
 
-  .fomo-card-slack {
-    grid-column: 1;
+  .morning-grid {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
   }
 
-  .fomo-card-solution {
-    grid-column: 1;
+  .morning-card {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .morning-vs {
+    padding: 1rem 0;
   }
 
   .loop-steps {
@@ -1473,6 +1640,7 @@ footer {
     transform: none;
   }
 
+  .morning,
   .fomo,
   .how-it-works,
   .ralph-file,
@@ -1484,10 +1652,10 @@ footer {
   }
 
   .fomo-quote {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
   }
 
-  .fomo-card-solution .fomo-quote {
+  .fomo-solution-text {
     font-size: 1.25rem;
   }
 
@@ -1500,5 +1668,13 @@ footer {
   .agent-strip-inner {
     flex-direction: column;
     gap: 0.75rem;
+  }
+
+  .morning-stat {
+    font-size: 3rem;
+  }
+
+  .morning-card {
+    padding: 2rem 1.5rem;
   }
 }

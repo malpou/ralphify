@@ -171,6 +171,9 @@
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
+  <!-- Dot grid background -->
+  <div class="dot-grid" aria-hidden="true"></div>
+
   <header>
     <nav aria-label="Main navigation">
       <a href="./" class="logo" aria-label="Ralphify home"><span class="logo-symbol">&#x221e;</span> Ralphify</a>
@@ -187,11 +190,7 @@
 
     <!-- Hero -->
     <section class="hero" aria-label="Introduction">
-      <div class="hero-bg" aria-hidden="true">
-        <div class="hero-orb hero-orb-1"></div>
-        <div class="hero-orb hero-orb-2"></div>
-        <div class="hero-grid-overlay"></div>
-      </div>
+      <div class="hero-glow" aria-hidden="true"></div>
 
       <div class="hero-center">
         <div class="hero-badge">
@@ -200,7 +199,7 @@
         </div>
 
         <h1 class="hero-headline">
-          Stop stressing over<br>not having an agent running.
+          Stop stressing over not<br>having an agent running.
         </h1>
         <p class="hero-punchline">
           <span class="hero-gradient-text">Ralph is always running</span>
@@ -221,7 +220,7 @@
         <div class="hero-live-status" aria-hidden="true">
           <div class="live-status-inner">
             <span class="status-dot"></span>
-            <span class="live-status-text">Iteration <span class="live-counter">48</span></span>
+            <span class="live-status-text">Iteration <span class="live-counter">0</span></span>
             <span class="live-status-sep">&middot;</span>
             <span class="live-status-detail">23 commits</span>
             <span class="live-status-sep">&middot;</span>
@@ -252,9 +251,9 @@
             <span class="terminal-dot red"></span>
             <span class="terminal-dot yellow"></span>
             <span class="terminal-dot green"></span>
-            <span class="terminal-title">ralph &mdash; iteration 48</span>
+            <span class="terminal-title">ralph &mdash; autonomous loop</span>
           </div>
-          <pre><code><span class="prompt">$</span> ralph run
+          <pre class="terminal-body"><code><span class="prompt">$</span> ralph run
 <span class="dim">&#9484;&#9472; Iteration 46 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
 <span class="success">&#x2713;</span> Iteration 46 completed <span class="dim">(38.2s)</span>
   Commands: 2 passed
@@ -277,14 +276,46 @@
       </div>
     </section>
 
-    <!-- The FOMO — Storytelling arc -->
+    <!-- The Morning After — before/after contrast -->
+    <section class="morning" aria-labelledby="morning-heading">
+      <div class="morning-inner">
+        <p class="section-eyebrow fade-up">The morning after</p>
+        <h2 id="morning-heading" class="section-heading fade-up">You went to bed.<br>So did your agent.</h2>
+
+        <div class="morning-grid fade-up">
+          <div class="morning-card morning-card-them">
+            <div class="morning-label">
+              <span class="status-dot"></span>
+              Your teammate
+            </div>
+            <div class="morning-stat">23</div>
+            <div class="morning-stat-label">commits overnight</div>
+            <div class="morning-detail">48 iterations &middot; 3 PRs ready for review &middot; all tests passing</div>
+          </div>
+
+          <div class="morning-vs" aria-hidden="true">vs</div>
+
+          <div class="morning-card morning-card-you">
+            <div class="morning-label">
+              <span class="status-dot status-dot-dead"></span>
+              You
+            </div>
+            <div class="morning-stat">0</div>
+            <div class="morning-stat-label">commits overnight</div>
+            <div class="morning-detail">Closed laptop &middot; agent died &middot; woke up to nothing</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The FOMO — Slack scene -->
     <section class="fomo" aria-labelledby="fomo-heading">
       <div class="fomo-inner">
         <p class="fomo-eyebrow fade-up">Sound familiar?</p>
         <h2 id="fomo-heading" class="section-heading fade-up">Everyone has an agent running.<br>Except you.</h2>
 
-        <div class="fomo-grid fade-up">
-          <!-- The scene: Slack mockup -->
+        <div class="fomo-content fade-up">
+          <!-- Slack mockup -->
           <div class="fomo-card fomo-card-slack">
             <div class="slack-channel"># eng-general</div>
             <div class="slack-msg">
@@ -313,28 +344,31 @@
             </div>
           </div>
 
-          <!-- The tension -->
-          <div class="fomo-card fomo-card-tension">
-            <div class="fomo-tension-icon" aria-hidden="true">&#x1F4BB;</div>
-            <div class="fomo-quote">&ldquo;Do you have an agent running?&rdquo;</div>
-            <p class="fomo-context">The question that haunts every standup. Three people nod. You stare at your coffee.</p>
-          </div>
-
-          <div class="fomo-card fomo-card-tension">
-            <div class="fomo-tension-icon" aria-hidden="true">&#x1F634;</div>
-            <div class="fomo-quote">&ldquo;I just let it run overnight.&rdquo;</div>
-            <p class="fomo-context">They went to bed and woke up to a PR with 23 commits. You went to bed and woke up to nothing.</p>
-          </div>
-
-          <!-- The solution -->
-          <div class="fomo-card fomo-card-solution">
-            <div class="fomo-solution-badge">
-              <span class="status-dot"></span>
-              The fix
+          <!-- Side quotes -->
+          <div class="fomo-quotes">
+            <div class="fomo-quote-card">
+              <div class="fomo-tension-icon" aria-hidden="true">&#x1F4BB;</div>
+              <div class="fomo-quote">&ldquo;Do you have an agent running?&rdquo;</div>
+              <p class="fomo-context">The question that haunts every standup. Three people nod. You stare at your coffee.</p>
             </div>
-            <div class="fomo-quote">&ldquo;Ralph has been running since Tuesday.&rdquo;</div>
-            <p class="fomo-context">An autonomous loop that reads the prompt, does the work, and starts again. Fresh context every iteration. No babysitting. No dead agents.</p>
+            <div class="fomo-quote-card">
+              <div class="fomo-tension-icon" aria-hidden="true">&#x1F634;</div>
+              <div class="fomo-quote">&ldquo;I just let it run overnight.&rdquo;</div>
+              <p class="fomo-context">They went to bed and woke up to a PR with 23 commits. You woke up to nothing.</p>
+            </div>
           </div>
+        </div>
+
+        <!-- The solution -->
+        <div class="fomo-solution fade-up">
+          <div class="fomo-solution-badge">
+            <span class="status-dot"></span>
+            The fix
+          </div>
+          <div class="fomo-solution-text">
+            <span class="hero-gradient-text">&ldquo;Ralph has been running since Tuesday.&rdquo;</span>
+          </div>
+          <p class="fomo-solution-sub">An autonomous loop that reads the prompt, does the work, and starts again. Fresh context every iteration. No babysitting. No dead agents.</p>
         </div>
       </div>
     </section>
@@ -498,10 +532,7 @@ pick the next task from TODO.md and implement it.</code></pre>
 
     <!-- Bottom CTA -->
     <section class="cta-bottom" aria-labelledby="cta-bottom-heading">
-      <div class="cta-bottom-bg" aria-hidden="true">
-        <div class="cta-orb cta-orb-1"></div>
-        <div class="cta-orb cta-orb-2"></div>
-      </div>
+      <div class="cta-bottom-glow" aria-hidden="true"></div>
       <div class="cta-bottom-inner">
         <div class="cta-bottom-status">
           <span class="status-dot status-dot-lg"></span>
@@ -569,6 +600,36 @@ pick the next task from TODO.md and implement it.</code></pre>
         if (count < target) setTimeout(tick, step);
       };
       setTimeout(tick, 600);
+    }
+
+    // Terminal typing effect — animate the terminal output line by line
+    const terminalBody = document.querySelector('.terminal-body code');
+    if (terminalBody) {
+      const fullHTML = terminalBody.innerHTML;
+      const lines = fullHTML.split('\n');
+      terminalBody.innerHTML = '';
+      terminalBody.style.visibility = 'visible';
+
+      let lineIndex = 0;
+      const typeLine = () => {
+        if (lineIndex < lines.length) {
+          terminalBody.innerHTML += (lineIndex > 0 ? '\n' : '') + lines[lineIndex];
+          lineIndex++;
+          const delay = lineIndex <= 1 ? 400 : (lineIndex === lines.length ? 0 : 65);
+          setTimeout(typeLine, delay);
+        }
+      };
+
+      // Start typing when terminal scrolls into view
+      const termObs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setTimeout(typeLine, 300);
+            termObs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.3 });
+      termObs.observe(terminalBody.closest('.terminal-window'));
     }
   </script>
 </body>
