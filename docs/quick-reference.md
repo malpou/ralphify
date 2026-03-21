@@ -1,5 +1,6 @@
 ---
 description: Condensed reference for ralphify commands, RALPH.md format, placeholder syntax, and common patterns — the page you bookmark and come back to.
+keywords: ralphify quick reference, RALPH.md format, placeholder syntax, commands reference, cheat sheet
 ---
 
 # Quick Reference

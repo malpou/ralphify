@@ -1,5 +1,6 @@
 ---
 description: Fix common ralphify issues — setup errors, agent hangs, command failures, and permission problems.
+keywords: ralphify troubleshooting, agent hangs, command failures, setup errors, debug ralph loop
 ---
 
 # Troubleshooting

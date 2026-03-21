@@ -1,5 +1,6 @@
 ---
 description: When ralph loops are the right tool — what kinds of tasks work well, what doesn't, and how to tell if your task fits the pattern.
+keywords: when to use ralphify, autonomous coding tasks, AI agent use cases, loop vs single run, task suitability
 ---
 
 # When to use ralph loops
