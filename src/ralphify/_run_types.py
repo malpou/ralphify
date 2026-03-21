@@ -94,7 +94,7 @@ class RunConfig:
     delay: float = 0
     timeout: float | None = None
     stop_on_error: bool = False
-    log_dir: str | None = None
+    log_dir: Path | None = None
     project_root: Path = field(default=Path("."))
     credit: bool = True
 

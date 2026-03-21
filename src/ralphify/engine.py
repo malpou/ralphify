@@ -265,7 +265,7 @@ def run_loop(
 
     log_path_dir: Path | None = None
     if config.log_dir:
-        log_path_dir = Path(config.log_dir)
+        log_path_dir = config.log_dir
         log_path_dir.mkdir(parents=True, exist_ok=True)
 
     emit(EventType.RUN_STARTED, RunStartedData(

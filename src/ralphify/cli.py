@@ -305,7 +305,7 @@ def _build_run_config(
         delay=delay,
         timeout=timeout,
         stop_on_error=stop_on_error,
-        log_dir=log_dir,
+        log_dir=Path(log_dir) if log_dir else None,
         project_root=Path.cwd(),
         credit=credit,
     )
