@@ -311,6 +311,26 @@ The most powerful feature of ralph loops is that you can edit `RALPH.md` while t
 - Do not refactor code that isn't directly related to the current task
 ```
 
+## Notes with HTML comments
+
+HTML comments in your RALPH.md are automatically stripped before the prompt is assembled. They never reach the agent. Use them for notes to yourself:
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+---
+
+<!-- Added 2025-01-20: agent kept deleting tests, so added the rule below -->
+
+## Rules
+
+- Do NOT delete failing tests — fix the underlying code instead
+
+<!-- TODO: remove the coverage command once we hit 80% -->
+```
+
+This is handy for the edit-while-running pattern — you can annotate why certain rules exist without wasting the agent's context window.
+
 ## Prompt size and context windows
 
 Keep your prompt focused. A long prompt with every possible instruction eats into the agent's context window, leaving less room for the actual codebase.

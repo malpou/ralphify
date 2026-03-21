@@ -117,6 +117,7 @@ Each iteration:
 ## Live editing
 
 - Everything is re-read from disk every iteration — edit files while the loop runs
+- HTML comments (`<!-- ... -->`) are stripped from the prompt — use them for notes to yourself
 
 ## Common patterns
 
