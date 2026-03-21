@@ -10,7 +10,7 @@ import shlex
 import shutil
 import sys
 from pathlib import Path
-from typing import NoReturn
+from typing import Any, NoReturn
 
 import typer
 from rich.console import Console
@@ -145,7 +145,7 @@ def _parse_user_args(
     return result
 
 
-def _parse_commands(raw_commands: list) -> list[Command]:
+def _parse_commands(raw_commands: list[dict[str, Any]]) -> list[Command]:
     """Validate and parse raw command dicts from frontmatter into Command objects."""
     commands: list[Command] = []
     seen_names: set[str] = set()

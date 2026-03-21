@@ -9,6 +9,7 @@ don't leak into the assembled prompt.
 """
 
 import re
+from typing import Any
 
 import yaml
 
@@ -42,7 +43,7 @@ def _extract_frontmatter_block(text: str) -> tuple[str, str]:
     return "", text
 
 
-def parse_frontmatter(text: str) -> tuple[dict, str]:
+def parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     """Parse a RALPH.md file with YAML frontmatter.
 
     Frontmatter is delimited by ``---`` lines at the start of the file.
@@ -69,7 +70,7 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
     return frontmatter, body
 
 
-def serialize_frontmatter(frontmatter: dict, body: str) -> str:
+def serialize_frontmatter(frontmatter: dict[str, Any], body: str) -> str:
     """Serialize frontmatter and body back to a markdown string.
 
     This is the inverse of :func:`parse_frontmatter`.  If *frontmatter*

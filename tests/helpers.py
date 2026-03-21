@@ -48,7 +48,7 @@ def make_ralph(
     tmp_path: Path,
     prompt: str = "go",
     agent: str = "claude -p --dangerously-skip-permissions",
-    commands: list[dict] | None = None,
+    commands: list[dict[str, Any]] | None = None,
     args: list[str] | None = None,
 ) -> Path:
     """Create a ralph directory with a proper RALPH.md for CLI-level tests.
@@ -58,7 +58,7 @@ def make_ralph(
     """
     ralph_dir = tmp_path / "my-ralph"
     ralph_dir.mkdir(exist_ok=True)
-    frontmatter: dict = {"agent": agent}
+    frontmatter: dict[str, Any] = {"agent": agent}
     if commands:
         frontmatter["commands"] = commands
     if args:
