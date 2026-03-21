@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 from helpers import MOCK_RUNNER_SUBPROCESS
-from ralphify._runner import run_command
+from ralphify._runner import TIMEOUT_EXIT_CODE, run_command
 
 
 class TestRunCommand:
@@ -78,7 +78,7 @@ class TestRunCommand:
         result = run_command(script=None, command="echo", cwd=Path("/project"), timeout=60)
 
         assert result.success is False
-        assert result.exit_code == -1
+        assert result.exit_code == TIMEOUT_EXIT_CODE
         assert result.timed_out is True
 
     @patch(MOCK_RUNNER_SUBPROCESS)
