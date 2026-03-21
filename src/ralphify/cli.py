@@ -213,17 +213,17 @@ def _parse_commands(raw_commands: list[dict[str, Any]]) -> list[Command]:
     commands: list[Command] = []
     seen_names: set[str] = set()
     for cmd_def in raw_commands:
-        if not isinstance(cmd_def, dict) or "name" not in cmd_def or "run" not in cmd_def:
-            _exit_error("Each command must have 'name' and 'run' fields.")
-        for key in ("name", "run"):
+        if not isinstance(cmd_def, dict) or CMD_FIELD_NAME not in cmd_def or CMD_FIELD_RUN not in cmd_def:
+            _exit_error(f"Each command must have '{CMD_FIELD_NAME}' and '{CMD_FIELD_RUN}' fields.")
+        for key in (CMD_FIELD_NAME, CMD_FIELD_RUN):
             if not isinstance(cmd_def[key], str) or not cmd_def[key].strip():
                 _exit_error(f"Command '{key}' must be a non-empty string.")
-        cmd_name = cmd_def["name"]
-        cmd_run = cmd_def["run"]
+        cmd_name = cmd_def[CMD_FIELD_NAME]
+        cmd_run = cmd_def[CMD_FIELD_RUN]
         if cmd_name in seen_names:
             _exit_error(f"Duplicate command name '{cmd_name}'.")
         seen_names.add(cmd_name)
-        timeout = cmd_def.get("timeout", DEFAULT_COMMAND_TIMEOUT)
+        timeout = cmd_def.get(CMD_FIELD_TIMEOUT, DEFAULT_COMMAND_TIMEOUT)
         if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or timeout <= 0:
             _exit_error(
                 f"Command '{cmd_name}' has invalid timeout: {timeout!r}. "

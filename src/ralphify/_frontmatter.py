@@ -26,6 +26,11 @@ FIELD_COMMANDS = "commands"
 FIELD_ARGS = "args"
 FIELD_CREDIT = "credit"
 
+# Sub-field names within each command mapping.
+CMD_FIELD_NAME = "name"
+CMD_FIELD_RUN = "run"
+CMD_FIELD_TIMEOUT = "timeout"
+
 # YAML frontmatter delimiter line.
 _FRONTMATTER_DELIMITER = "---"
 
