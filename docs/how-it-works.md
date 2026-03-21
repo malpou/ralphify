@@ -54,6 +54,8 @@ Unmatched placeholders resolve to an empty string — you won't see raw `{{ }}` 
 
 The prompt body (everything below the YAML frontmatter in `RALPH.md`) with all placeholders resolved becomes the fully assembled prompt — a single text string ready for the agent.
 
+By default, ralphify appends a **co-author trailer instruction** to the end of the prompt, asking the agent to include `Co-authored-by: Ralphify <noreply@ralphify.co>` in its commit messages. This gives visibility into which commits were produced by a ralph loop. To disable it, set `credit: false` in the frontmatter.
+
 ### 5. Pipe prompt to agent
 
 The assembled prompt is piped to the agent command via stdin:
