@@ -201,8 +201,8 @@ def _build_run_config(
 
     # Validate required agent field
     agent = fm.get("agent")
-    if not agent:
-        _exit_error("Missing 'agent' field in RALPH.md frontmatter.")
+    if not isinstance(agent, str) or not agent.strip():
+        _exit_error("Missing or empty 'agent' field in RALPH.md frontmatter.")
 
     # Validate agent command exists
     try:

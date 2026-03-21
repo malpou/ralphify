@@ -47,6 +47,24 @@ class TestRun:
         assert result.exit_code == 1
         assert "agent" in result.output.lower()
 
+    def test_errors_with_whitespace_only_agent(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir()
+        (ralph_dir / "RALPH.md").write_text("---\nagent: \"  \"\n---\ngo")
+        result = runner.invoke(app, ["run", str(ralph_dir)])
+        assert result.exit_code == 1
+        assert "agent" in result.output.lower()
+
+    def test_errors_with_non_string_agent(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir()
+        (ralph_dir / "RALPH.md").write_text("---\nagent: 123\n---\ngo")
+        result = runner.invoke(app, ["run", str(ralph_dir)])
+        assert result.exit_code == 1
+        assert "agent" in result.output.lower()
+
     def test_errors_when_agent_not_on_path(self, mock_which, tmp_path, monkeypatch):
         mock_which.return_value = None
         monkeypatch.chdir(tmp_path)
