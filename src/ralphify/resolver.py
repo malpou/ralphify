@@ -10,8 +10,18 @@ prompt.  This forces explicit placement and avoids accidental data dumps.
 
 import re
 
-_COMMANDS_PATTERN = re.compile(r"\{\{\s*commands\.([a-zA-Z0-9_-]+)\s*\}\}")
-_ARGS_PATTERN = re.compile(r"\{\{\s*args\.([a-zA-Z0-9_-]+)\s*\}\}")
+# Shared pattern for Mustache-style placeholders: {{ kind.name }}
+# The *kind* varies (commands, args) but the structure is identical.
+_NAME_CHARS = r"[a-zA-Z0-9_-]+"
+
+
+def _placeholder_pattern(kind: str) -> re.Pattern[str]:
+    """Compile a regex matching ``{{ <kind>.<name> }}`` placeholders."""
+    return re.compile(rf"\{{\{{\s*{kind}\.({_NAME_CHARS})\s*\}}\}}")
+
+
+_COMMANDS_PATTERN = _placeholder_pattern("commands")
+_ARGS_PATTERN = _placeholder_pattern("args")
 
 
 def _resolve_kind(prompt: str, available: dict[str, str], pattern: re.Pattern[str]) -> str:
