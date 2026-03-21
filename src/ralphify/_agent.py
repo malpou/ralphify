@@ -162,6 +162,8 @@ def _run_agent_streaming(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     try:
         # Popen with PIPE guarantees non-None streams; guard explicitly
@@ -220,6 +222,8 @@ def _run_agent_blocking(
             cmd,
             input=prompt,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=timeout,
             capture_output=bool(log_path_dir),
         )

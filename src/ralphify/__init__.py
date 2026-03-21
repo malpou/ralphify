@@ -36,7 +36,7 @@ from ralphify._events import (
 from ralphify.manager import ManagedRun, RunManager
 
 
-def main():
+def main() -> None:
     """Entry point for the ``ralph`` CLI (called by the console script)."""
     from ralphify.cli import app
     app()
