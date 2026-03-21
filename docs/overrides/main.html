@@ -64,4 +64,48 @@
     ]
   }
   </script>
+
+  <!-- WebSite + Organization structured data (home page only) -->
+  {% if page and (page.title == "Home" or not page.title) %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Ralphify",
+    "url": "{{ config.site_url }}",
+    "description": "{{ config.site_description }}",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Computerlove Technologies",
+      "url": "https://github.com/computerlovetech"
+    }
+  }
+  </script>
+  {% endif %}
+
+  <!-- SoftwareApplication structured data (home page only) -->
+  {% if page and (page.title == "Home" or not page.title) %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Ralphify",
+    "description": "{{ config.site_description }}",
+    "url": "{{ config.site_url }}",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Linux, macOS, Windows",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Computerlove Technologies",
+      "url": "https://github.com/computerlovetech"
+    },
+    "codeRepository": "https://github.com/computerlovetech/ralphify"
+  }
+  </script>
+  {% endif %}
 {% endblock %}
