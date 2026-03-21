@@ -16,7 +16,7 @@ ralph run my-ralph -n 1 --log-dir logs  # Single iteration with output capture
 ralph run my-ralph --stop-on-error # Stop if agent exits non-zero
 ralph run my-ralph --delay 10      # Wait 10s between iterations
 ralph run my-ralph --timeout 300   # Kill agent after 5 min per iteration
-ralph run my-ralph -- --dir ./src  # Pass user args to the ralph
+ralph run my-ralph --dir ./src     # Pass user args to the ralph
 
 ralph init my-task                  # Scaffold a ralph from template (no AI)
 ralph init                         # Scaffold in current directory
@@ -99,8 +99,8 @@ Your instructions here. Use {{ args.dir }} for user arguments.
 {{ args.focus }}                 # Replaced with --focus value from CLI
 ```
 
-- Pass via `ralph run my-ralph -- --dir ./src --focus "perf"` (named flags)
-- Or positionally: `ralph run my-ralph -- ./src "perf"` (requires `args:` in frontmatter)
+- Pass via `ralph run my-ralph --dir ./src --focus "perf"` (named flags)
+- Or positionally: `ralph run my-ralph ./src "perf"` (requires `args:` in frontmatter)
 - Missing args resolve to empty string
 
 ## The loop
@@ -159,7 +159,7 @@ Focus area: {{ args.focus }}.
 ```
 
 ```bash
-ralph run research -- --dir ./api --focus "error handling"
+ralph run research --dir ./api --focus "error handling"
 ```
 
 ### Debug a single iteration

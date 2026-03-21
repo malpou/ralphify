@@ -43,7 +43,7 @@ ralph run my-ralph --stop-on-error         # Stop if agent exits non-zero
 ralph run my-ralph --delay 10              # Wait 10s between iterations
 ralph run my-ralph --timeout 300           # Kill agent after 5 minutes per iteration
 ralph run my-ralph --log-dir ralph_logs    # Save output to log files
-ralph run my-ralph -- --dir ./src          # Pass user args to the ralph
+ralph run my-ralph --dir ./src             # Pass user args to the ralph
 ```
 
 | Argument / Option | Short | Default | Description |
@@ -54,11 +54,9 @@ ralph run my-ralph -- --dir ./src          # Pass user args to the ralph
 | `--delay` | `-d` | `0` | Seconds to wait between iterations |
 | `--timeout` | `-t` | none | Max seconds per iteration |
 | `--log-dir` | `-l` | none | Directory for iteration log files |
-| `--` | | | Separator before user arguments |
-
 ### User arguments
 
-Extra flags after `--` are passed as user arguments to the ralph template. Use `{{ args.<name> }}` placeholders in your RALPH.md to reference them.
+User arguments are passed as named flags after the ralph path. Use `{{ args.<name> }}` placeholders in your RALPH.md to reference them.
 
 User arguments must be declared in the `args` frontmatter field:
 
@@ -74,13 +72,13 @@ Focus area: {{ args.focus }}
 
 ```bash
 # Named flags
-ralph run research -- --dir ./my-project --focus "performance"
+ralph run research --dir ./my-project --focus "performance"
 
 # Positional args (requires args: [dir, focus] in frontmatter)
-ralph run research -- ./my-project "performance"
+ralph run research ./my-project "performance"
 
 # Mixed
-ralph run research -- ./my-project --focus "performance"
+ralph run research ./my-project --focus "performance"
 ```
 
 Missing args resolve to an empty string.

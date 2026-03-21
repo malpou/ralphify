@@ -49,7 +49,7 @@ The v2 rewrite. Ralphify is now simpler: a ralph is a directory with a `RALPH.md
 - **Removed checks and contexts** — replaced by `commands` in RALPH.md frontmatter. Commands run each iteration and their output is available via `{{ commands.<name> }}` placeholders.
 - **`ralph run` requires a path** — `ralph run my-ralph` instead of `ralph run` with optional name. The argument is a path to a directory containing RALPH.md.
 - **Placeholder syntax changed** — `{{ contexts.<name> }}` is now `{{ commands.<name> }}`. The `{{ args.<name> }}` syntax is unchanged.
-- **User arguments** — now passed after `--` separator: `ralph run my-ralph -- --dir ./src`.
+- **User arguments** — pass named flags to your ralph: `ralph run my-ralph --dir ./src`.
 
 ### Added
 

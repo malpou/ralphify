@@ -239,8 +239,8 @@ Focus area: {{ args.focus }}
 Run the same ralph against different targets:
 
 ```bash
-ralph run research -- --dir ./api --focus "error handling"
-ralph run research -- --dir ./frontend --focus "state management"
+ralph run research --dir ./api --focus "error handling"
+ralph run research --dir ./frontend --focus "state management"
 ```
 
 The `git-log` command uses `{{ args.dir }}` to show only commits touching the target directory — the same arg value is resolved in both command `run` strings and the prompt body.
