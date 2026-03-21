@@ -258,7 +258,7 @@ nav {
   border-radius: 100px;
   border: 1px solid rgba(139, 108, 240, 0.15);
   background: rgba(139, 108, 240, 0.06);
-  margin-bottom: 3rem;
+  margin-bottom: 2.5rem;
   letter-spacing: 0.02em;
 }
 
@@ -282,20 +282,25 @@ nav {
   50% { opacity: 0.6; box-shadow: 0 0 16px rgba(52, 211, 153, 0.3); }
 }
 
+.hero-eyebrow {
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
 .hero-headline {
-  font-size: clamp(2.5rem, 6vw, 4.2rem);
+  font-size: clamp(2.8rem, 6.5vw, 4.8rem);
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 1.05;
   color: #fff;
-  margin-bottom: 1.25rem;
+  margin-bottom: 2rem;
   letter-spacing: -0.04em;
 }
 
-.hero-tagline {
-  font-size: clamp(2.8rem, 7vw, 5rem);
-  font-weight: 800;
-  line-height: 1.05;
-  margin-bottom: 2.5rem;
+.hero-gradient-text {
+  display: block;
   background: linear-gradient(135deg, #8B6CF0 0%, #E87B4A 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -305,9 +310,10 @@ nav {
 .runner-inline {
   -webkit-text-fill-color: initial;
   display: inline-block;
-  font-size: 0.75em;
-  margin-left: 0.15em;
+  font-size: 0.65em;
+  margin-left: 0.1em;
   animation: bounce-run 1s ease-in-out infinite;
+  vertical-align: middle;
 }
 
 @keyframes bounce-run {
@@ -430,6 +436,68 @@ nav {
   border-color: var(--purple-light);
 }
 
+/* ── Activity ticker ─────────────────────────────────────── */
+
+.ticker {
+  overflow: hidden;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(139, 108, 240, 0.08);
+  border-bottom: 1px solid rgba(139, 108, 240, 0.08);
+  padding: 0.6rem 0;
+  position: relative;
+}
+
+.ticker::before,
+.ticker::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ticker::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg-surface), transparent);
+}
+
+.ticker::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--bg-surface), transparent);
+}
+
+.ticker-track {
+  display: flex;
+  gap: 3rem;
+  white-space: nowrap;
+  animation: ticker-scroll 30s linear infinite;
+  width: max-content;
+}
+
+.ticker-item {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ticker-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34D399;
+  flex-shrink: 0;
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* ── FOMO section ──────────────────────────────────────── */
 
 .fomo {
@@ -453,25 +521,13 @@ nav {
   margin: 0 auto;
 }
 
-.fomo-quote {
+.fomo-lead {
   text-align: center;
-  margin-bottom: 4rem;
-}
-
-.fomo-quote-text {
-  font-size: clamp(1.8rem, 4.5vw, 3.2rem);
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.15;
-  margin-bottom: 1.25rem;
-  letter-spacing: -0.03em;
-  font-style: italic;
-}
-
-.fomo-quote-attribution {
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
   color: var(--text-muted);
-  font-size: 1.05rem;
   font-family: var(--mono);
+  margin-bottom: 3.5rem;
+  letter-spacing: -0.01em;
 }
 
 .fomo-cards {
@@ -1255,6 +1311,10 @@ a:focus-visible,
     animation: none;
     display: none;
   }
+
+  .ticker-track {
+    animation: none;
+  }
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
@@ -1327,15 +1387,19 @@ a:focus-visible,
   }
 
   .hero-headline {
-    font-size: 2rem;
+    font-size: 2.2rem;
   }
 
-  .hero-tagline {
-    font-size: 2.2rem;
+  .hero-eyebrow {
+    font-size: 1rem;
   }
 
   .hero-sub {
     font-size: 1.05rem;
+  }
+
+  .ticker {
+    display: none;
   }
 
   .demo {
@@ -1383,10 +1447,6 @@ a:focus-visible,
 
   .tension-section-title {
     font-size: 1.65rem;
-  }
-
-  .fomo-quote-text {
-    font-size: 1.5rem;
   }
 
   footer {
@@ -1437,7 +1497,8 @@ a:focus-visible,
   .loop-visual,
   .tension,
   .agent-strip,
-  .fomo {
+  .fomo,
+  .ticker {
     display: none !important;
   }
 
@@ -1468,9 +1529,12 @@ a:focus-visible,
     font-size: 1.75rem;
   }
 
-  .hero-tagline {
-    font-size: 1.75rem;
+  .hero-gradient-text {
     -webkit-text-fill-color: #000 !important;
+  }
+
+  .hero-eyebrow {
+    color: #333 !important;
   }
 
   .btn-primary {
