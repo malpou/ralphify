@@ -22,6 +22,12 @@ MOCK_RUNNER_SUBPROCESS = "ralphify._runner.subprocess.run"
 MOCK_WHICH = "ralphify.cli.shutil.which"
 """Patch target for shutil.which inside the CLI module."""
 
+MOCK_RUN_COMMAND = "ralphify.engine.run_command"
+"""Patch target for run_command inside the engine module."""
+
+MOCK_ENGINE_SLEEP = "ralphify.engine.time.sleep"
+"""Patch target for time.sleep inside the engine module."""
+
 
 # ── Factory helpers ───────────────────────────────────────────────────
 

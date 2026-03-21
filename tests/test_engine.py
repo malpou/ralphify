@@ -5,7 +5,7 @@ import threading
 import time
 from unittest.mock import patch
 
-from helpers import MOCK_SUBPROCESS, drain_events, fail_result, make_config, make_state, ok_result
+from helpers import MOCK_RUN_COMMAND, MOCK_SUBPROCESS, drain_events, fail_result, make_config, make_state, ok_result
 
 from ralphify._events import EventType, NullEmitter, QueueEmitter
 from ralphify._run_types import REASON_ERROR, REASON_USER_REQUESTED, Command, RunStatus
@@ -265,7 +265,7 @@ class TestRalphArgs:
 
 class TestCommandExecution:
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
-    @patch("ralphify.engine.run_command")
+    @patch(MOCK_RUN_COMMAND)
     def test_commands_output_injected(self, mock_run_cmd, mock_agent, tmp_path):
         mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="test output\n")
 
@@ -287,7 +287,7 @@ class TestCommandExecution:
         assert "{{ commands.tests }}" not in call_input
 
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
-    @patch("ralphify.engine.run_command")
+    @patch(MOCK_RUN_COMMAND)
     def test_multiple_commands_all_executed(self, mock_run_cmd, mock_agent, tmp_path):
         """All commands in the list are executed and their outputs collected."""
 
@@ -321,7 +321,7 @@ class TestCommandExecution:
         assert mock_run_cmd.call_count == 2
 
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
-    @patch("ralphify.engine.run_command")
+    @patch(MOCK_RUN_COMMAND)
     def test_dotslash_command_uses_ralph_dir_as_cwd(self, mock_run_cmd, mock_agent, tmp_path):
         """Commands starting with ./ run relative to the ralph directory."""
         mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
@@ -343,7 +343,7 @@ class TestCommandExecution:
         assert passed_cwd == config.ralph_dir
 
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
-    @patch("ralphify.engine.run_command")
+    @patch(MOCK_RUN_COMMAND)
     def test_regular_command_uses_project_root_as_cwd(self, mock_run_cmd, mock_agent, tmp_path):
         """Commands without ./ prefix run from the project root."""
         mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
@@ -365,7 +365,7 @@ class TestCommandExecution:
         assert passed_cwd == config.project_root
 
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
-    @patch("ralphify.engine.run_command")
+    @patch(MOCK_RUN_COMMAND)
     def test_command_timeout_passed_through(self, mock_run_cmd, mock_agent, tmp_path):
         """Command timeout from frontmatter is forwarded to run_command."""
         mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")

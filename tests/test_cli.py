@@ -8,7 +8,7 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from helpers import MOCK_WHICH, ok_result, fail_result
+from helpers import MOCK_ENGINE_SLEEP, MOCK_SUBPROCESS, MOCK_WHICH, ok_result, fail_result
 from ralphify import __version__
 from ralphify.cli import app, _parse_commands, _parse_user_args
 
@@ -122,7 +122,7 @@ class TestRun:
         assert result.exit_code == 1
         assert "duplicate" in result.output.lower()
 
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_runs_when_valid(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -130,7 +130,7 @@ class TestRun:
         assert result.exit_code == 0
         assert mock_run.call_count == 1
 
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_runs_n_iterations(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path, prompt="test prompt")
@@ -140,7 +140,7 @@ class TestRun:
         for call in mock_run.call_args_list:
             assert call.kwargs["input"] == "test prompt"
 
-    @patch("ralphify._agent.subprocess.run")
+    @patch(MOCK_SUBPROCESS)
     def test_reads_prompt_each_iteration(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path, prompt="v1")
@@ -165,7 +165,7 @@ class TestRun:
         assert mock_run.call_args_list[0].kwargs["input"] == "v1"
         assert mock_run.call_args_list[1].kwargs["input"] == "v2"
 
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_shows_success_per_iteration(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -175,7 +175,7 @@ class TestRun:
         assert "Iteration 2 completed" in result.output
         assert "2 succeeded" in result.output
 
-    @patch("ralphify._agent.subprocess.run", side_effect=fail_result)
+    @patch(MOCK_SUBPROCESS, side_effect=fail_result)
     def test_continues_on_error_by_default(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -184,7 +184,7 @@ class TestRun:
         assert mock_run.call_count == 3
         assert "3 failed" in result.output
 
-    @patch("ralphify._agent.subprocess.run", side_effect=fail_result)
+    @patch(MOCK_SUBPROCESS, side_effect=fail_result)
     def test_stop_on_error(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -194,7 +194,7 @@ class TestRun:
         assert "Stopping due to --stop-on-error" in result.output
         assert "1 failed" in result.output
 
-    @patch("ralphify._agent.subprocess.run")
+    @patch(MOCK_SUBPROCESS)
     def test_mixed_success_and_failure(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -208,8 +208,8 @@ class TestRun:
         assert "2 succeeded" in result.output
         assert "1 failed" in result.output
 
-    @patch("ralphify.engine.time.sleep")
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_ENGINE_SLEEP)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_delay_between_iterations(self, mock_run, mock_sleep, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -219,8 +219,8 @@ class TestRun:
         for call in mock_sleep.call_args_list:
             assert call.args[0] == 5
 
-    @patch("ralphify.engine.time.sleep")
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_ENGINE_SLEEP)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_no_delay_with_single_iteration(self, mock_run, mock_sleep, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -228,7 +228,7 @@ class TestRun:
         assert result.exit_code == 0
         mock_sleep.assert_not_called()
 
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_accepts_ralph_md_file_path(self, mock_run, mock_which, tmp_path, monkeypatch):
         """Can pass path to RALPH.md file directly."""
         monkeypatch.chdir(tmp_path)
@@ -239,7 +239,7 @@ class TestRun:
 
 @patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestRunLogging:
-    @patch("ralphify._agent.subprocess.run")
+    @patch(MOCK_SUBPROCESS)
     def test_creates_log_files(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -254,7 +254,7 @@ class TestRunLogging:
         assert log_files[0].name.startswith("001_")
         assert log_files[1].name.startswith("002_")
 
-    @patch("ralphify._agent.subprocess.run")
+    @patch(MOCK_SUBPROCESS)
     def test_log_file_contains_output(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -269,7 +269,7 @@ class TestRunLogging:
         assert "hello from agent" in content
         assert "warning" in content
 
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_no_log_files_without_flag(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -280,7 +280,7 @@ class TestRunLogging:
 
 @patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestRunTimeout:
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_timeout_passed_to_subprocess(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -288,7 +288,7 @@ class TestRunTimeout:
         assert result.exit_code == 0
         assert mock_run.call_args.kwargs["timeout"] == 30
 
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_no_timeout_by_default(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -296,7 +296,7 @@ class TestRunTimeout:
         assert result.exit_code == 0
         assert mock_run.call_args.kwargs["timeout"] is None
 
-    @patch("ralphify._agent.subprocess.run")
+    @patch(MOCK_SUBPROCESS)
     def test_timeout_counts_as_failure(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -307,7 +307,7 @@ class TestRunTimeout:
         assert "1 failed" in result.output
         assert "1 timed out" in result.output
 
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_timeout_shows_in_header(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path)
@@ -380,7 +380,7 @@ class TestParseUserArgs:
 
 @patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestRunWithUserArgs:
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_named_args_resolved_in_prompt(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path, prompt="Research {{ args.dir }}")
@@ -388,7 +388,7 @@ class TestRunWithUserArgs:
         assert result.exit_code == 0
         assert mock_run.call_args.kwargs["input"] == "Research ./my-project"
 
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_positional_args_with_declared_names(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(
@@ -400,7 +400,7 @@ class TestRunWithUserArgs:
         assert result.exit_code == 0
         assert mock_run.call_args.kwargs["input"] == "Research ./my-project with focus on performance"
 
-    @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_unused_arg_placeholders_cleared(self, mock_run, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         ralph_dir = _make_ralph(tmp_path, prompt="Before {{ args.opt }} after")
