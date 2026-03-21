@@ -1054,6 +1054,7 @@ nav {
   background: var(--bg-surface);
   border-top: none;
   position: relative;
+  overflow: hidden;
 }
 
 .how-it-works::before {
@@ -1071,6 +1072,17 @@ nav {
     rgba(139, 108, 240, 0.15) 70%,
     transparent 100%
   );
+}
+
+.how-it-works::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 10%;
+  width: 500px;
+  height: 400px;
+  background: radial-gradient(ellipse at center, rgba(232, 123, 74, 0.03) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .how-inner {
@@ -1161,6 +1173,7 @@ nav {
   background: var(--bg);
   border-top: none;
   position: relative;
+  overflow: hidden;
 }
 
 .why::before {
@@ -1178,6 +1191,18 @@ nav {
     rgba(139, 108, 240, 0.15) 70%,
     transparent 100%
   );
+}
+
+.why::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 600px;
+  background: radial-gradient(ellipse at center, rgba(139, 108, 240, 0.04) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .why-inner {
