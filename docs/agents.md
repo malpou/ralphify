@@ -193,3 +193,9 @@ bash -c '<tool> <auto-approve-flag> --message "$(cat -)"'
 The `cat -` reads the piped prompt from stdin and passes it as a command-line argument. This works for any tool that accepts a prompt via a flag (like `--message`, `--input`, `--prompt`).
 
 If the tool has no way to accept a prompt non-interactively, a [custom wrapper script](#custom-wrapper-script) is the escape hatch — you can use the prompt text however the tool needs it.
+
+## Next steps
+
+- [Getting Started](getting-started.md) — set up your first loop with the agent you just configured
+- [Writing Prompts](writing-prompts.md) — patterns for writing effective autonomous loop prompts
+- [Troubleshooting](troubleshooting.md) — when the agent hangs, produces no output, or exits unexpectedly
