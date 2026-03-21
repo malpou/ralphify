@@ -8,8 +8,7 @@ from unittest.mock import patch
 from helpers import MOCK_SUBPROCESS, drain_events, make_config, ok_result
 
 from ralphify._events import Event, EventType, FanoutEmitter, QueueEmitter
-from ralphify._run_types import RUN_ID_LENGTH
-from ralphify._run_types import RunStatus
+from ralphify._run_types import RUN_ID_LENGTH, RunStatus
 from ralphify.manager import ManagedRun, RunManager
 
 

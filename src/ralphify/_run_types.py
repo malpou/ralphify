@@ -8,6 +8,7 @@ that only need the types don't pull in the engine's execution logic.
 from __future__ import annotations
 
 import threading
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -19,6 +20,11 @@ DEFAULT_COMMAND_TIMEOUT: int = 60
 
 RUN_ID_LENGTH: int = 12
 """Number of hex characters used for generated run IDs."""
+
+
+def generate_run_id() -> str:
+    """Generate a short hex run ID from a random UUID."""
+    return uuid.uuid4().hex[:RUN_ID_LENGTH]
 
 
 class RunStatus(Enum):

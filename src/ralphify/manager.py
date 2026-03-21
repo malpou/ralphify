@@ -7,11 +7,10 @@ controlling, and inspecting multiple runs from external code.
 from __future__ import annotations
 
 import threading
-import uuid
 from dataclasses import dataclass, field
 
 from ralphify._events import EventEmitter, FanoutEmitter, QueueEmitter
-from ralphify._run_types import RUN_ID_LENGTH, RunConfig, RunState
+from ralphify._run_types import RunConfig, RunState, generate_run_id
 from ralphify.engine import run_loop
 
 
@@ -72,7 +71,7 @@ class RunManager:
         Assigns a unique run ID and returns the :class:`ManagedRun`.
         The run is not started — call :meth:`start_run` to begin execution.
         """
-        run_id = uuid.uuid4().hex[:RUN_ID_LENGTH]
+        run_id = generate_run_id()
         state = RunState(run_id=run_id)
         emitter = QueueEmitter()
         managed = ManagedRun(config=config, state=state, emitter=emitter)
