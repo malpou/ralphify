@@ -196,57 +196,87 @@
 
   <main id="main-content">
 
-    <!-- Hero -->
+    <!-- Hero — split layout -->
     <section class="hero" aria-label="Introduction">
-      <div class="hero-mesh" aria-hidden="true">
-        <div class="mesh-blob mesh-1"></div>
-        <div class="mesh-blob mesh-2"></div>
-        <div class="mesh-blob mesh-3"></div>
-        <div class="mesh-blob mesh-4"></div>
+      <div class="hero-bg" aria-hidden="true">
+        <div class="hero-gradient-orb hero-orb-1"></div>
+        <div class="hero-gradient-orb hero-orb-2"></div>
+        <div class="hero-gradient-orb hero-orb-3"></div>
       </div>
 
-      <div class="hero-content">
-        <div class="hero-badge">
-          <span class="status-dot"></span>
-          Open-source &middot; pip install ralphify &middot; iteration <span id="iter-count">1,247</span>
+      <div class="hero-inner">
+        <div class="hero-text">
+          <div class="hero-badge">
+            <span class="status-dot"></span>
+            Open-source &middot; pip install ralphify
+          </div>
+
+          <h1 class="hero-headline">
+            Stop stressing.<br>
+            <span class="hero-gradient-text">Ralph is always running</span>
+            <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
+          </h1>
+
+          <p class="hero-sub">
+            Everyone else has an AI coding agent shipping code overnight.
+            Put yours in a <code>while True</code> loop and join them.
+          </p>
+
+          <div class="cta">
+            <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
+            <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
+          </div>
+
+          <div class="hero-install">
+            <code>uv tool install ralphify</code>
+            <button class="copy-btn" aria-label="Copy install command" onclick="copyCommand(this, 'uv tool install ralphify')">Copy</button>
+          </div>
         </div>
 
-        <h1 class="hero-headline">
-          Everyone else has an<br>agent running right now.
-        </h1>
-        <p class="hero-punchline">
-          <span class="hero-gradient-text">Don't stress. Get Ralph.</span>
-          <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
-        </p>
-
-        <p class="hero-sub">
-          Put your AI coding agent in a <code>while True</code> loop.<br>
-          It ships while you sleep. That's the whole idea.
-        </p>
-
-        <div class="cta">
-          <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
-          <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
+        <div class="hero-terminal">
+          <div class="terminal-window">
+            <div class="terminal-header">
+              <span class="terminal-dot red"></span>
+              <span class="terminal-dot yellow"></span>
+              <span class="terminal-dot green"></span>
+              <span class="terminal-title">ralph run</span>
+            </div>
+            <div class="terminal-body">
+              <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 1 &mdash;&mdash;&mdash;</span></div>
+              <div class="term-line"><span class="term-success">&#x2713;</span> 47/47 tests passed</div>
+              <div class="term-line"><span class="term-success">&#x2713;</span> committed: <span class="term-purple">feat: add rate limiting</span></div>
+              <div class="term-line">&nbsp;</div>
+              <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 2 &mdash;&mdash;&mdash;</span></div>
+              <div class="term-line"><span class="term-fail">&#x2717;</span> 1 test failed &mdash; feeding back to agent</div>
+              <div class="term-line">&nbsp;</div>
+              <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 3 &mdash;&mdash;&mdash;</span></div>
+              <div class="term-line"><span class="term-success">&#x2713;</span> 48/48 tests passed <span class="term-dim">&mdash; self-healed</span></div>
+              <div class="term-line"><span class="term-success">&#x2713;</span> committed: <span class="term-purple">fix: correct mutex ordering</span></div>
+              <div class="term-line">&nbsp;</div>
+              <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 4 &mdash;&mdash;&mdash;</span></div>
+              <div class="term-line">
+                <span class="term-dim">running agent&hellip;</span>
+                <span class="cursor-blink">&#x2588;</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- The scroll-triggered narrative: "Right now" -->
-    <section class="right-now" aria-labelledby="right-now-heading">
-      <div class="right-now-inner">
-        <h2 id="right-now-heading" class="sr-only">What's happening right now</h2>
-
-        <div class="ticker-strip">
-          <div class="ticker-track" aria-hidden="true">
-            <span class="ticker-item"><span class="ticker-dot"></span> @maya shipped 14 commits overnight</span>
-            <span class="ticker-item"><span class="ticker-dot"></span> @dan's agent just fixed a race condition</span>
-            <span class="ticker-item"><span class="ticker-dot"></span> @alex woke up to 3 PRs ready for review</span>
-            <span class="ticker-item"><span class="ticker-dot"></span> @kai's backlog is empty since Tuesday</span>
-            <span class="ticker-item"><span class="ticker-dot"></span> @maya shipped 14 commits overnight</span>
-            <span class="ticker-item"><span class="ticker-dot"></span> @dan's agent just fixed a race condition</span>
-            <span class="ticker-item"><span class="ticker-dot"></span> @alex woke up to 3 PRs ready for review</span>
-            <span class="ticker-item"><span class="ticker-dot"></span> @kai's backlog is empty since Tuesday</span>
-          </div>
+    <!-- Ticker -->
+    <section class="ticker-section" aria-labelledby="ticker-heading">
+      <h2 id="ticker-heading" class="sr-only">What's happening right now</h2>
+      <div class="ticker-strip">
+        <div class="ticker-track" aria-hidden="true">
+          <span class="ticker-item"><span class="ticker-dot"></span> @maya shipped 14 commits overnight</span>
+          <span class="ticker-item"><span class="ticker-dot"></span> @dan's agent just fixed a race condition</span>
+          <span class="ticker-item"><span class="ticker-dot"></span> @alex woke up to 3 PRs ready for review</span>
+          <span class="ticker-item"><span class="ticker-dot"></span> @kai's backlog is empty since Tuesday</span>
+          <span class="ticker-item"><span class="ticker-dot"></span> @maya shipped 14 commits overnight</span>
+          <span class="ticker-item"><span class="ticker-dot"></span> @dan's agent just fixed a race condition</span>
+          <span class="ticker-item"><span class="ticker-dot"></span> @alex woke up to 3 PRs ready for review</span>
+          <span class="ticker-item"><span class="ticker-dot"></span> @kai's backlog is empty since Tuesday</span>
         </div>
       </div>
     </section>
@@ -256,7 +286,7 @@
       <div class="fomo-inner">
         <p class="section-eyebrow fade-up">The reality</p>
         <h2 id="fomo-heading" class="section-heading fade-up">
-          You closed your laptop.<br>Everyone else's agent kept going.
+          You closed your laptop.<br>Your agent didn't.
         </h2>
 
         <div class="fomo-contrast fade-up">
@@ -288,88 +318,6 @@
               <div class="fomo-line"><span class="fomo-time">4:03 AM</span> <span class="success">&#x2713;</span> feat: add pagination</div>
               <div class="fomo-line"><span class="fomo-time">5:44 AM</span> <span class="success">&#x2713;</span> refactor: extract auth</div>
               <div class="fomo-line"><span class="fomo-time">7:00 AM</span> <span class="fomo-highlight">23 commits &middot; 3 PRs ready</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- How it works — cinematic terminal -->
-    <section class="demo" aria-labelledby="demo-heading">
-      <div class="demo-inner">
-        <p class="section-eyebrow fade-up">Three commands. That's it.</p>
-        <h2 id="demo-heading" class="section-heading fade-up">Install. Create. Run.</h2>
-        <p class="section-subtitle fade-up">No config files. No dashboards. No YAML nightmares.</p>
-
-        <div class="demo-terminal-wrap fade-up">
-          <div class="terminal-glow" aria-hidden="true"></div>
-          <div class="demo-terminal">
-            <div class="terminal-window">
-              <div class="terminal-header">
-                <span class="terminal-dot red"></span>
-                <span class="terminal-dot yellow"></span>
-                <span class="terminal-dot green"></span>
-                <span class="terminal-title">terminal</span>
-              </div>
-              <div class="terminal-body">
-                <div class="term-line term-line-1">
-                  <span class="term-prompt">$</span>
-                  <span class="term-cmd">uv tool install ralphify</span>
-                  <span class="term-dim"> # install once</span>
-                </div>
-                <div class="term-line term-line-2">
-                  <span class="term-prompt">$</span>
-                  <span class="term-cmd">ralph new</span>
-                  <span class="term-dim"> # creates RALPH.md</span>
-                </div>
-                <div class="term-line term-line-3">
-                  <span class="term-prompt">$</span>
-                  <span class="term-cmd">ralph run</span>
-                  <span class="term-dim"> # start the loop</span>
-                </div>
-                <div class="term-line term-line-4">&nbsp;</div>
-                <div class="term-line term-line-5">
-                  <span class="term-dim">&mdash;&mdash;&mdash; iteration 1 &mdash;&mdash;&mdash;</span>
-                </div>
-                <div class="term-line term-line-6">
-                  <span class="term-success">&#x2713;</span> 47/47 tests passed
-                </div>
-                <div class="term-line term-line-7">
-                  <span class="term-success">&#x2713;</span> committed: <span class="term-purple">feat: add rate limiting</span>
-                </div>
-                <div class="term-line term-line-8">
-                  <span class="term-dim">&mdash;&mdash;&mdash; iteration 2 &mdash;&mdash;&mdash;</span>
-                </div>
-                <div class="term-line term-line-9">
-                  <span class="term-fail">&#x2717;</span> 1 test failed &mdash; feeding back to agent
-                </div>
-                <div class="term-line term-line-10">
-                  <span class="term-dim">&mdash;&mdash;&mdash; iteration 3 &mdash;&mdash;&mdash;</span>
-                </div>
-                <div class="term-line term-line-11">
-                  <span class="term-success">&#x2713;</span> 48/48 tests passed <span class="term-dim">&mdash; self-healed</span>
-                </div>
-                <div class="term-line term-line-12">
-                  <span class="term-success">&#x2713;</span> committed: <span class="term-purple">fix: correct mutex ordering</span>
-                </div>
-                <div class="term-line term-line-cursor">
-                  <span class="term-prompt">&#x25B6;</span>
-                  <span class="term-dim">running agent&hellip;</span>
-                  <span class="cursor-blink">&#x2588;</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="agent-strip fade-up">
-          <div class="agent-strip-inner">
-            <span class="agent-strip-label">Works with</span>
-            <div class="agent-strip-list">
-              <a href="docs/agents/" class="agent-chip">Claude Code</a>
-              <a href="docs/agents/" class="agent-chip">Aider</a>
-              <a href="docs/agents/" class="agent-chip">Codex CLI</a>
-              <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
             </div>
           </div>
         </div>
@@ -416,7 +364,7 @@ pick the next task from TODO.md and implement it.</code></pre>
       </div>
     </section>
 
-    <!-- The loop -->
+    <!-- How it works — the loop -->
     <section class="how-it-works" aria-labelledby="how-heading">
       <div class="how-inner">
         <p class="section-eyebrow fade-up">How it works</p>
@@ -481,6 +429,33 @@ pick the next task from TODO.md and implement it.</code></pre>
       </div>
     </section>
 
+    <!-- Agent compatibility -->
+    <section class="agents" aria-labelledby="agents-heading">
+      <div class="agents-inner">
+        <p class="section-eyebrow fade-up">Works with everything</p>
+        <h2 id="agents-heading" class="section-heading fade-up">Any agent. Any language. Any stack.</h2>
+        <p class="section-subtitle fade-up">Ralphify is agent-agnostic. If it takes a prompt via stdin, it works.</p>
+        <div class="agent-grid fade-up">
+          <a href="docs/agents/" class="agent-card">
+            <div class="agent-card-name">Claude Code</div>
+            <div class="agent-card-desc">Anthropic's CLI agent</div>
+          </a>
+          <a href="docs/agents/" class="agent-card">
+            <div class="agent-card-name">Aider</div>
+            <div class="agent-card-desc">AI pair programming in terminal</div>
+          </a>
+          <a href="docs/agents/" class="agent-card">
+            <div class="agent-card-name">Codex CLI</div>
+            <div class="agent-card-desc">OpenAI's CLI agent</div>
+          </a>
+          <a href="docs/agents/" class="agent-card">
+            <div class="agent-card-name">Any CLI agent</div>
+            <div class="agent-card-desc">If it reads stdin, it works</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
     <!-- Social proof -->
     <section class="social-proof" aria-labelledby="social-heading">
       <h2 id="social-heading" class="sr-only">What developers are saying</h2>
@@ -514,25 +489,28 @@ pick the next task from TODO.md and implement it.</code></pre>
     <!-- Install CTA -->
     <section class="install" aria-labelledby="install-heading">
       <h2 id="install-heading" class="section-heading fade-up">Get Ralph running</h2>
-      <p class="section-subtitle fade-up">Three commands. That's it.</p>
+      <p class="section-subtitle fade-up">Three commands. Two minutes. Zero config.</p>
       <div class="install-steps fade-up">
         <div class="install-step">
+          <span class="install-number">1</span>
           <span class="install-label">Install</span>
           <div class="install-command">
             <code>uv tool install ralphify</code>
             <button class="copy-btn" aria-label="Copy install command" onclick="copyCommand(this, 'uv tool install ralphify')">Copy</button>
           </div>
         </div>
-        <div class="install-arrow" aria-hidden="true">&rarr;</div>
+        <div class="install-connector" aria-hidden="true"></div>
         <div class="install-step">
+          <span class="install-number">2</span>
           <span class="install-label">Create a ralph</span>
           <div class="install-command">
             <code>ralph new</code>
             <button class="copy-btn" aria-label="Copy new command" onclick="copyCommand(this, 'ralph new')">Copy</button>
           </div>
         </div>
-        <div class="install-arrow" aria-hidden="true">&rarr;</div>
+        <div class="install-connector" aria-hidden="true"></div>
         <div class="install-step">
+          <span class="install-number">3</span>
           <span class="install-label">Run it</span>
           <div class="install-command">
             <code>ralph run</code>
@@ -565,7 +543,7 @@ pick the next task from TODO.md and implement it.</code></pre>
         </div>
         <div class="faq-item">
           <dt>What's &ldquo;agent FOMO&rdquo;?</dt>
-          <dd>That nagging feeling that everyone else has an AI coding agent shipping code right now&thinsp;&mdash;&thinsp;and you don't. Ralph fixes this. Set it up once, and your agent runs autonomously while you're away. No more stressing about whether you have an agent running.</dd>
+          <dd>That nagging feeling that everyone else has an AI coding agent shipping code right now&thinsp;&mdash;&thinsp;and you don't. Ralph fixes this. Set it up once, and your agent runs autonomously while you're away.</dd>
         </div>
       </dl>
     </section>
@@ -581,6 +559,7 @@ pick the next task from TODO.md and implement it.</code></pre>
         <h2 id="cta-bottom-heading">
           Stop stressing.<br>
           <span class="hero-gradient-text">Start shipping.</span>
+          <span class="runner-emoji runner-emoji-sm" aria-hidden="true">&#x1F3C3;</span>
         </h2>
         <div class="install-command cta-command">
           <code>uv tool install ralphify && ralph new && ralph run</code>
@@ -628,28 +607,19 @@ pick the next task from TODO.md and implement it.</code></pre>
 
     document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
-    // Terminal lines staggered reveal
-    const termLines = document.querySelectorAll('.term-line');
-    if (termLines.length) {
-      const termObs = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const lines = entry.target.querySelectorAll('.term-line');
-            lines.forEach((line, i) => {
-              line.style.opacity = '0';
-              line.style.transform = 'translateY(4px)';
-              setTimeout(() => {
-                line.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                line.style.opacity = '1';
-                line.style.transform = 'translateY(0)';
-              }, i * 180);
-            });
-            termObs.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.2 });
-
-      document.querySelectorAll('.terminal-body').forEach(el => termObs.observe(el));
+    // Hero terminal lines staggered reveal
+    const heroTerminal = document.querySelector('.hero-terminal .terminal-body');
+    if (heroTerminal) {
+      const lines = heroTerminal.querySelectorAll('.term-line');
+      lines.forEach((line, i) => {
+        line.style.opacity = '0';
+        line.style.transform = 'translateY(4px)';
+        setTimeout(() => {
+          line.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+          line.style.opacity = '1';
+          line.style.transform = 'translateY(0)';
+        }, 600 + i * 200);
+      });
     }
 
     // FOMO cards staggered reveal
@@ -667,16 +637,6 @@ pick the next task from TODO.md and implement it.</code></pre>
         });
       }, { threshold: 0.2 });
       fomoObs.observe(fomoContrast);
-    }
-
-    // Live iteration counter
-    const iterEl = document.getElementById('iter-count');
-    if (iterEl) {
-      let count = 1247;
-      setInterval(() => {
-        count++;
-        iterEl.textContent = count.toLocaleString();
-      }, 8000);
     }
 
     // Copy to clipboard
