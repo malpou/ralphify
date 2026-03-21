@@ -110,10 +110,7 @@ class TestRunLoop:
 
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_prompt_read_from_ralph_file(self, mock_run, tmp_path):
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir(exist_ok=True)
-        (ralph_dir / "RALPH.md").write_text("my prompt text")
-        config = make_config(tmp_path, max_iterations=1)
+        config = make_config(tmp_path, "my prompt text", max_iterations=1)
         state = make_state()
 
         run_loop(config, state, NullEmitter())
@@ -274,13 +271,10 @@ class TestRunStateControls:
 class TestRalphArgs:
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_args_resolved_in_prompt(self, mock_run, tmp_path):
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir(exist_ok=True)
-        (ralph_dir / "RALPH.md").write_text(
-            "---\nargs:\n  - dir\n  - focus\n---\nResearch {{ args.dir }} focus: {{ args.focus }}"
-        )
         config = make_config(
-            tmp_path, max_iterations=1,
+            tmp_path,
+            "---\nargs:\n  - dir\n  - focus\n---\nResearch {{ args.dir }} focus: {{ args.focus }}",
+            max_iterations=1,
             args={"dir": "./src", "focus": "perf"},
         )
         state = make_state()
@@ -291,10 +285,7 @@ class TestRalphArgs:
 
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_empty_args_clears_placeholders(self, mock_run, tmp_path):
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir(exist_ok=True)
-        (ralph_dir / "RALPH.md").write_text("Before {{ args.opt }} after")
-        config = make_config(tmp_path, max_iterations=1, args={})
+        config = make_config(tmp_path, "Before {{ args.opt }} after", max_iterations=1, args={})
         state = make_state()
         run_loop(config, state, NullEmitter())
 
@@ -308,14 +299,11 @@ class TestCommandExecution:
     def test_commands_output_injected(self, mock_run_cmd, mock_agent, tmp_path):
         mock_run_cmd.return_value = RunResult(success=True, returncode=0, output="test output\n")
 
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir(exist_ok=True)
-        (ralph_dir / "RALPH.md").write_text(
-            "---\nagent: echo\ncommands:\n  - name: tests\n    run: uv run pytest\n---\n"
-            "Results:\n\n{{ commands.tests }}"
-        )
         config = make_config(
-            tmp_path, max_iterations=1,
+            tmp_path,
+            "---\nagent: echo\ncommands:\n  - name: tests\n    run: uv run pytest\n---\n"
+            "Results:\n\n{{ commands.tests }}",
+            max_iterations=1,
             commands=[Command(name="tests", run="uv run pytest")],
         )
         state = make_state()
@@ -340,15 +328,12 @@ class TestCommandExecution:
 
         mock_run_cmd.side_effect = per_command
 
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir(exist_ok=True)
-        (ralph_dir / "RALPH.md").write_text(
+        config = make_config(
+            tmp_path,
             "---\nagent: echo\ncommands:\n  - name: tests\n    run: pytest\n"
             "  - name: lint\n    run: ruff check\n---\n"
-            "{{ commands.tests }}\n{{ commands.lint }}"
-        )
-        config = make_config(
-            tmp_path, max_iterations=1,
+            "{{ commands.tests }}\n{{ commands.lint }}",
+            max_iterations=1,
             commands=[
                 Command(name="tests", run="pytest"),
                 Command(name="lint", run="ruff check"),
@@ -365,14 +350,11 @@ class TestCommandExecution:
         """Commands starting with ./ run relative to the ralph directory."""
         mock_run_cmd.return_value = RunResult(success=True, returncode=0, output="ok")
 
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir(exist_ok=True)
-        (ralph_dir / "RALPH.md").write_text(
-            "---\nagent: echo\ncommands:\n  - name: local\n    run: ./check.sh\n---\n"
-            "{{ commands.local }}"
-        )
         config = make_config(
-            tmp_path, max_iterations=1,
+            tmp_path,
+            "---\nagent: echo\ncommands:\n  - name: local\n    run: ./check.sh\n---\n"
+            "{{ commands.local }}",
+            max_iterations=1,
             commands=[Command(name="local", run="./check.sh")],
         )
         state = make_state()
@@ -387,14 +369,11 @@ class TestCommandExecution:
         """Commands without ./ prefix run from the project root."""
         mock_run_cmd.return_value = RunResult(success=True, returncode=0, output="ok")
 
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir(exist_ok=True)
-        (ralph_dir / "RALPH.md").write_text(
-            "---\nagent: echo\ncommands:\n  - name: tests\n    run: uv run pytest\n---\n"
-            "{{ commands.tests }}"
-        )
         config = make_config(
-            tmp_path, max_iterations=1,
+            tmp_path,
+            "---\nagent: echo\ncommands:\n  - name: tests\n    run: uv run pytest\n---\n"
+            "{{ commands.tests }}",
+            max_iterations=1,
             commands=[Command(name="tests", run="uv run pytest")],
         )
         state = make_state()
@@ -409,14 +388,11 @@ class TestCommandExecution:
         """Command timeout from frontmatter is forwarded to run_command."""
         mock_run_cmd.return_value = RunResult(success=True, returncode=0, output="ok")
 
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir(exist_ok=True)
-        (ralph_dir / "RALPH.md").write_text(
-            "---\nagent: echo\ncommands:\n  - name: slow\n    run: sleep 1\n    timeout: 300\n---\n"
-            "{{ commands.slow }}"
-        )
         config = make_config(
-            tmp_path, max_iterations=1,
+            tmp_path,
+            "---\nagent: echo\ncommands:\n  - name: slow\n    run: sleep 1\n    timeout: 300\n---\n"
+            "{{ commands.slow }}",
+            max_iterations=1,
             commands=[Command(name="slow", run="sleep 1", timeout=300)],
         )
         state = make_state()
@@ -686,55 +662,45 @@ class TestAssemblePrompt:
     """Unit tests for _assemble_prompt — reading and resolving the prompt template."""
 
     def test_reads_prompt_from_ralph_file(self, tmp_path):
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir()
-        (ralph_dir / "RALPH.md").write_text("simple prompt")
-        config = make_config(tmp_path, max_iterations=1)
+        config = make_config(tmp_path, "simple prompt", max_iterations=1)
 
         result = _assemble_prompt(config, {})
 
         assert result == "simple prompt"
 
     def test_resolves_command_placeholders(self, tmp_path):
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir()
-        (ralph_dir / "RALPH.md").write_text(
+        config = make_config(
+            tmp_path,
             "---\nagent: echo\ncommands:\n  - name: tests\n    run: pytest\n---\n"
-            "Results: {{ commands.tests }}"
+            "Results: {{ commands.tests }}",
+            max_iterations=1,
         )
-        config = make_config(tmp_path, max_iterations=1)
 
         result = _assemble_prompt(config, {"tests": "all passed"})
 
         assert result == "Results: all passed"
 
     def test_resolves_args_placeholders(self, tmp_path):
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir()
-        (ralph_dir / "RALPH.md").write_text(
-            "---\nagent: echo\nargs:\n  - dir\n---\nSearch {{ args.dir }}"
+        config = make_config(
+            tmp_path,
+            "---\nagent: echo\nargs:\n  - dir\n---\nSearch {{ args.dir }}",
+            max_iterations=1,
+            args={"dir": "./src"},
         )
-        config = make_config(tmp_path, max_iterations=1, args={"dir": "./src"})
 
         result = _assemble_prompt(config, {})
 
         assert result == "Search ./src"
 
     def test_clears_unresolved_placeholders(self, tmp_path):
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir()
-        (ralph_dir / "RALPH.md").write_text("Before {{ args.missing }} after")
-        config = make_config(tmp_path, max_iterations=1, args={})
+        config = make_config(tmp_path, "Before {{ args.missing }} after", max_iterations=1, args={})
 
         result = _assemble_prompt(config, {})
 
         assert result == "Before  after"
 
     def test_strips_html_comments(self, tmp_path):
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir()
-        (ralph_dir / "RALPH.md").write_text("Before <!-- hidden --> after")
-        config = make_config(tmp_path, max_iterations=1)
+        config = make_config(tmp_path, "Before <!-- hidden --> after", max_iterations=1)
 
         result = _assemble_prompt(config, {})
 

@@ -37,13 +37,17 @@ MOCK_ENGINE_SLEEP = "ralphify.engine.time.sleep"
 # ── Factory helpers ───────────────────────────────────────────────────
 
 
-def make_config(tmp_path: Path, **overrides) -> RunConfig:
-    """Create a RunConfig pointing at a temp ralph directory."""
+def make_config(tmp_path: Path, ralph_content: str = "test prompt", **overrides) -> RunConfig:
+    """Create a RunConfig pointing at a temp ralph directory.
+
+    *ralph_content* is written to the ``RALPH.md`` file every time, so
+    tests can supply custom frontmatter + body without manually creating
+    the ralph directory first.
+    """
     ralph_dir = tmp_path / "my-ralph"
     ralph_dir.mkdir(exist_ok=True)
     ralph_file = ralph_dir / "RALPH.md"
-    if not ralph_file.exists():
-        ralph_file.write_text("test prompt")
+    ralph_file.write_text(ralph_content)
 
     defaults = dict(
         agent="echo",
