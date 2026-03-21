@@ -199,24 +199,29 @@
           </div>
 
           <h1 class="hero-headline">
-            Stop stressing<br>
-            over not having<br>
-            an agent running.
-          </h1>
-
-          <p class="hero-punchline">
+            Stop stressing.<br>
             <span class="hero-gradient-text">Ralph is always running</span>
             <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
-          </p>
+          </h1>
 
           <p class="hero-sub">
-            Put your AI coding agent in a <code>while True</code> loop.<br>
-            Write a prompt. Point it at an agent. Walk away.
+            Your AI coding agent in a <code>while True</code> loop.<br>
+            Write a prompt. Walk away. Wake up to commits.
           </p>
 
           <div class="cta">
             <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
             <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
+          </div>
+
+          <div class="hero-agents">
+            <span class="agent-strip-label">Works with</span>
+            <div class="agent-strip-list">
+              <a href="docs/agents/" class="agent-chip">Claude Code</a>
+              <a href="docs/agents/" class="agent-chip">Aider</a>
+              <a href="docs/agents/" class="agent-chip">Codex CLI</a>
+              <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
+            </div>
           </div>
         </div>
 
@@ -226,7 +231,7 @@
               <span class="terminal-dot red"></span>
               <span class="terminal-dot yellow"></span>
               <span class="terminal-dot green"></span>
-              <span class="terminal-title">ralph &mdash; iteration 47</span>
+              <span class="terminal-title">ralph &mdash; iteration 48</span>
             </div>
             <pre><code><span class="prompt">$</span> ralph run
 <span class="dim">&#9484;&#9472; Iteration 46 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
@@ -245,19 +250,9 @@
 <span class="success">&#x2713;</span> Iteration 48 completed <span class="dim">(41.7s)</span>
   Checks: 2 passed
     <span class="success">&#x2713;</span> lint
-    <span class="success">&#x2713;</span> tests <span class="dim">(47/47)</span>
+    <span class="success">&#x2713;</span> tests <span class="dim">(48/48)</span>
 <span class="cursor-blink">&#9608;</span></code></pre>
           </div>
-        </div>
-      </div>
-
-      <div class="hero-agents">
-        <span class="agent-strip-label">Works with</span>
-        <div class="agent-strip-list">
-          <a href="docs/agents/" class="agent-chip">Claude Code</a>
-          <a href="docs/agents/" class="agent-chip">Aider</a>
-          <a href="docs/agents/" class="agent-chip">Codex CLI</a>
-          <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
         </div>
       </div>
     </section>
@@ -287,17 +282,39 @@
       <div class="fomo-inner">
         <p class="fomo-eyebrow">Sound familiar?</p>
         <h2 id="fomo-heading" class="section-heading">The agent FOMO is real.</h2>
-        <p class="section-subtitle">Every engineering team has that one person whose agent shipped 14 files at 3am. You woke up to a Slack message: <em>&ldquo;Done.&rdquo;</em></p>
+        <p class="section-subtitle">Every engineering team has that one person whose agent shipped 14 files while they slept.</p>
 
         <div class="fomo-grid">
+          <div class="fomo-card fomo-card-slack">
+            <div class="slack-msg">
+              <div class="slack-avatar">M</div>
+              <div class="slack-body">
+                <div class="slack-meta"><strong>Marcus</strong> <span class="slack-time">9:04 AM</span></div>
+                <div class="slack-text">my agent ran 23 iterations overnight. PR is up for review</div>
+              </div>
+            </div>
+            <div class="slack-msg">
+              <div class="slack-avatar">Y</div>
+              <div class="slack-body">
+                <div class="slack-meta"><strong>You</strong> <span class="slack-time">9:06 AM</span></div>
+                <div class="slack-text">nice, I'll take a look</div>
+              </div>
+            </div>
+            <div class="slack-msg slack-msg-thought">
+              <div class="slack-thought-text">meanwhile, you closed your laptop last night and the agent died</div>
+            </div>
+          </div>
+
           <div class="fomo-card">
             <div class="fomo-quote">&ldquo;Do you have an agent running?&rdquo;</div>
             <p class="fomo-context">The question that haunts every standup. Three people nod. You stare at your coffee.</p>
           </div>
+
           <div class="fomo-card">
             <div class="fomo-quote">&ldquo;I just let it run overnight.&rdquo;</div>
-            <p class="fomo-context">Your colleague closed their laptop, went to bed, and woke up to a PR with 23 commits. You closed your laptop and the agent died.</p>
+            <p class="fomo-context">They closed their laptop, went to bed, and woke up to a PR with 23 commits. You closed your laptop and the agent died.</p>
           </div>
+
           <div class="fomo-card fomo-card-solution">
             <div class="fomo-solution-badge">
               <span class="status-dot"></span>
@@ -305,39 +322,6 @@
             </div>
             <div class="fomo-quote">&ldquo;Ralph has been running since Tuesday.&rdquo;</div>
             <p class="fomo-context">An autonomous loop that reads the prompt, does the work, checks itself, and starts again. Fresh context every iteration. No babysitting.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- How the loop works -->
-    <section class="how-it-works" aria-labelledby="how-heading">
-      <div class="how-inner">
-        <h2 id="how-heading" class="section-heading">The loop</h2>
-        <p class="section-subtitle">Three steps, every iteration. Fresh context, no drift.</p>
-
-        <div class="loop-visual">
-          <div class="loop-steps">
-            <div class="loop-step">
-              <div class="loop-step-number">1</div>
-              <h3>Assemble the prompt</h3>
-              <p>Ralphify reads your <a href="docs/writing-prompts/"><code>RALPH.md</code></a>, runs commands to gather live data (git log, test output, anything), and injects results into the prompt.</p>
-            </div>
-            <div class="loop-connector-h" aria-hidden="true"></div>
-            <div class="loop-step">
-              <div class="loop-step-number">2</div>
-              <h3>Pipe to the agent</h3>
-              <p>The assembled prompt goes to your <a href="docs/agents/">agent</a>. It reads the codebase, does one unit of work, commits, and exits.</p>
-            </div>
-            <div class="loop-connector-h" aria-hidden="true"></div>
-            <div class="loop-step">
-              <div class="loop-step-number">3</div>
-              <h3>Repeat</h3>
-              <p>Back to step 1. Fresh context window, latest code. Edit the prompt while it runs &mdash; changes take effect next cycle.</p>
-            </div>
-          </div>
-          <div class="loop-return" aria-hidden="true">
-            <span class="loop-return-arrow">&#x21A9; back to step 1</span>
           </div>
         </div>
       </div>
@@ -377,6 +361,39 @@ Test results from the last run:
 
 Fix any failing tests. If all tests pass,
 pick the next task from TODO.md and implement it.</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How the loop works -->
+    <section class="how-it-works" aria-labelledby="how-heading">
+      <div class="how-inner">
+        <h2 id="how-heading" class="section-heading">The loop</h2>
+        <p class="section-subtitle">Three steps, every iteration. Fresh context, no drift.</p>
+
+        <div class="loop-visual">
+          <div class="loop-steps">
+            <div class="loop-step">
+              <div class="loop-step-number">1</div>
+              <h3>Assemble the prompt</h3>
+              <p>Ralphify reads your <a href="docs/writing-prompts/"><code>RALPH.md</code></a>, runs commands to gather live data (git log, test output, anything), and injects results into the prompt.</p>
+            </div>
+            <div class="loop-connector-h" aria-hidden="true"></div>
+            <div class="loop-step">
+              <div class="loop-step-number">2</div>
+              <h3>Pipe to the agent</h3>
+              <p>The assembled prompt goes to your <a href="docs/agents/">agent</a>. It reads the codebase, does one unit of work, commits, and exits.</p>
+            </div>
+            <div class="loop-connector-h" aria-hidden="true"></div>
+            <div class="loop-step">
+              <div class="loop-step-number">3</div>
+              <h3>Repeat</h3>
+              <p>Back to step 1. Fresh context window, latest code. Edit the prompt while it runs &mdash; changes take effect next cycle.</p>
+            </div>
+          </div>
+          <div class="loop-return" aria-hidden="true">
+            <span class="loop-return-arrow">&#x21A9; back to step 1</span>
           </div>
         </div>
       </div>
@@ -470,8 +487,8 @@ pick the next task from TODO.md and implement it.</code></pre>
           <span class="cta-bottom-status-text">Ralph is running</span>
         </div>
         <h2 id="cta-bottom-heading">
-          Stop stressing.<br>
-          <span class="hero-gradient-text">Let Ralph ship while you sleep.</span>
+          Everyone else has an agent running.<br>
+          <span class="hero-gradient-text">Now it's your turn.</span>
         </h2>
         <div class="install-command cta-command">
           <code>uv tool install ralphify && ralph new && ralph run</code>
