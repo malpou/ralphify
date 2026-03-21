@@ -524,8 +524,16 @@ nav {
   transform: translate(-50%, -50%);
   width: 160%;
   height: 200%;
-  background: radial-gradient(ellipse, rgba(139, 108, 240, 0.10) 0%, rgba(232, 123, 74, 0.03) 35%, transparent 55%);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(139, 108, 240, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 80% at 50% 50%, rgba(232, 123, 74, 0.05) 0%, transparent 45%);
   pointer-events: none;
+  animation: terminal-glow 8s ease-in-out infinite alternate;
+}
+
+@keyframes terminal-glow {
+  0% { opacity: 0.8; }
+  100% { opacity: 1; }
 }
 
 .hero-terminal .terminal-window {
@@ -786,7 +794,7 @@ nav {
 .fomo {
   padding: 9rem 2rem;
   background: var(--bg-surface);
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
   position: relative;
 }
 
@@ -796,7 +804,24 @@ nav {
   top: 0;
   left: 0;
   right: 0;
-  height: 400px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 108, 240, 0.3) 30%,
+    rgba(232, 123, 74, 0.2) 50%,
+    rgba(139, 108, 240, 0.3) 70%,
+    transparent 100%
+  );
+}
+
+.fomo::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 300px;
   background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(139, 108, 240, 0.04) 0%, transparent 70%);
   pointer-events: none;
 }
@@ -923,7 +948,25 @@ nav {
 .ralph-file {
   padding: 9rem 2rem;
   background: var(--bg);
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
+  position: relative;
+}
+
+.ralph-file::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 108, 240, 0.15) 30%,
+    rgba(139, 108, 240, 0.25) 50%,
+    rgba(139, 108, 240, 0.15) 70%,
+    transparent 100%
+  );
 }
 
 .ralph-file-inner {
@@ -997,7 +1040,25 @@ nav {
 .how-it-works {
   padding: 9rem 2rem;
   background: var(--bg-surface);
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
+  position: relative;
+}
+
+.how-it-works::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 108, 240, 0.15) 30%,
+    rgba(139, 108, 240, 0.25) 50%,
+    rgba(139, 108, 240, 0.15) 70%,
+    transparent 100%
+  );
 }
 
 .how-inner {
@@ -1086,7 +1147,25 @@ nav {
 .why {
   padding: 9rem 2rem;
   background: var(--bg);
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
+  position: relative;
+}
+
+.why::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 108, 240, 0.15) 30%,
+    rgba(139, 108, 240, 0.25) 50%,
+    rgba(139, 108, 240, 0.15) 70%,
+    transparent 100%
+  );
 }
 
 .why-inner {
@@ -1149,7 +1228,18 @@ nav {
 .agents {
   padding: 6rem 2rem;
   background: var(--bg-surface);
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
+  position: relative;
+}
+
+.agents::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(139, 108, 240, 0.15) 30%, rgba(139, 108, 240, 0.25) 50%, rgba(139, 108, 240, 0.15) 70%, transparent 100%);
 }
 
 .agents-inner {
@@ -1202,7 +1292,18 @@ nav {
 .social-proof {
   padding: 6rem 2rem;
   background: var(--bg);
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
+  position: relative;
+}
+
+.social-proof::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(139, 108, 240, 0.15) 30%, rgba(139, 108, 240, 0.25) 50%, rgba(139, 108, 240, 0.15) 70%, transparent 100%);
 }
 
 .social-inner {
@@ -1281,7 +1382,18 @@ nav {
 .install {
   padding: 9rem 2rem;
   background: var(--bg-surface);
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
+  position: relative;
+}
+
+.install::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(139, 108, 240, 0.15) 30%, rgba(139, 108, 240, 0.25) 50%, rgba(139, 108, 240, 0.15) 70%, transparent 100%);
 }
 
 .install-steps {
@@ -1387,7 +1499,18 @@ nav {
 .faq {
   padding: 9rem 2rem;
   background: var(--bg);
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
+  position: relative;
+}
+
+.faq::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(139, 108, 240, 0.15) 30%, rgba(139, 108, 240, 0.25) 50%, rgba(139, 108, 240, 0.15) 70%, transparent 100%);
 }
 
 .faq-list {
@@ -1456,7 +1579,25 @@ nav {
   text-align: center;
   position: relative;
   overflow: hidden;
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
+}
+
+.cta-bottom > .cta-bottom-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 108, 240, 0.3) 30%,
+    rgba(232, 123, 74, 0.2) 50%,
+    rgba(139, 108, 240, 0.3) 70%,
+    transparent 100%
+  );
+  z-index: 1;
 }
 
 .cta-bottom-bg {
@@ -1528,8 +1669,19 @@ nav {
 
 footer {
   padding: 3rem 2rem;
-  border-top: 1px solid var(--border-subtle);
+  border-top: none;
   background: var(--bg);
+  position: relative;
+}
+
+footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(139, 108, 240, 0.10) 30%, rgba(139, 108, 240, 0.15) 50%, rgba(139, 108, 240, 0.10) 70%, transparent 100%);
 }
 
 .footer-nav {
