@@ -158,5 +158,5 @@ A single agent conversation fills up its context window, slows down, and eventua
 - **[When to Use](when-to-use.md)** — figure out if a ralph loop fits your task
 - **[Getting Started](getting-started.md)** — from install to a running loop in 10 minutes
 - **[Writing Prompts](writing-prompts.md)** — patterns for effective autonomous loop prompts
-- **[Cookbook](cookbook.md)** — copy-pasteable setups for Python, TypeScript, Rust, and more
+- **[Cookbook](cookbook.md)** — copy-pasteable setups for coding, docs, research, and more
 - **[Python API](api.md)** — embed the loop in your own automation

@@ -232,7 +232,7 @@ Once you're confident the loop works, drop the `-n 3` to let it run indefinitely
 ## Next steps
 
 - [Writing Prompts](writing-prompts.md) — patterns for writing effective autonomous loop prompts
-- [Cookbook](cookbook.md) — copy-pasteable setups for Python, TypeScript, Rust, and more
+- [Cookbook](cookbook.md) — copy-pasteable setups for coding, docs, research, and more
 - [How it Works](how-it-works.md) — what happens inside each iteration
 - [Troubleshooting](troubleshooting.md) — when things don't work as expected
 - [CLI Reference](cli.md) — all commands and options
