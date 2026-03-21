@@ -634,6 +634,30 @@ class TestHandleControlSignals:
         assert EventType.RUN_PAUSED in types
         assert EventType.RUN_RESUMED not in types
 
+    def test_stop_detected_during_pause_poll_interval(self):
+        """Stop flag set without resume event exercises the polling-loop guard.
+
+        Normally request_stop() sets both the flag and the resume event, so
+        wait_for_unpause unblocks immediately.  This test sets only the flag
+        to cover the guard inside the polling loop (engine.py _wait_for_resume)
+        that checks stop_requested after each poll timeout.
+        """
+        state = make_state()
+        state.request_pause()
+        q = QueueEmitter()
+        emit = _BoundEmitter(q, state.run_id)
+
+        def set_stop_flag():
+            time.sleep(0.01)
+            state._stop_requested = True
+
+        threading.Thread(target=set_stop_flag, daemon=True).start()
+
+        result = _handle_control_signals(state, emit)
+
+        assert result is False
+        assert state.status == RunStatus.STOPPED
+
 
 class TestRunCommands:
     """Unit tests for _run_commands — command execution and cwd resolution."""
