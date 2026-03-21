@@ -79,6 +79,7 @@ config = RunConfig(
 | `timeout` | `float | None` | `None` | Max seconds per iteration |
 | `stop_on_error` | `bool` | `False` | Stop loop if agent exits non-zero |
 | `log_dir` | `str | None` | `None` | Directory for iteration log files |
+| `credit` | `bool` | `True` | Append co-author trailer instruction to prompt |
 | `project_root` | `Path` | `Path(".")` | Project root directory |
 
 `RunConfig` is mutable — you can change fields mid-run, and the loop picks up changes at the next iteration boundary.
