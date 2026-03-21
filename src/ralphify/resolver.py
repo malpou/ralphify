@@ -47,26 +47,27 @@ def resolve_placeholders(
     return named_pattern.sub(_replace_named, prompt)
 
 
+def _resolve_kind(prompt: str, available: dict[str, str], kind: str) -> str:
+    """Resolve placeholders of a given *kind*, clearing them when *available* is empty."""
+    if not available:
+        return _get_pattern(kind).sub("", prompt)
+    return resolve_placeholders(prompt, available, kind)
+
+
 def resolve_commands(prompt: str, command_outputs: dict[str, str]) -> str:
     """Replace ``{{ commands.name }}`` placeholders with command outputs.
 
-    Delegates to :func:`resolve_placeholders` with ``kind="commands"``.
     When *command_outputs* is empty, clears any remaining
     ``{{ commands.* }}`` placeholders so they don't leak into the
     assembled prompt.
     """
-    if not command_outputs:
-        return _get_pattern("commands").sub("", prompt)
-    return resolve_placeholders(prompt, command_outputs, "commands")
+    return _resolve_kind(prompt, command_outputs, "commands")
 
 
 def resolve_args(prompt: str, user_args: dict[str, str]) -> str:
     """Replace ``{{ args.name }}`` placeholders with user-supplied values.
 
-    Delegates to :func:`resolve_placeholders` with ``kind="args"``.
     When *user_args* is empty, clears any remaining ``{{ args.* }}``
     placeholders so they don't leak into the assembled prompt.
     """
-    if not user_args:
-        return _get_pattern("args").sub("", prompt)
-    return resolve_placeholders(prompt, user_args, "args")
+    return _resolve_kind(prompt, user_args, "args")
