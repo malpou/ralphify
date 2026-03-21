@@ -204,13 +204,26 @@ curl example and a description of the response format.
 
 ### Parameterized ralphs
 
-Use user arguments to make a ralph reusable across different projects or configurations:
+Use user arguments to make a ralph reusable across different projects or configurations. Args work in both the prompt body and command `run` fields:
 
 ```markdown
 ---
 agent: claude -p --dangerously-skip-permissions
 args: [dir, focus]
+commands:
+  - name: git-log
+    run: git log --oneline -10 -- {{ args.dir }}
+  - name: research-so-far
+    run: cat RESEARCH.md
 ---
+
+## Recent changes in {{ args.dir }}
+
+{{ commands.git-log }}
+
+## Research so far
+
+{{ commands.research-so-far }}
 
 Research the codebase at {{ args.dir }}.
 
@@ -229,6 +242,8 @@ Run the same ralph against different targets:
 ralph run research -- --dir ./api --focus "error handling"
 ralph run research -- --dir ./frontend --focus "state management"
 ```
+
+The `git-log` command uses `{{ args.dir }}` to show only commits touching the target directory — the same arg value is resolved in both command `run` strings and the prompt body.
 
 ## Anti-patterns to avoid
 
