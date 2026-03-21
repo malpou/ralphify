@@ -26,14 +26,13 @@ if sys.platform == "win32":
     sys.stderr.reconfigure(encoding="utf-8")
 
 _console = Console(highlight=False)
-rprint = _console.print
 
 app = typer.Typer()
 
 
 def _exit_error(msg: str) -> NoReturn:
     """Print an error in red and exit with code 1."""
-    rprint(f"[red]{msg}[/red]")
+    _console.print(f"[red]{msg}[/red]")
     raise typer.Exit(1)
 
 
@@ -55,22 +54,22 @@ def _print_banner() -> None:
     pad = max(0, (width - art_width) // 2)
     prefix = " " * pad
 
-    rprint()
+    _console.print()
     for line, color in BANNER:
-        rprint(f"[bold {color}]{prefix}{line}[/bold {color}]")
-    rprint()
-    rprint(f"[italic #A78BF5]{TAGLINE:^{width}}[/italic #A78BF5]")
-    rprint()
+        _console.print(f"[bold {color}]{prefix}{line}[/bold {color}]")
+    _console.print()
+    _console.print(f"[italic #A78BF5]{TAGLINE:^{width}}[/italic #A78BF5]")
+    _console.print()
     help_text = "Run 'ralph --help' for usage information"
-    rprint(f"[dim]{help_text:^{width}}[/dim]")
+    _console.print(f"[dim]{help_text:^{width}}[/dim]")
     star_text = "⭐ Star us on GitHub: https://github.com/computerlovetech/ralphify"
-    rprint(f"[dim]{star_text:^{width}}[/dim]")
-    rprint()
+    _console.print(f"[dim]{star_text:^{width}}[/dim]")
+    _console.print()
 
 
 def _version_callback(value: bool) -> None:
     if value:
-        rprint(f"ralphify {__version__}")
+        _console.print(f"ralphify {__version__}")
         raise typer.Exit()
 
 
@@ -82,7 +81,7 @@ def main_callback(
     """Stop stressing over not having an agent running. Ralph is always running."""
     if ctx.invoked_subcommand is None:
         _print_banner()
-        rprint(ctx.get_help())
+        _console.print(ctx.get_help())
         raise typer.Exit()
 
 
@@ -267,7 +266,7 @@ def run(
     )
 
     if log_dir:
-        rprint(f"[dim]Logging output to {log_dir}/[/dim]")
+        _console.print(f"[dim]Logging output to {log_dir}/[/dim]")
 
     state = RunState(run_id=generate_run_id())
     emitter = ConsoleEmitter(_console)
