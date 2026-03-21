@@ -98,14 +98,14 @@ def make_state() -> RunState:
 
 def _make_completed_process(
     returncode: int = 0, stdout: str = "", stderr: str = "",
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Build a CompletedProcess with the given values."""
     return subprocess.CompletedProcess(args=[], returncode=returncode, stdout=stdout, stderr=stderr)
 
 
 def ok_result(
     *_args: Any, stdout: str = "", stderr: str = "", **_kwargs: Any,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Subprocess result with exit code 0.
 
     Works as a direct factory — ``ok_result(stdout="out\\n")`` — and as a
@@ -116,7 +116,7 @@ def ok_result(
 
 def fail_result(
     *_args: Any, stdout: str = "", stderr: str = "", **_kwargs: Any,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Subprocess result with exit code 1.
 
     Works as a direct factory and as a ``side_effect`` callable (see

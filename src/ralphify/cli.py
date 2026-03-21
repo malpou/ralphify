@@ -103,7 +103,10 @@ def new(
         _exit_error(str(exc))
 
     cmd = build_agent_command(agent.name, "new-ralph", name)
-    os.execvp(cmd[0], cmd)
+    try:
+        os.execvp(cmd[0], cmd)
+    except FileNotFoundError:
+        _exit_error(f"Agent command '{cmd[0]}' not found on PATH.")
 
 
 def _parse_user_args(
