@@ -79,6 +79,30 @@ class TestRun:
         assert result.exit_code == 1
         assert "not found on PATH" in result.output
 
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+    def test_errors_with_empty_command_name(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir()
+        (ralph_dir / "RALPH.md").write_text(
+            "---\nagent: claude -p\ncommands:\n  - name: \"\"\n    run: echo hi\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "name" in result.output.lower()
+
+    @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
+    def test_errors_with_empty_command_run(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir()
+        (ralph_dir / "RALPH.md").write_text(
+            "---\nagent: claude -p\ncommands:\n  - name: status\n    run: \"\"\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "run" in result.output.lower()
+
     @patch("ralphify._agent.subprocess.run", side_effect=ok_result)
     @patch("ralphify.cli.shutil.which", return_value="/usr/bin/claude")
     def test_runs_when_valid(self, mock_which, mock_run, tmp_path, monkeypatch):
