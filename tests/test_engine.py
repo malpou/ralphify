@@ -8,7 +8,8 @@ from unittest.mock import patch
 from helpers import MOCK_SUBPROCESS, drain_events, fail_result, make_config, make_state, ok_result
 
 from ralphify._events import EventType, NullEmitter, QueueEmitter
-from ralphify._run_types import RunStatus
+from ralphify._run_types import Command, RunStatus
+from ralphify._runner import RunResult
 from ralphify.engine import _BoundEmitter, _delay_if_needed, run_loop
 
 
@@ -266,7 +267,6 @@ class TestCommandExecution:
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     @patch("ralphify.engine.run_command")
     def test_commands_output_injected(self, mock_run_cmd, mock_agent, tmp_path):
-        from ralphify._runner import RunResult
         mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="test output\n")
 
         ralph_dir = tmp_path / "my-ralph"
@@ -275,7 +275,6 @@ class TestCommandExecution:
             "---\nagent: echo\ncommands:\n  - name: tests\n    run: uv run pytest\n---\n"
             "Results:\n\n{{ commands.tests }}"
         )
-        from ralphify._run_types import Command
         config = make_config(
             tmp_path, max_iterations=1,
             commands=[Command(name="tests", run="uv run pytest")],
@@ -291,8 +290,6 @@ class TestCommandExecution:
     @patch("ralphify.engine.run_command")
     def test_multiple_commands_all_executed(self, mock_run_cmd, mock_agent, tmp_path):
         """All commands in the list are executed and their outputs collected."""
-        from ralphify._runner import RunResult
-        from ralphify._run_types import Command
 
         call_count = 0
 
@@ -327,9 +324,6 @@ class TestCommandExecution:
     @patch("ralphify.engine.run_command")
     def test_dotslash_command_uses_ralph_dir_as_cwd(self, mock_run_cmd, mock_agent, tmp_path):
         """Commands starting with ./ run relative to the ralph directory."""
-        from ralphify._runner import RunResult
-        from ralphify._run_types import Command
-
         mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
 
         ralph_dir = tmp_path / "my-ralph"
@@ -352,9 +346,6 @@ class TestCommandExecution:
     @patch("ralphify.engine.run_command")
     def test_regular_command_uses_project_root_as_cwd(self, mock_run_cmd, mock_agent, tmp_path):
         """Commands without ./ prefix run from the project root."""
-        from ralphify._runner import RunResult
-        from ralphify._run_types import Command
-
         mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
 
         ralph_dir = tmp_path / "my-ralph"
@@ -377,9 +368,6 @@ class TestCommandExecution:
     @patch("ralphify.engine.run_command")
     def test_command_timeout_passed_through(self, mock_run_cmd, mock_agent, tmp_path):
         """Command timeout from frontmatter is forwarded to run_command."""
-        from ralphify._runner import RunResult
-        from ralphify._run_types import Command
-
         mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
 
         ralph_dir = tmp_path / "my-ralph"
