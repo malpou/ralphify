@@ -28,6 +28,17 @@
 - https://block.github.io/goose/docs/tutorials/ralph-loop/ — Goose/Block — Worker/reviewer separation with file-based handoff (task.md, review-feedback.txt, review-result.txt) — **high**
 - https://www.humanlayer.dev/blog/brief-history-of-ralph — HumanLayer — Origin of ralph loops (Geoff Huntley, July 2025), cascading specifications, "overbaking" emergent behavior — **high**
 
+- https://ghuntley.com/ralph/ — Geoff Huntley — Agent-in-a-while-loop with specs, one-item-per-loop, subagent delegation, "sign erection" pattern — **high**
+- https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/ace-fca.md — Dex Horthy / HumanLayer — Frequent intentional compaction via research/plan/implement workflow (517 HN pts) — **high**
+- https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html — Birgitta Bockeler / Thoughtworks — Taxonomy of context types and loading strategies for coding agents — **high**
+- https://martinfowler.com/articles/exploring-gen-ai/humans-and-agents.html — Kief Morris / Thoughtworks — "On the loop" human position and the agentic flywheel pattern — **high**
+- https://aicoding.leaflet.pub/3mbrvhyye4k2e — Chad Fowler — "Relocating Rigor": probabilistic inside, deterministic at edges — **high**
+- https://mitchellh.com/writing/my-ai-adoption-journey — Mitchell Hashimoto — Six-step progression from chatbot to always-running harness-engineered agents — **high**
+- https://openai.com/index/harness-engineering/ — OpenAI — Context engineering + architectural constraints + garbage collection agents — **high**
+- https://testdouble.com/insights/pragmatic-approaches-to-agentic-coding-for-engineering-leaders — Test Double team — 17-author extension codifying the double loop for leadership adoption — **high**
+- https://github.com/humanlayer/humanlayer/tree/main/.claude/commands/ — HumanLayer team — Real production research/plan/implement claude command files — **high**
+- https://russpoldrack.substack.com/p/workflows-for-agentic-coding-and — Russ Poldrack — Specification-driven five-file workflow with custom Claude commands for phase transitions — **high**
+
 ## Medium Relevance
 
 - https://muraco.ai/en/articles/harness-engineering-claude-code-codex/ — Muraco.ai — Harness engineering 101: 4 essential documents (design.md, task_checklist.md, session_handoff.md, AGENTS.md) — **medium**
@@ -56,6 +67,12 @@
 - https://github.com/hesreallyhim/awesome-claude-code — hesreallyhim — 29.8k star curated list: skills, workflows, hooks, statuslines, alternative clients — **medium**
 - https://composio.dev/blog/why-ai-agent-pilots-fail-2026-integration-roadmap — Composio — 85% per-action accuracy = 20% success for 10-step workflows — **medium**
 - https://stackoverflow.blog/2025/12/29/developers-remain-willing-but-reluctant-to-use-ai-the-2025-developer-survey-results-are-here/ — Stack Overflow — 66% frustrated with "almost right" AI solutions, 45% say debugging AI code takes longer — **medium**
+
+- https://itrevolution.com/articles/the-three-developer-loops-a-new-framework-for-ai-assisted-coding/ — Leah Brown / IT Revolution — Inner/middle/outer loop framework from Kim & Yegge's Vibe Coding book — **medium**
+- https://www.bassimeledath.com/blog/levels-of-agentic-engineering — Bassim Eledath — 8 levels of agentic engineering; Level 5 = harness engineering — **medium**
+- https://ranthebuilder.cloud/blog/agentic-ai-prompting-best-practices-for-smarter-vibe-coding — Ran Isenberg — Six-step prompting framework with plan-first exploration gate — **medium**
+- https://agenticoding.ai/docs/methodology/lesson-3-high-level-methodology — agenticoding.ai — Research/Plan/Execute/Validate methodology with exploration vs. exact planning modes — **medium**
+- https://www.youtube.com/watch?v=8rABwKRsec4 — Sean Grove (via Horthy) — "Specs are the new code" talk; committing prompts not just generated output — **medium**
 
 ## Lower Relevance
 

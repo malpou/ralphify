@@ -29,7 +29,7 @@ No kill switch, no budget ceiling, no loop detection. The most expensive inciden
 - **$47K data enrichment incident** (Feb 2026): Agent misinterpreted an API error and ran 2.3 million API calls over a weekend
 - **Replit production database deletion**: Agent deleted a startup's prod database during a code freeze, then fabricated data to cover it up
 
-**Fix**: Four non-negotiables — hard budget ceiling, rate limiter, loop detector, human pager. Ralphify's iteration limit flag serves as one of these.
+**Fix**: Four non-negotiables — hard budget ceiling, rate limiter, loop detector, human pager. Iteration limit flags serve as one of these.
 
 ### 5. Comprehension Debt
 
@@ -78,7 +78,7 @@ Multiple independent sources converge on the same finding: AI agents get you 70-
 
 The METR study adds a twist: experienced open-source developers were 19% *slower* with AI tools but *perceived* themselves as faster. The illusion of speed masks real slowdowns from debugging AI-introduced errors.
 
-**Implication for agent loops**: Loops must be designed for the hard 20%, not the easy 80%. The verification layer, rollback mechanism, and decomposition strategy all exist to handle the cases where the agent can't one-shot the solution.
+**Implication**: Loops must be designed for the hard 20%, not the easy 80%. The verification layer, rollback mechanism, and decomposition strategy all exist to handle the cases where the agent can't one-shot the solution.
 
 ## The Complexity Ratchet
 
@@ -88,7 +88,7 @@ Karpathy's autoresearch addresses this directly with a simplicity criterion: "A 
 
 Agents given autonomy in loops also exhibit scope creep — one HN report describes an agent deploying "multi-cloud edge-deployed Kubernetes with Kafka" that nobody asked for. Spotify's LLM judge found scope creep to be the #1 trigger for session vetoes.
 
-**Implication for ralph loops**: RALPH.md prompts should include explicit scope constraints. A `scope` frontmatter field listing editable files/directories would prevent the agent from wandering.
+**Implication for agent loops**: Prompts should include explicit scope constraints. A scope field listing editable files/directories prevents the agent from wandering.
 
 ## The Trust Calibration Problem
 
@@ -96,7 +96,7 @@ AI assistance creates a false sense of security. Studies show AI-assisted code s
 
 This compounds in loops: each iteration's output becomes the next iteration's input. If iteration 3 introduces a subtle bug that passes tests, iterations 4-50 build on a faulty foundation.
 
-**Implication for ralph loops**: Verification gates between iterations aren't optional — they're the only thing preventing compounding errors. The verification hierarchy (chapter 02) should be the minimum bar, not an aspirational feature.
+**Implication for agent loops**: Verification gates between iterations aren't optional — they're the only thing preventing compounding errors. The verification hierarchy (chapter 02) should be the minimum bar, not an aspirational feature.
 
 ## Practitioner-Validated Remedies
 

@@ -69,10 +69,4 @@ HN commenters noted that adding separate QA agents often leads to "unproductive 
 ### Mocking in Verification
 The LinearB interview highlights that "you cannot rely on prompting alone to manage failure; the model must be constrained by explicit system signals." Mocked tests create a dangerous illusion of correctness.
 
-## Implications for Ralph Loop Design
-
-The ideal ralph loop verification strategy:
-1. **Commands as verifiers**: Use `{{ commands.test_results }}` to run tests and feed results back into the prompt each iteration
-2. **Exit criteria in the prompt**: Define what "done" looks like in measurable terms
-3. **Iteration limits as safety**: Always cap iterations to prevent runaway costs
-4. **Git as rollback**: On verification failure, the agent can revert to the last good state
+See [Chapter 6: Implications for Ralphify](06-ralphify-implications.md) for how verification patterns map to the framework.

@@ -4,21 +4,35 @@
 
 ## Key Insights
 
-1. **Fresh context beats accumulated context.** Every major practitioner system resets context each iteration rather than accumulating conversation history. State lives in files, not chat memory.
-2. **The verification layer is the whole game.** Spotify's LLM-judge vetoes 25% of agent sessions; Karpathy's scalar metric auto-reverts bad experiments. Without strong verification, agents drift.
-3. **Three primitives define a loop: editable asset, measurable metric, time-boxed cycle.** Karpathy's autoresearch distilled this to its essence — 630 lines of Python running 12 experiments/hour.
-4. **Hibernate-and-wake > polling for long operations.** Meta's REA shuts down between async jobs rather than maintaining sessions — a pattern ralphify's loop-with-commands already enables.
-5. **Agent Skills are becoming portable packages.** Reusable instruction sets that install like npm packages across agent platforms — directly relevant to ralphify's skill system.
-6. **Multi-agent orchestration is shifting from conductor to fleet.** Tools like Conductor, Gas Town, and Vibe Kanban manage parallel agent instances in isolated worktrees.
-7. **The human role inverts: from steering to specifying and reviewing.** Engineers define destinations and review complete output rather than micro-managing each step.
-8. **AGENTS.md / CLAUDE.md files are the new infrastructure.** Specification documents that anchor agent execution across sessions are now considered essential project infrastructure.
-9. **Git is the universal state backend.** Every serious system uses git commits as checkpoints, enabling revert-on-failure and progress tracking across iterations.
-10. **Cost awareness is critical.** Multi-agent systems consume 4-15x more tokens; practitioners need iteration limits, spend caps, and cost monitoring.
-11. **Context window poisoning is the #1 failure mode.** Once a mistake enters context, agents compound rather than self-correct. Fresh resets are the only reliable fix.
-12. **The 70-80% problem is real and universal.** AI agents hit the same ceiling as every previous "replace programming" technology. The last 20% costs 80% of the tokens.
-13. **Specification files have an instruction ceiling (~150-200).** More rules = worse instruction-following across the board. Keep CLAUDE.md under 300 lines; use it as a router, not a monolith.
-14. **Unbounded agent autonomy produces $47K incidents.** Hard budget ceilings, rate limiters, loop detectors, and human pagers are non-negotiable.
-15. **Output redirection prevents context flooding.** Redirect verbose output to logs, grep for metrics — the single most impactful technique for agent loop reliability.
+1. **Fresh context beats accumulated context.** Every major system resets context each iteration. State lives in files, not chat memory. Larger context windows make poisoning *worse*, not better — they lure users into regimes where models lose track.
+
+2. **The verification layer is the whole game.** Spotify's LLM-judge vetoes 25% of sessions; Karpathy's scalar metric auto-reverts bad experiments. Without strong verification, agents drift. The best systems layer deterministic checks (tests, lint) with LLM evaluation.
+
+3. **Three primitives define a loop: editable asset, measurable metric, time-boxed cycle.** Karpathy's autoresearch distilled this to 630 lines running 700 experiments in 2 days. When all three are clear, reliability is high.
+
+4. **One item per loop is the universal scope rule.** Every practitioner system limits each iteration to a single task. Batching causes drift. Spotify's #1 veto trigger is scope creep.
+
+5. **"Probabilistic inside, deterministic at edges."** Generation is flexible; evaluation is rigid. Commands (deterministic) evaluate; prompts (probabilistic) generate. Tests written by humans, implementations by agents.
+
+6. **Output redirection prevents context flooding.** `> run.log 2>&1` then `grep` for metrics — the single most impactful technique for agent loop reliability. Verbose output kills agent performance.
+
+7. **Three-phase prompt architecture (research→plan→implement) is the validated workflow.** Each phase gets a fresh context window loading only the previous phase's artifact. Independently converged on by HumanLayer, Anthropic, and Test Double.
+
+8. **Context utilization should stay at 40-60%.** Above this threshold, quality degrades measurably. Intentional compaction (writing progress to file, restarting session) is the fix.
+
+9. **"On the loop" beats "in the loop."** Fix the harness, not the output. Every prompt improvement benefits all future iterations — creating a flywheel.
+
+10. **Specification files have an instruction ceiling (~150-200).** More rules = worse instruction-following across the board. Keep CLAUDE.md under 300 lines; use it as a router, not a monolith. Never auto-generate.
+
+11. **Unbounded agent autonomy produces $47K incidents.** Hard budget ceilings, rate limiters, loop detectors, and human pagers are non-negotiable.
+
+12. **The 70-80% problem is real and universal.** AI agents hit the same ceiling as every previous "replace programming" technology. The last 20% costs 80% of the tokens. Loops must be designed for the hard 20%, not the easy 80%.
+
+13. **Git is the universal state backend.** Commits as checkpoints, revert-on-failure, diffs as progress documentation. The four recurring state files: specification (frozen), progress log (append-only), task list (shrinking), knowledge base (growing).
+
+14. **Hibernate-and-wake > polling for long operations.** Meta's REA shuts down between async jobs rather than maintaining sessions. Ralphify's loop-with-commands already enables this pattern.
+
+15. **Multi-agent orchestration works for independent tasks, fails for coordination.** Parallel agents on separate branches/files succeed; shared-state coordination is fragile and 4-15x more expensive. Filesystem coordination beats message-passing.
 
 ## Chapters
 
@@ -29,17 +43,18 @@
 | 3 | [Karpathy's Autoresearch](chapters/03-autoresearch.md) | The minimal agent loop distilled to 3 primitives and 630 lines |
 | 4 | [Production Systems at Scale](chapters/04-production-scale.md) | Meta's REA, Spotify's Honk, Codex long-horizon — enterprise patterns |
 | 5 | [Multi-Agent Orchestration](chapters/05-multi-agent.md) | Fleet management, parallel worktrees, coordinator patterns |
-| 6 | [Implications for Ralphify](chapters/06-ralphify-implications.md) | Cookbook ideas, framework directions, and competitive positioning |
+| 6 | [Implications for Ralphify](chapters/06-ralphify-implications.md) | Framework gaps, cookbook recipes, prompt engineering lessons, competitive positioning |
 | 7 | [Anti-Patterns & Failure Modes](chapters/07-anti-patterns.md) | The ten recurring failure modes and practitioner-validated remedies |
 | 8 | [Specification Files](chapters/08-specification-files.md) | CLAUDE.md, AGENTS.md patterns from 2,500+ repos and real-world configs |
+| 9 | [Prompt Assembly & Context Engineering](chapters/09-prompt-assembly.md) | Three-phase architecture, context management, double-loop model, steering injection |
 
 ## Open Questions
 
 - How do practitioners handle non-deterministic verification (subjective quality)?
 - What's the optimal iteration length for different task types?
-- How does the double-loop model (vibing then polishing) translate to ralph loops?
 - What trust thresholds trigger the transition from agent-assisted to agent-autonomous?
-- What statistical methods beyond MAD are used for confidence scoring in optimization loops?
+- How does the agent skill packaging ecosystem evolve — will there be a registry/marketplace?
+- What's the real-world false negative rate for LLM-as-judge beyond Spotify's 25%?
 
 ## Key Sources
 
@@ -48,12 +63,11 @@
 - [Karpathy's Autoresearch](https://github.com/karpathy/autoresearch) — GitHub
 - [Meta's REA](https://engineering.fb.com/2026/03/17/developer-tools/ranking-engineer-agent-rea-autonomous-ai-system-accelerating-meta-ads-ranking-innovation/) — Engineering at Meta
 - [Codex Long Horizon Tasks](https://developers.openai.com/cookbook/examples/codex/long_horizon_tasks/) — OpenAI
-- [Top AI Coding Trends for 2026](https://beyond.addy.ie/2026-trends/) — Addy Osmani
-- [The Autonomous Agents Loop](https://daviddaniel.tech/research/articles/autonomous-agents-loop/) — David Daniel Research
-- [Coding Agent Loop Spec (Attractor)](https://github.com/strongdm/attractor/blob/main/coding-agent-loop-spec.md) — StrongDM
 - [Skill Issue: Harness Engineering](https://www.humanlayer.dev/blog/skill-issue-harness-engineering-for-coding-agents) — HumanLayer
 - [The 80% Problem in Agentic Coding](https://addyo.substack.com/p/the-80-problem-in-agentic-coding) — Addy Osmani
 - [Agentic Engineering Anti-Patterns](https://simonwillison.net/guides/agentic-engineering-patterns/anti-patterns/) — Simon Willison
 - [Lessons from 2,500+ AGENTS.md Files](https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/) — GitHub Blog
-- [Writing a Good CLAUDE.md](https://www.humanlayer.dev/blog/writing-a-good-claude-md) — HumanLayer
 - [Harness Engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) — Martin Fowler / Thoughtworks
+- [The Double-Loop Model](https://testdouble.com/insights/youre-holding-it-wrong-the-double-loop-model-for-agentic-coding) — Test Double
+- [Advanced Context Engineering](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/ace-fca.md) — HumanLayer
+- [Relocating Rigor](https://aicoding.leaflet.pub/3mbrvhyye4k2e) — Chad Fowler

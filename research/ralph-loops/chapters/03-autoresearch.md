@@ -55,21 +55,10 @@ This separation is key: humans define *what* to optimize and *how to measure*; t
 - **Tobi Lütke** (Shopify CEO): 37 experiments overnight → 19% performance gain
 - Community: Active experimentation on GitHub, session reports showing steady metric improvements
 
-## Why This Matters for Ralphify
-
-Autoresearch is essentially a ralph loop with:
-- `agent`: the AI coding agent
-- `commands`: `run train.py`, `extract val_bpb from logs`
-- The prompt: `program.md` with `{{ commands.metrics }}` placeholder
-
-A "research ralph" that replicates this pattern would be a high-value cookbook example. The key ingredients:
-1. A RALPH.md with the optimization strategy
-2. Commands that run the experiment and capture metrics
-3. A prompt that feeds metrics back and asks for the next hypothesis
-4. Git-based state for revert-on-failure
-
 ## Karpathy's Vision: Collaborative Agent Research
 
 > "The next step for autoresearch is that it has to be asynchronously massively collaborative for agents. The goal is not to emulate a single PhD student, it's to emulate a research community of them."
 
-This maps to ralphify's multi-run capability — running multiple ralph loops in parallel with different strategies, sharing results via the filesystem.
+This maps to multi-run capability — running multiple loops in parallel with different strategies, sharing results via the filesystem.
+
+See [Chapter 6: Implications for Ralphify](06-ralphify-implications.md) for how autoresearch maps to a cookbook recipe.

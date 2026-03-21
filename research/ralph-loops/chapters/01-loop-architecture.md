@@ -56,7 +56,7 @@ The quality of context assembly directly determines loop effectiveness. Key patt
 
 **Hierarchical context loading**: Load specification first, then progress state, then relevant code — in decreasing order of importance. This ensures the agent prioritizes goals over implementation details.
 
-**Command-based dynamic context**: Ralphify's `{{ commands.name }}` pattern — running shell commands to capture fresh data each iteration — is a powerful approach for assembling context that reflects current state rather than stale snapshots.
+**Command-based dynamic context**: Running shell commands to capture fresh data each iteration — as ralphify's `{{ commands.name }}` pattern does — assembles context that reflects current state rather than stale snapshots.
 
 **Truncation strategies**: The StrongDM Attractor spec truncates tool output before sending to the LLM (character-based first, then line-based) while preserving full output in events. This prevents large outputs from consuming the context window.
 

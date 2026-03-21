@@ -76,10 +76,4 @@ After each milestone: lint → typecheck → test → build → export validatio
 | Scope containment | Explicit budgets | Sandboxed container | Frozen spec |
 | Error recovery | Failure runbooks | Verifier re-runs | Immediate repair |
 
-## Implications for Ralphify
-
-**Hibernate-and-wake**: Ralphify's command system already supports this — commands can poll for job completion, and the loop only proceeds when data is ready.
-
-**Layered verification**: Ralphify could support multiple verification commands, with the prompt template incorporating all their outputs.
-
-**Scope containment**: The RALPH.md specification serves the same role as Codex's Prompt.md — a frozen goal that prevents drift.
+See [Chapter 6: Implications for Ralphify](06-ralphify-implications.md) for how these patterns map to the framework.

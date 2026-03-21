@@ -73,12 +73,4 @@ When coordination is needed:
 
 Multiple agents exploring different optimization strategies in parallel, with promising findings promoted to larger scales. This is population-based search, not sequential improvement.
 
-## Implications for Ralphify
-
-Ralphify's `manager.py` already supports concurrent runs via threads. The opportunity:
-
-1. **Parallel ralphs on different tasks**: Run multiple RALPH.md files simultaneously, each working on independent modules
-2. **Collaborative ralphs sharing state**: Multiple loops writing to a shared results file, with each loop's commands reading the shared state
-3. **Hierarchical ralphs**: A "planner ralph" that generates task RALPH.md files, then worker ralphs that execute them
-
-The filesystem-based coordination model is perfectly aligned with ralphify's architecture — no message passing needed, just shared files.
+See [Chapter 6: Implications for Ralphify](06-ralphify-implications.md) for how multi-agent patterns map to the framework.

@@ -52,3 +52,24 @@
 - Update chapter 06 (ralphify implications) with anti-pattern-informed framework recommendations
 - Look for YouTube video transcripts and conference talks on agent reliability
 - Explore the "double loop model" (Test Double) and how it maps to ralph loops
+
+## Iteration 3 — 2026-03-21
+
+**Decision: RESEARCH** (still have high-value unexplored threads)
+
+**Focus area:** Practical loop engineering techniques — the double-loop model, prompt assembly patterns, context management strategies, and emerging practitioner techniques from early 2026. Looking for the "how-to" that separates effective loops from cargo-culted ones.
+
+## Iteration 4 — 2026-03-21
+
+**Decision: REFINE** (4th iteration, convention calls for tightening)
+
+**Focus area:** Three refinement goals:
+1. REPORT.md insights: 20 → ~15, eliminate overlap, sharpen language
+2. Consolidate "Implications for Ralphify" sections scattered across all chapters into Ch06
+3. Freshen Ch06 with actionable framework recommendations informed by all research
+
+**Issues identified:**
+- Every chapter ends with an "Implications for Ralphify" section — redundant with Ch06
+- REPORT.md insights #13-#20 were added incrementally and have some overlap with #1-#12
+- Ch06 hasn't been updated since iteration 1 but 3 chapters of new research have been added since
+- Some insights are restatements (e.g., #1 and #11 both say fresh context beats accumulated context)
