@@ -237,19 +237,14 @@ def _parse_commands(raw_commands: list[dict[str, Any]]) -> list[Command]:
     return commands
 
 
-def _build_run_config(
-    ralph_path: str,
-    max_iterations: int | None,
-    stop_on_error: bool,
-    delay: float,
-    log_dir: str | None,
-    timeout: float | None,
-    extra_args: list[str] | None = None,
-) -> RunConfig:
-    """Read RALPH.md from the given path, validate, and build a RunConfig."""
-    path = Path(ralph_path)
+def _resolve_ralph_paths(ralph_path: str) -> tuple[Path, Path]:
+    """Resolve the ralph directory and RALPH.md file from a user-provided path.
 
-    # Resolve ralph directory and RALPH.md file
+    Accepts a directory containing RALPH.md or a direct path to RALPH.md.
+    Returns ``(ralph_dir, ralph_file)``.  Exits with an error message when
+    the path is invalid or RALPH.md is not found.
+    """
+    path = Path(ralph_path)
     if path.is_dir():
         ralph_dir = path
         ralph_file = path / RALPH_MARKER
@@ -261,6 +256,21 @@ def _build_run_config(
 
     if not ralph_file.exists():
         _exit_error(f"RALPH.md not found at '{ralph_file}'.")
+
+    return ralph_dir, ralph_file
+
+
+def _build_run_config(
+    ralph_path: str,
+    max_iterations: int | None,
+    stop_on_error: bool,
+    delay: float,
+    log_dir: str | None,
+    timeout: float | None,
+    extra_args: list[str] | None = None,
+) -> RunConfig:
+    """Read RALPH.md from the given path, validate, and build a RunConfig."""
+    ralph_dir, ralph_file = _resolve_ralph_paths(ralph_path)
 
     ralph_text = ralph_file.read_text(encoding="utf-8")
     fm, _ = parse_frontmatter(ralph_text)
