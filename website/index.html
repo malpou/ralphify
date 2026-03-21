@@ -196,7 +196,7 @@
 
   <main id="main-content">
 
-    <!-- Hero -->
+    <!-- Hero — split layout -->
     <section class="hero" aria-label="Introduction">
       <div class="hero-bg" aria-hidden="true">
         <div class="hero-gradient-wash"></div>
@@ -207,61 +207,66 @@
         <div class="hero-noise"></div>
       </div>
 
-      <div class="hero-inner">
-        <div class="hero-badge">
-          <span class="status-dot"></span>
-          Open-source &middot; pip install ralphify
-        </div>
+      <div class="hero-split">
+        <div class="hero-text">
+          <div class="hero-badge">
+            <span class="status-dot"></span>
+            Open-source &middot; pip install ralphify
+          </div>
 
-        <h1 class="hero-headline">
-          <span class="hero-line-small">Stop stressing over</span>
-          <span class="hero-line-big">not having an<br>agent running.</span>
-        </h1>
+          <h1 class="hero-headline">
+            <span class="hero-line-small">Stop stressing over</span>
+            <span class="hero-line-big">not having an agent running.</span>
+          </h1>
 
-        <p class="hero-tagline">
-          <span class="hero-gradient-text">Ralph is always running</span>
-          <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
-        </p>
+          <p class="hero-tagline">
+            <span class="hero-gradient-text">Ralph is always running</span>
+            <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
+          </p>
 
-        <p class="hero-sub">
-          Put your AI coding agent in a <code>while True</code> loop.<br>
-          Write a prompt. Walk away. Wake up to commits.
-        </p>
+          <p class="hero-sub">
+            Put your AI coding agent in a <code>while True</code> loop.<br>
+            Write a prompt. Walk away. Wake up to commits.
+          </p>
 
-        <div class="cta">
-          <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
-          <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
-        </div>
-
-        <div class="hero-install">
-          <code>uv tool install ralphify</code>
-          <button class="copy-btn" aria-label="Copy install command" onclick="copyCommand(this, 'uv tool install ralphify')">Copy</button>
-        </div>
-
-        <div class="hero-terminal">
-          <div class="terminal-window">
-            <div class="terminal-header">
-              <span class="terminal-dot red"></span>
-              <span class="terminal-dot yellow"></span>
-              <span class="terminal-dot green"></span>
-              <span class="terminal-title">ralph run</span>
+          <div class="hero-actions">
+            <div class="cta">
+              <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
+              <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
             </div>
-            <div class="terminal-body" id="hero-term">
-              <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 1 &mdash;&mdash;&mdash;</span></div>
-              <div class="term-line"><span class="term-success">&#x2713;</span> 47/47 tests passed</div>
-              <div class="term-line"><span class="term-success">&#x2713;</span> committed: <span class="term-purple">feat: add rate limiting</span></div>
-              <div class="term-line">&nbsp;</div>
-              <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 2 &mdash;&mdash;&mdash;</span></div>
-              <div class="term-line"><span class="term-fail">&#x2717;</span> 1 test failed &mdash; feeding back to agent</div>
-              <div class="term-line">&nbsp;</div>
-              <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 3 &mdash;&mdash;&mdash;</span></div>
-              <div class="term-line"><span class="term-success">&#x2713;</span> 48/48 tests passed <span class="term-dim">&mdash; self-healed</span></div>
-              <div class="term-line"><span class="term-success">&#x2713;</span> committed: <span class="term-purple">fix: correct mutex ordering</span></div>
-              <div class="term-line">&nbsp;</div>
-              <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 4 &mdash;&mdash;&mdash;</span></div>
-              <div class="term-line">
-                <span class="term-dim">running agent&hellip;</span>
-                <span class="cursor-blink">&#x2588;</span>
+            <div class="hero-install">
+              <code>uv tool install ralphify</code>
+              <button class="copy-btn" aria-label="Copy install command" onclick="copyCommand(this, 'uv tool install ralphify')">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-demo">
+          <div class="hero-terminal">
+            <div class="terminal-window">
+              <div class="terminal-header">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+                <span class="terminal-title">ralph run</span>
+              </div>
+              <div class="terminal-body" id="hero-term">
+                <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 1 &mdash;&mdash;&mdash;</span></div>
+                <div class="term-line"><span class="term-success">&#x2713;</span> 47/47 tests passed</div>
+                <div class="term-line"><span class="term-success">&#x2713;</span> committed: <span class="term-purple">feat: add rate limiting</span></div>
+                <div class="term-line">&nbsp;</div>
+                <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 2 &mdash;&mdash;&mdash;</span></div>
+                <div class="term-line"><span class="term-fail">&#x2717;</span> 1 test failed &mdash; feeding back to agent</div>
+                <div class="term-line">&nbsp;</div>
+                <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 3 &mdash;&mdash;&mdash;</span></div>
+                <div class="term-line"><span class="term-success">&#x2713;</span> 48/48 tests passed <span class="term-dim">&mdash; self-healed</span></div>
+                <div class="term-line"><span class="term-success">&#x2713;</span> committed: <span class="term-purple">fix: correct mutex ordering</span></div>
+                <div class="term-line">&nbsp;</div>
+                <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 4 &mdash;&mdash;&mdash;</span></div>
+                <div class="term-line">
+                  <span class="term-dim">running agent&hellip;</span>
+                  <span class="cursor-blink">&#x2588;</span>
+                </div>
               </div>
             </div>
           </div>
@@ -289,14 +294,14 @@
       </div>
     </section>
 
-    <!-- FOMO -->
+    <!-- Agent FOMO narrative -->
     <section class="fomo" aria-labelledby="fomo-heading">
       <div class="fomo-inner">
         <p class="section-eyebrow fade-up">The morning standup question</p>
         <h2 id="fomo-heading" class="section-heading fade-up">
           &ldquo;What did your agent<br>ship overnight?&rdquo;
         </h2>
-        <p class="section-subtitle fade-up">Everyone in standup shipped while they slept. You didn't.<br>Not anymore.</p>
+        <p class="section-subtitle fade-up">Everyone at standup shipped while they slept. You didn't.<br>Not anymore.</p>
 
         <div class="fomo-contrast fade-up">
           <div class="fomo-card fomo-without">
@@ -682,53 +687,20 @@ pick the next task from TODO.md and implement it.</code></pre>
       quoteObs.observe(quoteGrid);
     }
 
-    // Hero headline entrance animation
-    const heroSmall = document.querySelector('.hero-line-small');
-    const heroBig = document.querySelector('.hero-line-big');
-
-    if (heroSmall) {
-      heroSmall.style.opacity = '0';
-      heroSmall.style.transform = 'translateY(30px)';
-      setTimeout(() => {
-        heroSmall.style.transition = 'opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)';
-        heroSmall.style.opacity = '1';
-        heroSmall.style.transform = 'translateY(0)';
-      }, 100);
+    // Hero text entrance animations
+    const heroText = document.querySelector('.hero-text');
+    if (heroText) {
+      const animElements = heroText.querySelectorAll('.hero-badge, .hero-line-small, .hero-line-big, .hero-tagline, .hero-sub, .hero-actions');
+      animElements.forEach((el, i) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(24px)';
+        setTimeout(() => {
+          el.style.transition = 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, 100 + i * 120);
+      });
     }
-
-    if (heroBig) {
-      heroBig.style.opacity = '0';
-      heroBig.style.transform = 'translateY(30px)';
-      setTimeout(() => {
-        heroBig.style.transition = 'opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)';
-        heroBig.style.opacity = '1';
-        heroBig.style.transform = 'translateY(0)';
-      }, 220);
-    }
-
-    // Hero tagline entrance
-    const heroTagline = document.querySelector('.hero-tagline');
-    if (heroTagline) {
-      heroTagline.style.opacity = '0';
-      heroTagline.style.transform = 'translateY(20px)';
-      setTimeout(() => {
-        heroTagline.style.transition = 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)';
-        heroTagline.style.opacity = '1';
-        heroTagline.style.transform = 'translateY(0)';
-      }, 550);
-    }
-
-    // Hero sub, cta, install entrance
-    const heroElements = document.querySelectorAll('.hero-sub, .cta, .hero-install');
-    heroElements.forEach((el, i) => {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(16px)';
-      setTimeout(() => {
-        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        el.style.opacity = '1';
-        el.style.transform = 'translateY(0)';
-      }, 750 + i * 100);
-    });
   </script>
 </body>
 </html>

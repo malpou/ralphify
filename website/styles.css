@@ -245,7 +245,7 @@ nav {
   transform: translateY(-6px) rotate(-45deg);
 }
 
-/* -- Hero ----------------------------------------------------- */
+/* -- Hero — split layout -------------------------------------- */
 
 .hero {
   position: relative;
@@ -264,7 +264,6 @@ nav {
   overflow: hidden;
 }
 
-/* Large gradient wash — inspired by Lovable's vivid gradient bg */
 .hero-gradient-wash {
   position: absolute;
   top: -40%;
@@ -316,7 +315,6 @@ nav {
   animation: orb-drift-3 18s ease-in-out infinite alternate;
 }
 
-/* Subtle dot grid */
 .hero-grid {
   position: absolute;
   inset: 0;
@@ -326,7 +324,6 @@ nav {
   -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 30%, black 15%, transparent 70%);
 }
 
-/* Film grain texture overlay */
 .hero-noise {
   position: absolute;
   inset: 0;
@@ -350,17 +347,25 @@ nav {
   100% { transform: translate(25px, -30px) scale(1.06); }
 }
 
-.hero-inner {
+/* Split hero layout */
+.hero-split {
   position: relative;
   z-index: 1;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 10rem 2rem 6rem;
+  padding: 8rem 2rem 6rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  flex: 1;
+  min-height: calc(100vh - 60px);
+}
+
+.hero-text {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  flex: 1;
+  align-items: flex-start;
 }
 
 .hero-badge {
@@ -374,7 +379,7 @@ nav {
   border-radius: 100px;
   border: 1px solid rgba(139, 108, 240, 0.12);
   background: rgba(139, 108, 240, 0.04);
-  margin-bottom: 4rem;
+  margin-bottom: 2.5rem;
   letter-spacing: 0.03em;
   backdrop-filter: blur(8px);
 }
@@ -406,15 +411,15 @@ nav {
   50% { opacity: 0.6; box-shadow: 0 0 16px rgba(52, 211, 153, 0.3); }
 }
 
-/* Hero headline — massive, cinematic */
+/* Hero headline — massive, left-aligned */
 .hero-headline {
-  font-size: clamp(3.2rem, 8vw, 6rem);
+  font-size: clamp(2.8rem, 5.5vw, 4.5rem);
   font-weight: 800;
   line-height: 1.0;
   color: #fff;
   margin-bottom: 0.5rem;
   letter-spacing: -0.055em;
-  max-width: 960px;
+  text-align: left;
 }
 
 .hero-line-small,
@@ -424,9 +429,9 @@ nav {
 
 .hero-line-small {
   color: rgba(255, 255, 255, 0.40);
-  font-size: 0.55em;
+  font-size: 0.5em;
   letter-spacing: -0.03em;
-  margin-bottom: 0.2em;
+  margin-bottom: 0.3em;
   font-weight: 700;
 }
 
@@ -436,12 +441,13 @@ nav {
 }
 
 .hero-tagline {
-  font-size: clamp(2.8rem, 7vw, 5rem);
+  font-size: clamp(2.2rem, 4.5vw, 3.5rem);
   font-weight: 800;
   line-height: 1.0;
   letter-spacing: -0.05em;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   margin-top: 0.15em;
+  text-align: left;
 }
 
 .hero-gradient-text {
@@ -457,7 +463,7 @@ nav {
 }
 
 .runner-emoji {
-  font-size: clamp(1.5rem, 3vw, 2.8rem);
+  font-size: clamp(1.2rem, 2.5vw, 2rem);
   display: inline-block;
   animation: bounce-run 1s ease-in-out infinite;
   vertical-align: middle;
@@ -475,11 +481,12 @@ nav {
 }
 
 .hero-sub {
-  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
   color: var(--text-muted);
   margin-bottom: 2.5rem;
   line-height: 1.7;
-  max-width: 480px;
+  max-width: 420px;
+  text-align: left;
 }
 
 .hero-sub code {
@@ -491,11 +498,16 @@ nav {
   border: 1px solid rgba(139, 108, 240, 0.12);
 }
 
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
 .hero-install {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 1.5rem;
   background: rgba(139, 108, 240, 0.04);
   border: 1px solid rgba(139, 108, 240, 0.10);
   border-radius: 8px;
@@ -508,12 +520,17 @@ nav {
   color: var(--text-muted);
 }
 
-/* Hero terminal */
+/* Hero demo / terminal — right side */
+.hero-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hero-terminal {
   position: relative;
   width: 100%;
-  max-width: 640px;
-  margin-top: 5rem;
+  max-width: 540px;
 }
 
 .hero-terminal::before {
@@ -588,7 +605,6 @@ nav {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  justify-content: center;
 }
 
 .btn {
@@ -1754,8 +1770,9 @@ footer::before {
 /* -- Mobile responsive ---------------------------------------- */
 
 @media (max-width: 1024px) {
-  .hero-inner {
-    padding: 7rem 2rem 4rem;
+  .hero-split {
+    padding: 6rem 2rem 4rem;
+    gap: 3rem;
   }
 }
 
@@ -1764,12 +1781,38 @@ footer::before {
     min-height: auto;
   }
 
-  .hero-inner {
+  .hero-split {
+    grid-template-columns: 1fr;
     padding: 5rem 1.5rem 3rem;
+    gap: 3rem;
+    min-height: auto;
+  }
+
+  .hero-text {
+    align-items: center;
+    text-align: center;
   }
 
   .hero-headline {
+    text-align: center;
     font-size: clamp(2.4rem, 8vw, 3.8rem);
+  }
+
+  .hero-tagline {
+    text-align: center;
+  }
+
+  .hero-sub {
+    text-align: center;
+    max-width: 480px;
+  }
+
+  .hero-actions {
+    align-items: center;
+  }
+
+  .cta {
+    justify-content: center;
   }
 
   .hero-line-small {
@@ -1778,6 +1821,10 @@ footer::before {
 
   .hero-tagline {
     font-size: clamp(2rem, 7vw, 3rem);
+  }
+
+  .hero-demo {
+    order: 2;
   }
 
   .fomo-contrast {
@@ -1873,7 +1920,7 @@ footer::before {
 }
 
 @media (max-width: 480px) {
-  .hero-inner {
+  .hero-split {
     padding: 4rem 1rem 2rem;
   }
 
