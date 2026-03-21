@@ -7,7 +7,7 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from helpers import MOCK_ENGINE_SLEEP, MOCK_SUBPROCESS, MOCK_WHICH, ok_result, fail_result, make_ralph
+from helpers import MOCK_ENGINE_SLEEP, MOCK_SKILLS_WHICH, MOCK_SUBPROCESS, MOCK_WHICH, ok_result, fail_result, make_ralph
 from ralphify import __version__
 from ralphify.cli import app, _parse_commands, _parse_user_args
 
@@ -311,7 +311,7 @@ class TestRunTimeout:
 
 class TestNew:
     @patch("ralphify.cli.os.execvp")
-    @patch("shutil.which", return_value="/usr/bin/claude")
+    @patch(MOCK_SKILLS_WHICH, return_value="/usr/bin/claude")
     def test_installs_skill_and_launches_agent(self, mock_which, mock_execvp, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         result = runner.invoke(app, ["new", "my-task"])
@@ -322,14 +322,14 @@ class TestNew:
         mock_execvp.assert_called_once_with("claude", ["claude", "--dangerously-skip-permissions", "/new-ralph my-task"])
 
     @patch("ralphify.cli.os.execvp")
-    @patch("shutil.which", return_value="/usr/bin/claude")
+    @patch(MOCK_SKILLS_WHICH, return_value="/usr/bin/claude")
     def test_name_is_optional(self, mock_which, mock_execvp, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         result = runner.invoke(app, ["new"])
         assert result.exit_code == 0
         mock_execvp.assert_called_once_with("claude", ["claude", "--dangerously-skip-permissions", "/new-ralph"])
 
-    @patch("shutil.which", return_value=None)
+    @patch(MOCK_SKILLS_WHICH, return_value=None)
     def test_errors_when_no_agent_found(self, mock_which, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         result = runner.invoke(app, ["new"])

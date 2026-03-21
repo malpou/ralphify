@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from helpers import MOCK_SKILLS_WHICH
 
 from ralphify._skills import (
     DetectedAgent,
@@ -34,7 +35,7 @@ class TestDetectAgent:
                 return "/usr/bin/claude"
             return None
 
-        with patch("shutil.which", side_effect=fake_which):
+        with patch(MOCK_SKILLS_WHICH, side_effect=fake_which):
             agent = detect_agent()
         assert agent.name == "claude"
 
@@ -46,13 +47,23 @@ class TestDetectAgent:
                 return "/usr/bin/codex"
             return None
 
-        with patch("shutil.which", side_effect=fake_which):
+        with patch(MOCK_SKILLS_WHICH, side_effect=fake_which):
             agent = detect_agent()
         assert agent.name == "codex"
 
+    def test_prefers_claude_over_codex_when_both_available(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+
+        def fake_which(cmd):
+            return f"/usr/bin/{cmd}" if cmd in ("claude", "codex") else None
+
+        with patch(MOCK_SKILLS_WHICH, side_effect=fake_which):
+            agent = detect_agent()
+        assert agent.name == "claude"
+
     def test_raises_when_nothing_found(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        with patch("shutil.which", return_value=None):
+        with patch(MOCK_SKILLS_WHICH, return_value=None):
             with pytest.raises(RuntimeError, match="No agent found"):
                 detect_agent()
 

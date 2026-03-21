@@ -37,6 +37,9 @@ MOCK_RUN_COMMAND = "ralphify.engine.run_command"
 MOCK_ENGINE_SLEEP = "ralphify.engine.time.sleep"
 """Patch target for time.sleep inside the engine module."""
 
+MOCK_SKILLS_WHICH = "ralphify._skills.shutil.which"
+"""Patch target for shutil.which inside the skills module."""
+
 
 # ── Factory helpers ───────────────────────────────────────────────────
 
