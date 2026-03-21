@@ -73,6 +73,18 @@ class TestRun:
         assert result.exit_code == 1
         assert "not found on PATH" in result.output
 
+    def test_errors_with_malformed_agent_field(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir()
+        # Valid YAML but shlex.split raises ValueError on unmatched quotes
+        (ralph_dir / "RALPH.md").write_text(
+            '---\nagent: \'claude "unclosed\'\n---\ngo'
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "malformed" in result.output.lower()
+
     @pytest.mark.parametrize("frontmatter, expected_error", [
         ("commands:\n  - name: \"\"\n    run: echo hi", "name"),
         ("commands:\n  - name: status\n    run: \"\"", "run"),
@@ -350,6 +362,22 @@ class TestNew:
         result = runner.invoke(app, ["new"])
         assert result.exit_code == 1
         assert "No agent found" in result.output
+
+    @patch("ralphify._skills.install_skill", side_effect=RuntimeError("permission denied"))
+    @patch(MOCK_SKILLS_WHICH, return_value="/usr/bin/claude")
+    def test_errors_when_install_skill_fails(self, mock_which, mock_install, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(app, ["new"])
+        assert result.exit_code == 1
+        assert "permission denied" in result.output
+
+    @patch("ralphify.cli.os.execvp", side_effect=FileNotFoundError("not found"))
+    @patch(MOCK_SKILLS_WHICH, return_value="/usr/bin/claude")
+    def test_errors_when_agent_binary_not_found(self, mock_which, mock_execvp, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(app, ["new", "my-task"])
+        assert result.exit_code == 1
+        assert "not found on PATH" in result.output
 
 
 class TestInit:
