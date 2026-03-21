@@ -67,7 +67,7 @@ class _BoundEmitter:
         self, event_type: EventType, data: EventData | None = None,
     ) -> None:
         self._emitter.emit(Event(
-            type=event_type, run_id=self._run_id, data=dict(data) if data is not None else {},
+            type=event_type, run_id=self._run_id, data=data if data is not None else {},
         ))
 
 
