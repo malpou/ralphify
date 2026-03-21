@@ -188,165 +188,153 @@
 
   <main id="main-content">
 
-    <!-- Hero -->
+    <!-- Hero — split layout -->
     <section class="hero" aria-label="Introduction">
       <div class="hero-glow" aria-hidden="true"></div>
 
-      <div class="hero-center">
-        <div class="hero-badge">
-          <span class="status-dot"></span>
-          Open-source &middot; pip install ralphify
-        </div>
-
-        <h1 class="hero-headline">
-          Stop stressing over not<br>having an agent running.
-        </h1>
-        <p class="hero-punchline">
-          <span class="hero-gradient-text">Ralph is always running</span>
-          <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
-        </p>
-
-        <p class="hero-sub">
-          Put your AI coding agent in a <code>while True</code> loop.<br>
-          Write a prompt. Walk away. Wake up to commits.
-        </p>
-
-        <div class="cta cta-center">
-          <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
-          <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
-        </div>
-
-        <!-- Live status indicator -->
-        <div class="hero-live-status" aria-hidden="true">
-          <div class="live-status-inner">
+      <div class="hero-split">
+        <div class="hero-text">
+          <div class="hero-badge">
             <span class="status-dot"></span>
-            <span class="live-status-text">Iteration <span class="live-counter">0</span></span>
-            <span class="live-status-sep">&middot;</span>
-            <span class="live-status-detail">23 commits</span>
-            <span class="live-status-sep">&middot;</span>
-            <span class="live-status-detail">4h 12m running</span>
+            Open-source &middot; pip install ralphify
+          </div>
+
+          <h1 class="hero-headline">
+            Stop stressing over not having an agent running.
+          </h1>
+          <p class="hero-punchline">
+            <span class="hero-gradient-text">Ralph is always running</span>
+            <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
+          </p>
+
+          <p class="hero-sub">
+            Put your AI coding agent in a <code>while True</code> loop.<br>
+            Write a prompt. Walk away. Wake up to commits.
+          </p>
+
+          <div class="cta">
+            <a href="docs/getting-started/" class="btn btn-primary">Get Started</a>
+            <a href="docs/cookbook/" class="btn btn-secondary">View Cookbook</a>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- Agent strip -->
-    <div class="agent-strip">
-      <div class="agent-strip-inner">
-        <span class="agent-strip-label">Works with</span>
-        <div class="agent-strip-list">
-          <a href="docs/agents/" class="agent-chip">Claude Code</a>
-          <a href="docs/agents/" class="agent-chip">Aider</a>
-          <a href="docs/agents/" class="agent-chip">Codex CLI</a>
-          <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Live terminal demo -->
-    <section class="demo" aria-label="Terminal demo">
-      <div class="demo-inner">
-        <div class="terminal-window terminal-hero fade-up">
-          <div class="terminal-header">
-            <span class="terminal-dot red"></span>
-            <span class="terminal-dot yellow"></span>
-            <span class="terminal-dot green"></span>
-            <span class="terminal-title">ralph &mdash; autonomous loop</span>
-          </div>
-          <pre class="terminal-body"><code><span class="prompt">$</span> ralph run
-<span class="dim">&#9484;&#9472; Iteration 46 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+        <div class="hero-terminal">
+          <div class="terminal-window terminal-hero">
+            <div class="terminal-header">
+              <span class="terminal-dot red"></span>
+              <span class="terminal-dot yellow"></span>
+              <span class="terminal-dot green"></span>
+              <span class="terminal-title">ralph &mdash; autonomous loop</span>
+            </div>
+            <pre class="terminal-body"><code><span class="prompt">$</span> ralph run
+<span class="dim">&#9484;&#9472; Iteration 46 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
 <span class="success">&#x2713;</span> Iteration 46 completed <span class="dim">(38.2s)</span>
   Commands: 2 passed
     <span class="success">&#x2713;</span> lint
     <span class="success">&#x2713;</span> tests <span class="dim">(47/47)</span>
 
-<span class="dim">&#9484;&#9472; Iteration 47 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="dim">&#9484;&#9472; Iteration 47 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
 <span class="fail">&#x2717;</span> Iteration 47 failed <span class="dim">(23.1s)</span>
   Commands: 1 passed, 1 failed
     <span class="success">&#x2713;</span> lint
     <span class="fail">&#x2717;</span> tests <span class="dim">(exit 1)</span>
 
-<span class="dim">&#9484;&#9472; Iteration 48 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="dim">&#9484;&#9472; Iteration 48 &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
 <span class="success">&#x2713;</span> Iteration 48 completed <span class="dim">(41.7s)</span>
   Commands: 2 passed
     <span class="success">&#x2713;</span> lint
     <span class="success">&#x2713;</span> tests <span class="dim">(48/48)</span>
 <span class="cursor-blink">&#9608;</span></code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent strip -->
+      <div class="agent-strip">
+        <div class="agent-strip-inner">
+          <span class="agent-strip-label">Works with</span>
+          <div class="agent-strip-list">
+            <a href="docs/agents/" class="agent-chip">Claude Code</a>
+            <a href="docs/agents/" class="agent-chip">Aider</a>
+            <a href="docs/agents/" class="agent-chip">Codex CLI</a>
+            <a href="docs/agents/" class="agent-chip">Any CLI agent</a>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- The FOMO — combined storytelling section -->
-    <section class="fomo" aria-labelledby="fomo-heading">
-      <div class="fomo-inner">
-        <p class="section-eyebrow fomo-eyebrow fade-up">Sound familiar?</p>
-        <h2 id="fomo-heading" class="section-heading fade-up">Everyone has an agent running.<br>Except you.</h2>
+    <!-- While you slept — git log timeline -->
+    <section class="overnight" aria-labelledby="overnight-heading">
+      <div class="overnight-inner">
+        <p class="section-eyebrow overnight-eyebrow fade-up">While you slept</p>
+        <h2 id="overnight-heading" class="section-heading fade-up">You closed your laptop.<br><span class="hero-gradient-text">Ralph kept shipping.</span></h2>
+        <p class="section-subtitle fade-up">Your teammates wake up to PRs. You wake up to nothing.<br>Unless you have Ralph.</p>
 
-        <div class="fomo-content fade-up">
-          <!-- Slack mockup -->
-          <div class="fomo-card fomo-card-slack">
-            <div class="slack-channel"># eng-general</div>
-            <div class="slack-msg">
-              <div class="slack-avatar slack-avatar-m">M</div>
-              <div class="slack-body">
-                <div class="slack-meta"><strong>Marcus</strong> <span class="slack-time">9:04 AM</span></div>
-                <div class="slack-text">my agent ran 23 iterations overnight. PR is up for review &#x1F680;</div>
-              </div>
-            </div>
-            <div class="slack-msg">
-              <div class="slack-avatar slack-avatar-s">S</div>
-              <div class="slack-body">
-                <div class="slack-meta"><strong>Sarah</strong> <span class="slack-time">9:05 AM</span></div>
-                <div class="slack-text">same, mine knocked out the entire auth refactor. 47 tests passing</div>
-              </div>
-            </div>
-            <div class="slack-msg">
-              <div class="slack-avatar slack-avatar-y">Y</div>
-              <div class="slack-body">
-                <div class="slack-meta"><strong>You</strong> <span class="slack-time">9:07 AM</span></div>
-                <div class="slack-text">nice, I'll take a look</div>
-              </div>
-            </div>
-            <div class="slack-msg slack-msg-thought">
-              <div class="slack-thought-text">you closed your laptop last night and the agent died</div>
+        <div class="git-timeline fade-up">
+          <div class="git-line" aria-hidden="true"></div>
+
+          <div class="git-commit">
+            <div class="git-dot git-dot-success"></div>
+            <div class="git-time">11:47 PM</div>
+            <div class="git-msg">
+              <span class="git-hash">a3f7c2d</span>
+              feat: add rate limiting to API endpoints
+              <span class="git-meta"><span class="success">&#x2713;</span> 47/47 tests</span>
             </div>
           </div>
 
-          <!-- Stats contrast -->
-          <div class="fomo-contrast">
-            <div class="fomo-contrast-card fomo-contrast-them">
-              <div class="fomo-contrast-label">
-                <span class="status-dot"></span>
-                Your teammate
-              </div>
-              <div class="fomo-contrast-stat">23</div>
-              <div class="fomo-contrast-unit">commits overnight</div>
-              <div class="fomo-contrast-detail">48 iterations &middot; 3 PRs ready &middot; all tests green</div>
+          <div class="git-commit">
+            <div class="git-dot git-dot-success"></div>
+            <div class="git-time">12:31 AM</div>
+            <div class="git-msg">
+              <span class="git-hash">e91b4f8</span>
+              refactor: extract auth middleware into module
+              <span class="git-meta"><span class="success">&#x2713;</span> 49/49 tests</span>
             </div>
+          </div>
 
-            <div class="fomo-contrast-card fomo-contrast-you">
-              <div class="fomo-contrast-label">
-                <span class="status-dot status-dot-dead"></span>
-                You
-              </div>
-              <div class="fomo-contrast-stat">0</div>
-              <div class="fomo-contrast-unit">commits overnight</div>
-              <div class="fomo-contrast-detail">Closed laptop &middot; agent died &middot; woke up to nothing</div>
+          <div class="git-commit">
+            <div class="git-dot git-dot-fail"></div>
+            <div class="git-time">2:15 AM</div>
+            <div class="git-msg">
+              <span class="git-hash">c44d1e3</span>
+              fix: resolve race condition in session store
+              <span class="git-meta"><span class="fail">&#x2717;</span> 1 test failed &rarr; auto-retrying</span>
+            </div>
+          </div>
+
+          <div class="git-commit">
+            <div class="git-dot git-dot-success"></div>
+            <div class="git-time">2:18 AM</div>
+            <div class="git-msg">
+              <span class="git-hash">f82a9d1</span>
+              fix: correct mutex ordering in session store
+              <span class="git-meta"><span class="success">&#x2713;</span> 50/50 tests &mdash; self-healed</span>
+            </div>
+          </div>
+
+          <div class="git-commit">
+            <div class="git-dot git-dot-success"></div>
+            <div class="git-time">4:03 AM</div>
+            <div class="git-msg">
+              <span class="git-hash">b17e5a0</span>
+              feat: add pagination to list endpoints
+              <span class="git-meta"><span class="success">&#x2713;</span> 53/53 tests</span>
+            </div>
+          </div>
+
+          <div class="git-commit git-commit-now">
+            <div class="git-dot git-dot-active"></div>
+            <div class="git-time">6:01 AM</div>
+            <div class="git-msg">
+              <span class="git-hash">iteration 52</span>
+              still running...
+              <span class="git-meta"><span class="status-dot"></span> 23 commits &middot; 3 PRs ready</span>
             </div>
           </div>
         </div>
 
-        <!-- The solution -->
-        <div class="fomo-solution fade-up">
-          <div class="fomo-solution-badge">
-            <span class="status-dot"></span>
-            The fix
-          </div>
-          <div class="fomo-solution-text">
-            <span class="hero-gradient-text">&ldquo;Ralph has been running since Tuesday.&rdquo;</span>
-          </div>
-          <p class="fomo-solution-sub">An autonomous loop that reads the prompt, does the work, and starts again. Fresh context every iteration. No babysitting. No dead agents.</p>
-        </div>
+        <p class="overnight-coda fade-up">You woke up. Ralph didn't stop.</p>
       </div>
     </section>
 
@@ -564,22 +552,7 @@ pick the next task from TODO.md and implement it.</code></pre>
 
     document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
-    // Live iteration counter animation
-    const counterEl = document.querySelector('.live-counter');
-    if (counterEl) {
-      let count = 0;
-      const target = 48;
-      const duration = 2200;
-      const step = duration / target;
-      const tick = () => {
-        count++;
-        counterEl.textContent = count;
-        if (count < target) setTimeout(tick, step);
-      };
-      setTimeout(tick, 600);
-    }
-
-    // Terminal typing effect — animate the terminal output line by line
+    // Terminal typing effect
     const terminalBody = document.querySelector('.terminal-body code');
     if (terminalBody) {
       const fullHTML = terminalBody.innerHTML;
@@ -597,7 +570,6 @@ pick the next task from TODO.md and implement it.</code></pre>
         }
       };
 
-      // Start typing when terminal scrolls into view
       const termObs = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
@@ -609,36 +581,21 @@ pick the next task from TODO.md and implement it.</code></pre>
       termObs.observe(terminalBody.closest('.terminal-window'));
     }
 
-    // Animate FOMO contrast stats when visible
-    const animateCounters = () => {
-      document.querySelectorAll('.fomo-contrast-stat').forEach(el => {
-        const target = parseInt(el.textContent, 10);
-        if (isNaN(target) || target === 0) return;
-        el.textContent = '0';
-        let current = 0;
-        const step = Math.max(1, Math.floor(target / 30));
-        const interval = setInterval(() => {
-          current += step;
-          if (current >= target) {
-            current = target;
-            clearInterval(interval);
-          }
-          el.textContent = current;
-        }, 40);
-      });
-    };
-
-    const fomoContent = document.querySelector('.fomo-content');
-    if (fomoContent) {
-      const fomoObs = new IntersectionObserver((entries) => {
+    // Git timeline staggered reveal
+    const gitTimeline = document.querySelector('.git-timeline');
+    if (gitTimeline) {
+      const commits = gitTimeline.querySelectorAll('.git-commit');
+      const gitObs = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
-            animateCounters();
-            fomoObs.unobserve(entry.target);
+            commits.forEach((commit, i) => {
+              setTimeout(() => commit.classList.add('visible'), i * 180);
+            });
+            gitObs.unobserve(entry.target);
           }
         });
-      }, { threshold: 0.3 });
-      fomoObs.observe(fomoContent);
+      }, { threshold: 0.2 });
+      gitObs.observe(gitTimeline);
     }
   </script>
 </body>
