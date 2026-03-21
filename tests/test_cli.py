@@ -404,6 +404,22 @@ class TestParseCommands:
                 {"name": "test", "run": "echo 2"},
             ])
 
+    def test_whitespace_only_name_errors(self):
+        with pytest.raises(typer.Exit):
+            _parse_commands([{"name": "  ", "run": "echo hi"}])
+
+    def test_whitespace_only_run_errors(self):
+        with pytest.raises(typer.Exit):
+            _parse_commands([{"name": "test", "run": "  "}])
+
+    def test_non_string_name_errors(self):
+        with pytest.raises(typer.Exit):
+            _parse_commands([{"name": 123, "run": "echo hi"}])
+
+    def test_non_string_run_errors(self):
+        with pytest.raises(typer.Exit):
+            _parse_commands([{"name": "test", "run": 123}])
+
     def test_non_dict_entry_errors(self):
         with pytest.raises(typer.Exit):
             _parse_commands(["not-a-dict"])

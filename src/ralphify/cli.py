@@ -150,7 +150,7 @@ def _parse_commands(raw_commands: list) -> list[Command]:
         if not isinstance(cmd_def, dict) or "name" not in cmd_def or "run" not in cmd_def:
             _exit_error("Each command must have 'name' and 'run' fields.")
         for key in ("name", "run"):
-            if not cmd_def[key] or not isinstance(cmd_def[key], str):
+            if not isinstance(cmd_def[key], str) or not cmd_def[key].strip():
                 _exit_error(f"Command '{key}' must be a non-empty string.")
         cmd_name = cmd_def["name"]
         cmd_run = cmd_def["run"]
