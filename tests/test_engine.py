@@ -287,6 +287,117 @@ class TestCommandExecution:
         assert "test output" in call_input
         assert "{{ commands.tests }}" not in call_input
 
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    @patch("ralphify.engine.run_command")
+    def test_multiple_commands_all_executed(self, mock_run_cmd, mock_agent, tmp_path):
+        """All commands in the list are executed and their outputs collected."""
+        from ralphify._runner import RunResult
+        from ralphify._run_types import Command
+
+        call_count = 0
+
+        def per_command(**kwargs):
+            nonlocal call_count
+            call_count += 1
+            name = kwargs.get("command", "")
+            return RunResult(success=True, exit_code=0, output=f"output-{name}")
+
+        mock_run_cmd.side_effect = per_command
+
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / "RALPH.md").write_text(
+            "---\nagent: echo\ncommands:\n  - name: tests\n    run: pytest\n"
+            "  - name: lint\n    run: ruff check\n---\n"
+            "{{ commands.tests }}\n{{ commands.lint }}"
+        )
+        config = make_config(
+            tmp_path, max_iterations=1,
+            commands=[
+                Command(name="tests", run="pytest"),
+                Command(name="lint", run="ruff check"),
+            ],
+        )
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        assert mock_run_cmd.call_count == 2
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    @patch("ralphify.engine.run_command")
+    def test_dotslash_command_uses_ralph_dir_as_cwd(self, mock_run_cmd, mock_agent, tmp_path):
+        """Commands starting with ./ run relative to the ralph directory."""
+        from ralphify._runner import RunResult
+        from ralphify._run_types import Command
+
+        mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
+
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / "RALPH.md").write_text(
+            "---\nagent: echo\ncommands:\n  - name: local\n    run: ./check.sh\n---\n"
+            "{{ commands.local }}"
+        )
+        config = make_config(
+            tmp_path, max_iterations=1,
+            commands=[Command(name="local", run="./check.sh")],
+        )
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        passed_cwd = mock_run_cmd.call_args.kwargs["cwd"]
+        assert passed_cwd == config.ralph_dir
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    @patch("ralphify.engine.run_command")
+    def test_regular_command_uses_project_root_as_cwd(self, mock_run_cmd, mock_agent, tmp_path):
+        """Commands without ./ prefix run from the project root."""
+        from ralphify._runner import RunResult
+        from ralphify._run_types import Command
+
+        mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
+
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / "RALPH.md").write_text(
+            "---\nagent: echo\ncommands:\n  - name: tests\n    run: uv run pytest\n---\n"
+            "{{ commands.tests }}"
+        )
+        config = make_config(
+            tmp_path, max_iterations=1,
+            commands=[Command(name="tests", run="uv run pytest")],
+        )
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        passed_cwd = mock_run_cmd.call_args.kwargs["cwd"]
+        assert passed_cwd == config.project_root
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    @patch("ralphify.engine.run_command")
+    def test_command_timeout_passed_through(self, mock_run_cmd, mock_agent, tmp_path):
+        """Command timeout from frontmatter is forwarded to run_command."""
+        from ralphify._runner import RunResult
+        from ralphify._run_types import Command
+
+        mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
+
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / "RALPH.md").write_text(
+            "---\nagent: echo\ncommands:\n  - name: slow\n    run: sleep 1\n    timeout: 300\n---\n"
+            "{{ commands.slow }}"
+        )
+        config = make_config(
+            tmp_path, max_iterations=1,
+            commands=[Command(name="slow", run="sleep 1", timeout=300)],
+        )
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        passed_timeout = mock_run_cmd.call_args.kwargs["timeout"]
+        assert passed_timeout == 300
+
 
 class TestRunLoopCrashHandling:
     """Tests for the broad exception handler in run_loop (engine.py lines 269-276)."""
