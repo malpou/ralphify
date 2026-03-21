@@ -189,7 +189,7 @@
         <a href="docs/">Docs</a>
         <a href="docs/cookbook/">Cookbook</a>
         <a href="https://github.com/computerlovetech/ralphify" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href="https://pypi.org/project/ralphify/" target="_blank" rel="noopener noreferrer">PyPI</a>
+        <a href="docs/getting-started/" class="nav-cta">Get Started</a>
       </div>
     </nav>
   </header>
@@ -201,6 +201,7 @@
       <div class="hero-bg" aria-hidden="true">
         <div class="hero-gradient-orb hero-orb-1"></div>
         <div class="hero-gradient-orb hero-orb-2"></div>
+        <div class="hero-gradient-orb hero-orb-3"></div>
         <div class="hero-grid"></div>
       </div>
 
@@ -211,7 +212,8 @@
         </div>
 
         <h1 class="hero-headline">
-          Stop stressing over<br>not having an agent running.
+          <span class="hero-line-1">Stop stressing over</span>
+          <span class="hero-line-2">not having an agent running.</span>
         </h1>
         <p class="hero-tagline">
           <span class="hero-gradient-text">Ralph is always running</span>
@@ -241,7 +243,7 @@
               <span class="terminal-dot green"></span>
               <span class="terminal-title">ralph run</span>
             </div>
-            <div class="terminal-body">
+            <div class="terminal-body" id="hero-term">
               <div class="term-line"><span class="term-dim">&mdash;&mdash;&mdash; iteration 1 &mdash;&mdash;&mdash;</span></div>
               <div class="term-line"><span class="term-success">&#x2713;</span> 47/47 tests passed</div>
               <div class="term-line"><span class="term-success">&#x2713;</span> committed: <span class="term-purple">feat: add rate limiting</span></div>
@@ -611,7 +613,7 @@ pick the next task from TODO.md and implement it.</code></pre>
     document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
     // Hero terminal lines staggered reveal
-    const heroTerminal = document.querySelector('.hero-terminal .terminal-body');
+    const heroTerminal = document.getElementById('hero-term');
     if (heroTerminal) {
       const lines = heroTerminal.querySelectorAll('.term-line');
       lines.forEach((line, i) => {
@@ -670,6 +672,42 @@ pick the next task from TODO.md and implement it.</code></pre>
       }, { threshold: 0.2 });
       quoteObs.observe(quoteGrid);
     }
+
+    // Hero headline entrance animation
+    const heroLines = document.querySelectorAll('.hero-line-1, .hero-line-2');
+    heroLines.forEach((line, i) => {
+      line.style.opacity = '0';
+      line.style.transform = 'translateY(30px)';
+      setTimeout(() => {
+        line.style.transition = 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)';
+        line.style.opacity = '1';
+        line.style.transform = 'translateY(0)';
+      }, 100 + i * 150);
+    });
+
+    // Hero tagline entrance
+    const heroTagline = document.querySelector('.hero-tagline');
+    if (heroTagline) {
+      heroTagline.style.opacity = '0';
+      heroTagline.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        heroTagline.style.transition = 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)';
+        heroTagline.style.opacity = '1';
+        heroTagline.style.transform = 'translateY(0)';
+      }, 500);
+    }
+
+    // Hero sub, cta, install entrance
+    const heroElements = document.querySelectorAll('.hero-sub, .cta, .hero-install');
+    heroElements.forEach((el, i) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(16px)';
+      setTimeout(() => {
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      }, 700 + i * 100);
+    });
   </script>
 </body>
 </html>
