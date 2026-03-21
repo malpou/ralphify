@@ -100,7 +100,7 @@ cmd_slow = Command(name="integration", run="uv run pytest tests/integration", ti
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `name` | `str` | (required) | Identifier used in `{{ commands.<name> }}` placeholders |
+| `name` | `str` | (required) | Identifier used in `{{ commands.<name> }}` placeholders. Letters, digits, hyphens, and underscores only. |
 | `run` | `str` | (required) | Shell command to execute |
 | `timeout` | `float` | `60` | Max seconds before the command is killed |
 

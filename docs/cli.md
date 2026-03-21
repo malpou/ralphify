@@ -161,7 +161,7 @@ Each command has these fields:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `name` | string | (required) | Identifier used in `{{ commands.<name> }}` placeholders |
+| `name` | string | (required) | Identifier used in `{{ commands.<name> }}` placeholders. Letters, digits, hyphens, and underscores only. |
 | `run` | string | (required) | Shell command to execute each iteration (supports `{{ args.<name> }}` placeholders). Commands starting with `./` run from the ralph directory; others run from the project root. |
 | `timeout` | number | `60` | Max seconds before the command is killed |
 

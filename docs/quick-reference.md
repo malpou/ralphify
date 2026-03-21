@@ -75,7 +75,7 @@ Your instructions here. Use {{ args.dir }} for user arguments.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `name` | string | (required) | Identifier for `{{ commands.<name> }}` |
+| `name` | string | (required) | Identifier for `{{ commands.<name> }}`. Letters, digits, hyphens, and underscores only. |
 | `run` | string | (required) | Shell command to execute (supports `{{ args.<name> }}` placeholders). Commands starting with `./` run from the ralph directory; others run from the project root. |
 | `timeout` | number | `60` | Max seconds before the command is killed |
 

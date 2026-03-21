@@ -97,6 +97,26 @@ Common causes:
 
 ## Frontmatter issues
 
+### "Command name contains invalid characters"
+
+Command names may only contain letters, digits, hyphens, and underscores (`a-z`, `A-Z`, `0-9`, `-`, `_`). Names with dots, spaces, or special characters are rejected because they can't be referenced by `{{ commands.<name> }}` placeholders.
+
+```yaml
+# ✗ Wrong — dots and spaces aren't allowed
+commands:
+  - name: my.tests
+    run: uv run pytest -x
+  - name: test suite
+    run: uv run pytest -x
+
+# ✓ Correct — use hyphens or underscores
+commands:
+  - name: my-tests
+    run: uv run pytest -x
+  - name: test_suite
+    run: uv run pytest -x
+```
+
 ### "'commands' must be a list" or "'args' must be a list of strings"
 
 YAML scalars and lists look similar. A common mistake is writing a plain string where a list is expected:
