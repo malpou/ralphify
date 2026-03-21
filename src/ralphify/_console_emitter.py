@@ -58,14 +58,16 @@ class ConsoleEmitter:
 
     def emit(self, event: Event) -> None:
         handler = self._handlers.get(event.type)
-        if handler:
+        if handler is not None:
             handler(event.data)
 
     def _on_run_started(self, data: dict) -> None:
-        if data.get("timeout"):
-            self._rprint(f"[dim]Timeout: {format_duration(data['timeout'])} per iteration[/dim]")
-        if data.get("commands"):
-            self._rprint(f"[dim]Commands: {data['commands']} configured[/dim]")
+        timeout = data.get("timeout")
+        if timeout is not None and timeout > 0:
+            self._rprint(f"[dim]Timeout: {format_duration(timeout)} per iteration[/dim]")
+        command_count = data.get("commands")
+        if command_count is not None and command_count > 0:
+            self._rprint(f"[dim]Commands: {command_count} configured[/dim]")
 
     def _start_live(self) -> None:
         spinner = _IterationSpinner()

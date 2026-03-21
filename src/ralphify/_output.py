@@ -1,7 +1,7 @@
 """Combine, truncate, and format subprocess output.
 
-Output from checks and contexts is capped at :data:`MAX_OUTPUT_LEN`
-characters (5 000) to avoid blowing up the agent's context window.
+Output from commands is capped at :data:`MAX_OUTPUT_LEN` characters
+(5 000) to avoid blowing up the agent's context window.
 """
 
 from __future__ import annotations

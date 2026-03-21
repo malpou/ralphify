@@ -1,8 +1,8 @@
-"""Execute shell commands and scripts with timeout and output capture.
+"""Execute shell commands with timeout and output capture.
 
-Used by checks and contexts to run their configured command or ``run.*``
-script.  All commands run with ``cwd`` set to the project root, regardless
-of where the primitive directory is located.
+Used by the engine to run configured commands.  The working directory
+is set by the caller — typically the project root or the ralph directory
+for ``./`` commands.
 """
 
 from __future__ import annotations
