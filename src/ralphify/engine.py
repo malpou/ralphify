@@ -96,7 +96,7 @@ def _run_commands(
             script=None,
             command=run_str,
             cwd=cwd,
-            timeout=cmd.timeout or timeout,
+            timeout=cmd.timeout if cmd.timeout is not None else timeout,
         )
         results[cmd.name] = result.output
     return results

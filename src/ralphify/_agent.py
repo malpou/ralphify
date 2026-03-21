@@ -21,7 +21,7 @@ import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import IO, NamedTuple
 
@@ -59,7 +59,7 @@ def _write_log(
     stderr: str | bytes | None,
 ) -> Path:
     """Write iteration output to a timestamped log file and return the path."""
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     log_file = log_path_dir / f"{iteration:03d}_{timestamp}.log"
     log_file.write_text(collect_output(stdout, stderr))
     return log_file
@@ -100,7 +100,7 @@ def _read_agent_stream(
     result_text: str | None = None
 
     for line in stdout:
-        if deadline and time.monotonic() > deadline:
+        if deadline is not None and time.monotonic() > deadline:
             return _StreamResult(stdout_lines, result_text, timed_out=True)
 
         stdout_lines.append(line)
