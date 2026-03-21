@@ -3,7 +3,15 @@
 import queue
 from datetime import datetime, timezone
 
-from ralphify._events import Event, EventType, FanoutEmitter, NullEmitter, QueueEmitter
+from ralphify._events import BoundEmitter, Event, EventType, FanoutEmitter, NullEmitter, QueueEmitter
+
+
+def _drain(emitter: QueueEmitter) -> list[Event]:
+    """Drain all events from a QueueEmitter."""
+    events = []
+    while not emitter.queue.empty():
+        events.append(emitter.queue.get())
+    return events
 
 
 class TestEvent:
@@ -78,6 +86,39 @@ class TestQueueEmitter:
         emitter.emit(event)
 
         assert q.get() is event
+
+
+class TestBoundEmitter:
+    def test_emits_event_with_fixed_run_id(self):
+        q = QueueEmitter()
+        emit = BoundEmitter(q, "run-abc")
+        emit(EventType.ITERATION_STARTED, {"iteration": 1})
+
+        events = _drain(q)
+        assert len(events) == 1
+        assert events[0].run_id == "run-abc"
+        assert events[0].type == EventType.ITERATION_STARTED
+        assert events[0].data == {"iteration": 1}
+
+    def test_emits_empty_data_when_none_provided(self):
+        q = QueueEmitter()
+        emit = BoundEmitter(q, "run-xyz")
+        emit(EventType.RUN_PAUSED)
+
+        events = _drain(q)
+        assert len(events) == 1
+        assert events[0].data == {}
+
+    def test_multiple_events_share_run_id(self):
+        q = QueueEmitter()
+        emit = BoundEmitter(q, "run-123")
+        emit(EventType.RUN_STARTED)
+        emit(EventType.ITERATION_STARTED, {"iteration": 1})
+        emit(EventType.RUN_STOPPED)
+
+        events = _drain(q)
+        assert all(e.run_id == "run-123" for e in events)
+        assert len(events) == 3
 
 
 class TestFanoutEmitter:
