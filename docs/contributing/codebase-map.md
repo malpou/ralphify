@@ -75,7 +75,20 @@ The resolver (`resolver.py`) handles:
 
 ### Event system
 
-The run loop communicates via structured events (`_events.py`). Each event has a type (`EventType` enum), run ID, data dict, and UTC timestamp.
+The run loop communicates via structured events (`_events.py`). Each event has a type (`EventType` enum), run ID, typed data payload, and UTC timestamp.
+
+Event data uses TypedDict classes — one per event type — rather than free-form dicts. The key types:
+
+- **`RunStartedData`** / **`RunStoppedData`** — run lifecycle (stop reason is a `StopReason` literal: `"completed"`, `"error"`, `"user_requested"`)
+- **`IterationStartedData`** / **`IterationEndedData`** — per-iteration data (return code, duration, log path)
+- **`CommandsStartedData`** / **`CommandsCompletedData`** — command execution bookends
+- **`PromptAssembledData`** — prompt length after placeholder resolution
+- **`AgentActivityData`** — streaming agent output
+- **`LogMessageData`** — info/error messages with optional traceback
+
+All payload types are unioned as `EventData`.
+
+Emitter implementations:
 
 - **`EventEmitter`** — protocol that any listener implements (just an `emit(event)` method)
 - **`NullEmitter`** — discards events (used in tests)
@@ -114,7 +127,7 @@ Add it in `cli.py`. The CLI uses Typer. Update `docs/cli.md` to document the new
 
 ### If you change the event system...
 
-Events are defined in `_events.py:EventType`. The `ConsoleEmitter` in `_console_emitter.py` renders them to the terminal. Adding a new event type requires handling it in `ConsoleEmitter` and any other active emitters.
+Events are defined in `_events.py:EventType`, with a corresponding TypedDict payload class for each type. Adding a new event type requires a new `EventType` member, a new TypedDict payload class, adding it to the `EventData` union, and handling it in `ConsoleEmitter` (`_console_emitter.py`).
 
 ### Credit trailer
 
