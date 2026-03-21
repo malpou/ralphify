@@ -1189,6 +1189,23 @@ nav {
   background: rgba(139, 108, 240, 0.025);
 }
 
+.quote-card {
+  position: relative;
+}
+
+.quote-card::before {
+  content: "\201C";
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  font-size: 4rem;
+  line-height: 1;
+  font-family: Georgia, serif;
+  color: var(--purple);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
 .quote-card p {
   font-size: 0.95rem;
   line-height: 1.6;
