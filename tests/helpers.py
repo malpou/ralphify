@@ -15,6 +15,7 @@ from unittest.mock import MagicMock
 from ralphify._events import Event, QueueEmitter
 from ralphify._frontmatter import serialize_frontmatter
 from ralphify._run_types import RunConfig, RunState
+from ralphify._runner import RunResult
 
 
 # ── Patch targets ─────────────────────────────────────────────────────
@@ -123,6 +124,16 @@ def fail_result(
     :func:`ok_result`).
     """
     return _make_completed_process(returncode=1, stdout=stdout, stderr=stderr)
+
+
+def ok_run_result(
+    output: str = "",
+) -> RunResult:
+    """RunResult with exit code 0 (success).
+
+    Mirrors :func:`ok_result` but for the runner module's return type.
+    """
+    return RunResult(success=True, returncode=0, output=output)
 
 
 def make_mock_popen(
