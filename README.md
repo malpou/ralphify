@@ -86,12 +86,15 @@ Each iteration:
 $ ralph run my-ralph -n 3
 
 ── Iteration 1 ──
+  Commands: 1 ran
 ✓ Iteration 1 completed (52.3s)
 
 ── Iteration 2 ──
+  Commands: 1 ran
 ✗ Iteration 2 failed with exit code 1 (23.1s)
 
 ── Iteration 3 ──
+  Commands: 1 ran
 ✓ Iteration 3 completed (41.7s)
 
 Done: 3 iteration(s) — 2 succeeded, 1 failed
