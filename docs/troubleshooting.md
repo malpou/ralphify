@@ -159,6 +159,21 @@ If the command fails manually, the issue isn't with ralphify — fix the underly
 
 Note that command output is included in the prompt **regardless of exit code**. A failing test command is often exactly what you want — the agent sees the failure and fixes it.
 
+### Command output looks truncated
+
+Each command has a default timeout of **60 seconds**. If your command takes longer (a large test suite, a slow build), it's killed at the timeout and only the output captured so far is used. The agent sees incomplete output without knowing it was cut short.
+
+**Fix:** Increase the timeout for slow commands:
+
+```yaml
+commands:
+  - name: tests
+    run: uv run pytest -x
+    timeout: 300  # 5 minutes
+```
+
+You can also speed up the command itself — for example, running a subset of tests or filtering output via a [wrapper script](#command-with-pipes-or-redirections-not-working).
+
 ### Command output missing from prompt
 
 If a `{{ commands.my-command }}` placeholder produces nothing in the prompt:
