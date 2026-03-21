@@ -212,9 +212,11 @@
         </div>
 
         <h1 class="hero-headline">
-          <span class="hero-line-1">Stop stressing over</span>
-          <span class="hero-line-2">not having an agent running.</span>
+          <span class="hero-line-faded">Stop stressing over</span>
+          <span class="hero-line-bold">not having an</span>
+          <span class="hero-line-bold">agent running.</span>
         </h1>
+
         <p class="hero-tagline">
           <span class="hero-gradient-text">Ralph is always running</span>
           <span class="runner-emoji" aria-hidden="true">&#x1F3C3;</span>
@@ -674,15 +676,27 @@ pick the next task from TODO.md and implement it.</code></pre>
     }
 
     // Hero headline entrance animation
-    const heroLines = document.querySelectorAll('.hero-line-1, .hero-line-2');
-    heroLines.forEach((line, i) => {
-      line.style.opacity = '0';
-      line.style.transform = 'translateY(30px)';
+    const heroFaded = document.querySelector('.hero-line-faded');
+    const heroBolds = document.querySelectorAll('.hero-line-bold');
+
+    if (heroFaded) {
+      heroFaded.style.opacity = '0';
+      heroFaded.style.transform = 'translateY(40px)';
       setTimeout(() => {
-        line.style.transition = 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)';
+        heroFaded.style.transition = 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+        heroFaded.style.opacity = '1';
+        heroFaded.style.transform = 'translateY(0)';
+      }, 100);
+    }
+
+    heroBolds.forEach((line, i) => {
+      line.style.opacity = '0';
+      line.style.transform = 'translateY(40px)';
+      setTimeout(() => {
+        line.style.transition = 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
         line.style.opacity = '1';
         line.style.transform = 'translateY(0)';
-      }, 100 + i * 150);
+      }, 200 + i * 120);
     });
 
     // Hero tagline entrance
@@ -694,7 +708,7 @@ pick the next task from TODO.md and implement it.</code></pre>
         heroTagline.style.transition = 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)';
         heroTagline.style.opacity = '1';
         heroTagline.style.transform = 'translateY(0)';
-      }, 500);
+      }, 550);
     }
 
     // Hero sub, cta, install entrance
@@ -706,7 +720,7 @@ pick the next task from TODO.md and implement it.</code></pre>
         el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         el.style.opacity = '1';
         el.style.transform = 'translateY(0)';
-      }, 700 + i * 100);
+      }, 750 + i * 100);
     });
   </script>
 </body>
