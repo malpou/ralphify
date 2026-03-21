@@ -80,6 +80,7 @@ If any tests are failing above, fix them before continuing.
 | `commands` | No | List of commands to run each iteration |
 | `commands[].name` | Yes | Identifier, used in `{{ commands.<name> }}` placeholders |
 | `commands[].run` | Yes | Command to execute. Paths starting with `./` are relative to the ralph directory. |
+| `commands[].timeout` | No | Max seconds before the command is killed (default: 60) |
 | `args` | No | Declared argument names for positional CLI args |
 
 #### Body

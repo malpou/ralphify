@@ -72,10 +72,11 @@ Your instructions here. Use {{ args.dir }} for user arguments.
 
 ### Command fields
 
-| Field | Type | Description |
-|---|---|---|
-| `name` | string | Identifier for `{{ commands.<name> }}` |
-| `run` | string | Shell command to execute (supports `{{ args.<name> }}` placeholders) |
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `name` | string | (required) | Identifier for `{{ commands.<name> }}` |
+| `run` | string | (required) | Shell command to execute (supports `{{ args.<name> }}` placeholders) |
+| `timeout` | number | `60` | Max seconds before the command is killed |
 
 ## Placeholders
 

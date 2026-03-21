@@ -35,6 +35,15 @@ Each command defined in the `commands` frontmatter runs in order and captures it
 
 Command output is captured **regardless of exit code** — a command like `pytest -x` exits non-zero when tests fail, but its output is exactly what you want in the prompt.
 
+Each command has a default timeout of 60 seconds. If a command takes longer, the process is killed and the output captured so far is used. Override this with the `timeout` field for slow commands (e.g., a large test suite):
+
+```yaml
+commands:
+  - name: tests
+    run: uv run pytest -x
+    timeout: 300  # 5 minutes
+```
+
 ### 3. Resolve placeholders
 
 Each `{{ commands.<name> }}` placeholder in the prompt body is replaced with the corresponding command's output. Placeholders for `{{ args.<name> }}` are replaced with user argument values from the CLI — both in the prompt body and in command `run` strings.

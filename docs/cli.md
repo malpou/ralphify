@@ -157,14 +157,17 @@ Your instructions here. Reference args with {{ args.dir }}.
 
 ### Commands
 
-Each command has two fields:
+Each command has these fields:
 
-| Field | Type | Description |
-|---|---|---|
-| `name` | string | Identifier used in `{{ commands.<name> }}` placeholders |
-| `run` | string | Shell command to execute each iteration |
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `name` | string | (required) | Identifier used in `{{ commands.<name> }}` placeholders |
+| `run` | string | (required) | Shell command to execute each iteration |
+| `timeout` | number | `60` | Max seconds before the command is killed |
 
 Commands run in order. Output (stdout + stderr) is captured regardless of exit code. Commands are parsed with `shlex.split()` — no shell features (pipes, redirections, `&&`). For shell features, point the `run` field at a script.
+
+If a command exceeds its timeout, the process is killed and the captured output up to that point is used.
 
 ### Placeholders
 
