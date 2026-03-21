@@ -78,7 +78,7 @@ config = RunConfig(
 | `max_iterations` | `int | None` | `None` | Max iterations (`None` = unlimited) |
 | `delay` | `float` | `0` | Seconds to wait between iterations |
 | `timeout` | `float | None` | `None` | Max seconds per iteration |
-| `stop_on_error` | `bool` | `False` | Stop loop if agent exits non-zero |
+| `stop_on_error` | `bool` | `False` | Stop loop if agent exits non-zero or times out |
 | `log_dir` | `Path | None` | `None` | Directory for iteration log files |
 | `credit` | `bool` | `True` | Append co-author trailer instruction to prompt |
 | `project_root` | `Path` | `Path(".")` | Project root directory |
