@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from conftest import MOCK_SUBPROCESS
 
 from ralphify._agent import (
@@ -200,13 +201,10 @@ class TestExecuteAgentBlocking:
     def test_file_not_found_propagates(self, mock_run):
         mock_run.side_effect = FileNotFoundError("not found")
 
-        try:
+        with pytest.raises(FileNotFoundError):
             execute_agent(
                 ["nonexistent"], "prompt", timeout=None, log_path_dir=None, iteration=1,
             )
-            assert False, "Expected FileNotFoundError"
-        except FileNotFoundError:
-            pass
 
 
 class TestAgentResult:

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from functools import partial
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.live import Live
@@ -48,9 +49,9 @@ class ConsoleEmitter:
         self._handlers: dict[EventType, Callable[[dict], None]] = {
             EventType.RUN_STARTED: self._on_run_started,
             EventType.ITERATION_STARTED: self._on_iteration_started,
-            EventType.ITERATION_COMPLETED: lambda d: self._on_iteration_ended(d, "green", _ICON_SUCCESS),
-            EventType.ITERATION_FAILED: lambda d: self._on_iteration_ended(d, "red", _ICON_FAILURE),
-            EventType.ITERATION_TIMED_OUT: lambda d: self._on_iteration_ended(d, "yellow", _ICON_TIMEOUT),
+            EventType.ITERATION_COMPLETED: partial(self._on_iteration_ended, color="green", icon=_ICON_SUCCESS),
+            EventType.ITERATION_FAILED: partial(self._on_iteration_ended, color="red", icon=_ICON_FAILURE),
+            EventType.ITERATION_TIMED_OUT: partial(self._on_iteration_ended, color="yellow", icon=_ICON_TIMEOUT),
             EventType.COMMANDS_COMPLETED: self._on_commands_completed,
             EventType.LOG_MESSAGE: self._on_log_message,
             EventType.RUN_STOPPED: self._on_run_stopped,

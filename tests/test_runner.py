@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from conftest import MOCK_RUNNER_SUBPROCESS
 from ralphify._runner import run_command
 
@@ -109,3 +110,7 @@ class TestRunCommand:
 
         # env=None means subprocess.run inherits parent env
         assert mock_run.call_args.kwargs["env"] is None
+
+    def test_raises_when_no_script_or_command(self):
+        with pytest.raises(ValueError, match="Either 'script' or 'command' must be provided"):
+            run_command(script=None, command=None, cwd=Path("/project"), timeout=60)
