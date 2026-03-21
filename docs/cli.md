@@ -154,6 +154,7 @@ Your instructions here. Reference args with {{ args.dir }}.
 | `agent` | string | yes | The full agent command to pipe the prompt to |
 | `commands` | list | no | Commands to run each iteration (each has `name` and `run`) |
 | `args` | list of strings | no | Declared argument names for user arguments |
+| `credit` | bool | no | Append co-author trailer instruction to prompt (default: `true`) |
 
 ### Commands
 
