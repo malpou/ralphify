@@ -1,6 +1,6 @@
 ---
-description: Copy-pasteable ralphify setups for Python, TypeScript, and Rust autonomous coding loops.
-keywords: ralphify cookbook, autonomous coding recipes, Python AI agent, TypeScript AI agent, Rust AI agent, RALPH.md examples
+description: Copy-pasteable ralphify setups for Python, TypeScript, Rust, and Go autonomous coding loops — plus recipes for documentation, bug fixing, and parameterized research.
+keywords: ralphify cookbook, autonomous coding recipes, Python AI agent, TypeScript AI agent, Rust AI agent, Go AI agent, RALPH.md examples, documentation loop, bug fixing loop
 ---
 
 # Cookbook
@@ -185,6 +185,67 @@ Run `cargo fmt` before committing if the format check fails.
 
 ```bash
 ralph run rust-dev -n 5 --log-dir ralph_logs
+```
+
+---
+
+## Go
+
+A loop for a Go project using standard tooling.
+
+**`go-dev/RALPH.md`**
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+commands:
+  - name: tests
+    run: go test ./...
+  - name: vet
+    run: go vet ./...
+  - name: build
+    run: go build ./...
+  - name: git-log
+    run: git log --oneline -10
+---
+
+# Prompt
+
+## Recent commits
+
+{{ commands.git-log }}
+
+## Test results
+
+{{ commands.tests }}
+
+## Vet
+
+{{ commands.vet }}
+
+## Build
+
+{{ commands.build }}
+
+You are an autonomous coding agent running in a loop. Each iteration
+starts with a fresh context. Your progress lives in the code and git.
+
+Read TODO.md for the current task list. Pick the top uncompleted task,
+implement it fully, then mark it done.
+
+If any checks above show failures, fix them before starting new work.
+
+## Rules
+
+- One task per iteration
+- Run `go fmt ./...` before committing
+- No `//nolint` comments — fix the underlying issue
+- Commit with a descriptive message like `feat: add X` or `fix: resolve Y`
+- Mark the completed task in TODO.md
+```
+
+```bash
+ralph run go-dev -n 5 --log-dir ralph_logs
 ```
 
 ---
