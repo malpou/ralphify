@@ -7,6 +7,14 @@ keywords: ralphify changelog, release history, new features, version updates, br
 
 All notable changes to ralphify are documented here.
 
+## 0.2.2 — 2026-03-21
+
+### Added
+
+- **`ralph init` command** — scaffold a new ralph with a ready-to-customize template, no AI agent required. Run `ralph init my-task` to create a directory with a `RALPH.md` that includes example commands, args, and placeholders. A faster alternative to the AI-guided `ralph new`.
+
+---
+
 ## 0.2.1 — 2026-03-21
 
 ### Fixed

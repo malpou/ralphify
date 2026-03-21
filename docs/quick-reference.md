@@ -18,6 +18,9 @@ ralph run my-ralph --delay 10      # Wait 10s between iterations
 ralph run my-ralph --timeout 300   # Kill agent after 5 min per iteration
 ralph run my-ralph -- --dir ./src  # Pass user args to the ralph
 
+ralph init my-task                  # Scaffold a ralph from template (no AI)
+ralph init                         # Scaffold in current directory
+
 ralph new                          # AI-guided ralph creation
 ralph new docs                     # AI-guided creation with name pre-filled
 
