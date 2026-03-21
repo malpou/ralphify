@@ -157,7 +157,7 @@ class TestRunStateControls:
 
         def stop_after_first(*args, **kwargs):
             state.request_stop()
-            return subprocess.CompletedProcess(args=args, returncode=0)
+            return ok_result(*args, **kwargs)
 
         mock_run.side_effect = stop_after_first
 
@@ -198,7 +198,7 @@ class TestRunStateControls:
                     state.request_resume()
 
                 threading.Thread(target=resume_later, daemon=True).start()
-            return subprocess.CompletedProcess(args=args, returncode=0)
+            return ok_result(*args, **kwargs)
 
         mock_run.side_effect = track_calls
 
@@ -220,7 +220,7 @@ class TestRunStateControls:
                 state.request_stop()
 
             threading.Thread(target=stop_later, daemon=True).start()
-            return subprocess.CompletedProcess(args=args, returncode=0)
+            return ok_result(*args, **kwargs)
 
         mock_run.side_effect = pause_then_stop
 
@@ -265,7 +265,7 @@ class TestCommandExecution:
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     @patch(MOCK_RUN_COMMAND)
     def test_commands_output_injected(self, mock_run_cmd, mock_agent, tmp_path):
-        mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="test output\n")
+        mock_run_cmd.return_value = RunResult(success=True, returncode=0, output="test output\n")
 
         ralph_dir = tmp_path / "my-ralph"
         ralph_dir.mkdir(exist_ok=True)
@@ -295,7 +295,7 @@ class TestCommandExecution:
             nonlocal call_count
             call_count += 1
             name = kwargs.get("command", "")
-            return RunResult(success=True, exit_code=0, output=f"output-{name}")
+            return RunResult(success=True, returncode=0, output=f"output-{name}")
 
         mock_run_cmd.side_effect = per_command
 
@@ -322,7 +322,7 @@ class TestCommandExecution:
     @patch(MOCK_RUN_COMMAND)
     def test_dotslash_command_uses_ralph_dir_as_cwd(self, mock_run_cmd, mock_agent, tmp_path):
         """Commands starting with ./ run relative to the ralph directory."""
-        mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
+        mock_run_cmd.return_value = RunResult(success=True, returncode=0, output="ok")
 
         ralph_dir = tmp_path / "my-ralph"
         ralph_dir.mkdir(exist_ok=True)
@@ -344,7 +344,7 @@ class TestCommandExecution:
     @patch(MOCK_RUN_COMMAND)
     def test_regular_command_uses_project_root_as_cwd(self, mock_run_cmd, mock_agent, tmp_path):
         """Commands without ./ prefix run from the project root."""
-        mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
+        mock_run_cmd.return_value = RunResult(success=True, returncode=0, output="ok")
 
         ralph_dir = tmp_path / "my-ralph"
         ralph_dir.mkdir(exist_ok=True)
@@ -366,7 +366,7 @@ class TestCommandExecution:
     @patch(MOCK_RUN_COMMAND)
     def test_command_timeout_passed_through(self, mock_run_cmd, mock_agent, tmp_path):
         """Command timeout from frontmatter is forwarded to run_command."""
-        mock_run_cmd.return_value = RunResult(success=True, exit_code=0, output="ok")
+        mock_run_cmd.return_value = RunResult(success=True, returncode=0, output="ok")
 
         ralph_dir = tmp_path / "my-ralph"
         ralph_dir.mkdir(exist_ok=True)

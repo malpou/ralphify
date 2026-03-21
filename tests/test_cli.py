@@ -132,7 +132,7 @@ class TestRun:
                 ralph_file.write_text(
                     "---\nagent: claude -p --dangerously-skip-permissions\n---\nv2"
                 )
-            return subprocess.CompletedProcess(args=args, returncode=0)
+            return ok_result(*args, **kwargs)
 
         mock_run.side_effect = update_prompt
 

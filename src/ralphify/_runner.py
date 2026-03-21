@@ -29,7 +29,7 @@ class RunResult:
     """Result of running a command or script."""
 
     success: bool
-    exit_code: int
+    returncode: int
     output: str
     timed_out: bool = False
 
@@ -53,7 +53,7 @@ def run_command(
     current process environment so scripts keep ``PATH`` etc.  When
     ``None`` (default), ``subprocess.run`` inherits the parent env.
 
-    On timeout, returns ``exit_code=TIMEOUT_EXIT_CODE`` and ``timed_out=True``.
+    On timeout, returns ``returncode=TIMEOUT_EXIT_CODE`` and ``timed_out=True``.
     """
     if script:
         cmd = [str(script)]
@@ -75,13 +75,13 @@ def run_command(
         )
         return RunResult(
             success=result.returncode == 0,
-            exit_code=result.returncode,
+            returncode=result.returncode,
             output=collect_output(result.stdout, result.stderr),
         )
     except subprocess.TimeoutExpired as e:
         return RunResult(
             success=False,
-            exit_code=TIMEOUT_EXIT_CODE,
+            returncode=TIMEOUT_EXIT_CODE,
             output=collect_output(e.stdout, e.stderr),
             timed_out=True,
         )

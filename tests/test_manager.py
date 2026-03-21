@@ -1,6 +1,5 @@
 """Tests for the multi-run manager."""
 
-import subprocess
 import threading
 import time
 from unittest.mock import patch
@@ -117,7 +116,7 @@ class TestRunManagerPauseResume:
             if call_count == 1:
                 pause_done.set()
                 resume_allowed.wait(timeout=5)
-            return subprocess.CompletedProcess(args=args, returncode=0)
+            return ok_result(*args, **kwargs)
 
         mock_run.side_effect = counting_ok
 

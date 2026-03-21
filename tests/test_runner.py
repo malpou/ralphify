@@ -16,7 +16,7 @@ class TestRunCommand:
         result = run_command(script=None, command="echo hello", cwd=Path("/project"), timeout=60)
 
         assert result.success is True
-        assert result.exit_code == 0
+        assert result.returncode == 0
         assert "ok" in result.output
         assert result.timed_out is False
         mock_run.assert_called_once()
@@ -28,7 +28,7 @@ class TestRunCommand:
         result = run_command(script=None, command="ruff check", cwd=Path("/project"), timeout=60)
 
         assert result.success is False
-        assert result.exit_code == 1
+        assert result.returncode == 1
         assert "error" in result.output
 
     @patch(MOCK_RUNNER_SUBPROCESS)
@@ -66,7 +66,7 @@ class TestRunCommand:
         result = run_command(script=None, command="echo", cwd=Path("/project"), timeout=60)
 
         assert result.success is False
-        assert result.exit_code == TIMEOUT_EXIT_CODE
+        assert result.returncode == TIMEOUT_EXIT_CODE
         assert result.timed_out is True
 
     @patch(MOCK_RUNNER_SUBPROCESS)
