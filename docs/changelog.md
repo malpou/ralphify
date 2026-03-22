@@ -26,6 +26,12 @@ All notable changes to ralphify are documented here.
 
 ### Improved
 
+### Added
+
+- **Bundled `ralphify` agent skill** — a reference skill that teaches AI coding agents how to use ralphify. Install it into your agent's skill directory so the agent can autonomously create and manage ralphs. Covers CLI commands, RALPH.md format, placeholders, and prompt-writing patterns.
+
+### Improved
+
 - **`BoundEmitter` convenience methods** — `log_info(message)` and `log_error(message, traceback=...)` let Python API users emit log events without constructing `Event` objects manually.
 - **Extracted `ProcessResult` base class** — `RunResult` and `AgentResult` now share a common base with consistent `success` / `timed_out` semantics, reducing duplication in `_runner.py` and `_agent.py`.
 - **Code quality** — extracted CLI validation helpers, renamed `resolver.py` to `_resolver.py` to match private module convention, deduplicated output echoing and timeout/blocking paths in `_agent.py`, extracted `ensure_str` helper for consistent bytes-to-string decoding.
