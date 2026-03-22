@@ -261,3 +261,14 @@
 - **The autoresearch pattern maps directly to a ralph.** editable asset = code, commands = run experiment + extract metrics, RALPH.md = program.md. This is the highest-value cookbook example to build.
 - **The PRD-driven ralph pattern (snarktank/ralph) is the most practical for product development.** prd.json with acceptance criteria + progress.txt learning log + fresh context per iteration. Directly implementable as a ralphify cookbook recipe.
 - **Output redirection to prevent context flooding is a critical technique for RALPH.md prompts.** `> run.log 2>&1` then `grep` for metrics. Verbose command output kills agent performance.
+
+## Protocol Stack & Credential Security (NEW — Iteration 23)
+- **The agent protocol stack has converged into three layers: MCP (tool), A2A (agent), AG-UI (user).** Each solves a distinct problem. MCP has 97M monthly SDK downloads; A2A has 150+ orgs and gRPC support; AG-UI provides 16 event types for frontend streaming. AAIF unifies governance.
+- **AI-assisted commits leak secrets at 2x the baseline rate.** GitGuardian 2026: Claude Code specifically at 3.2% vs 1.5% baseline. 29M hardcoded secrets on public GitHub. 81% surge in AI-service secrets YoY.
+- **The credential injection proxy is the emerging standard for agent security.** Vercel, GitHub, and NVIDIA converged independently on the same architecture: the agent never holds credentials; an external proxy injects auth headers into outbound requests.
+- **Keycard (March 19, 2026) is the first dedicated runtime governance for coding agents.** Identity-bound, task-scoped, ephemeral credentials that never touch disk or context window. Point-of-execution governance for every tool call.
+- **53% of MCP servers rely on insecure static secrets despite OAuth 2.1 spec.** Astrix found 24K secrets in MCP config files on GitHub, 2.1K confirmed valid. The spec-adoption gap is enormous.
+- **CVE-2026-21852 demonstrates the supply-chain attack surface for agent loops.** Opening a malicious repo in Claude Code exfiltrates API keys via settings hooks before trust dialog appears. The repo IS the attack vector.
+- **Token rotation for long-running agent loops is unsolved for most runtimes.** OAuth token expiry mid-loop leaves work in broken state (Claude Code issue #12447). Credential injection proxy is the cleanest fix: rotation invisible to agent.
+- **RALPH.md is a natural credential scope declaration.** It already declares dependencies (agent + commands). Adding `credentials` or `mcp` fields would enable harness-managed credential provisioning without agent exposure.
+- **The zero-secret agent is architecturally achievable.** GitHub's agentic workflow architecture: agent in dedicated container with zero access to secrets, all auth via separate proxy/gateway containers. Applies directly to sandboxed ralph loops.

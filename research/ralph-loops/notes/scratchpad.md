@@ -643,3 +643,37 @@ After 3 consecutive research iterations (19-21), it's time to tighten. The repor
 - Refine cycle: 23 insights, 23 chapters — the chapter count is at the upper limit. Consider merging Ch09 (prompt assembly) into Ch15 (context engineering) or consolidating some of the later chapters.
 - Or: research the "stacked PRs" pattern for agent output — incremental review as alternative to monolithic diffs
 - Or: deeper dive into credential management patterns for autonomous agents — the intersection of secrets, agent loops, and CI/CD
+
+## Iteration 23 — 2026-03-22
+
+**Decision: RESEARCH**
+
+**Focus area:** Two high-value threads:
+1. **Agent workflow automation & inter-agent protocols** — Google's A2A protocol, the evolution from file-based handoff to structured coordination. How are practitioners actually running multi-agent pipelines in March 2026? What tools and protocols are emerging?
+2. **Latest cutting-edge practitioner voices (March 18-22, 2026)** — the freshest blog posts, HN threads, Reddit discussions, YouTube content on autonomous agent loops, harness engineering, and production agent deployments. Looking for signals the existing research hasn't captured.
+3. **Agent credential & secret management** — how practitioners handle credentials in autonomous loops, the emerging security architecture.
+
+**What was done:**
+- Launched 3 parallel research agents: A2A protocol (good — had training data through April 2025), latest March 2026 content (no web access), credential management (excellent — 20+ sources via web search)
+- Conducted 7 targeted web searches: A2A adoption, credential management, harness engineering latest, Keycard, GitGuardian, Vercel security, AAIF formation
+- Found and deep-read 18+ new high-signal sources across all three threads
+- Created chapter 24 (Protocol Stack & Credential Security) covering: three-protocol stack (MCP/A2A/AG-UI), AAIF governance, GitGuardian 2x leak rate data, credential injection proxy pattern (Vercel/GitHub/NVIDIA convergence), Keycard runtime governance, MCP OAuth adoption gap, token rotation for long-running loops, zero-secret ralph architecture
+- Added 1 new insight to REPORT.md (#25), 9 new insights to notes, 18 new sources, 5 new questions
+- Updated REPORT.md with new chapter, sources, and open questions
+
+**Key surprises:**
+- AI-assisted commits leak secrets at 2x the baseline (GitGuardian 2026) — Claude Code at 3.2% vs 1.5%. The credential problem is quantified and worse than expected.
+- Three companies (Vercel, GitHub, NVIDIA) independently converged on credential injection proxy — the same architecture, arrived at separately. Strong signal this is the right answer.
+- AAIF formation (Dec 2025) unified MCP, A2A, AGENTS.md, and goose under Linux Foundation with ALL major AI companies as platinum members — the protocol wars are over before they started.
+- A2A reached 150+ supporting organizations and v0.3 with gRPC in just 3 months — faster adoption than expected.
+- AG-UI is the third protocol nobody in the research had covered — agent→frontend standardization with 16 event types, filling the gap between MCP (tools) and A2A (agents).
+- Keycard (March 19, 2026 — just 3 days old!) is the first dedicated runtime governance platform for coding agents — identity-bound, task-scoped, ephemeral credentials.
+- 53% of MCP servers still use static API keys despite OAuth 2.1 spec — the spec-adoption gap is enormous.
+- CVE-2026-21852: opening a malicious repo in Claude Code exfiltrates API keys BEFORE the trust dialog appears — repos are attack vectors.
+- The "zero-secret ralph" architecture is naturally achievable because RALPH.md already declares dependencies.
+
+**Next iteration should focus on:**
+- Refine cycle (iteration 24): 25 insights, 24 chapters — the chapter count and insight count are high. Consider trimming insights to ~22 and merging related chapters.
+- Update Ch06 (implications) with protocol stack and credential findings: MCP server declarations, credential scope declarations, A2A Agent Cards for ralphs
+- Or: research practical "zero-secret" implementations for developer workflows — how do teams actually set up credential injection proxies?
+- Or: explore the AG-UI protocol more deeply — what does it mean for ralph loop UIs and dashboards?

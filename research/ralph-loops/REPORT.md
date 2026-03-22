@@ -52,6 +52,8 @@
 
 24. **Autonomous agents cannot reliably police themselves — sandboxing must be out-of-process.** NVIDIA's OpenShell (March 2026) moves all governance outside the agent: deny-by-default permissions, policy enforcement at the binary/destination/method/path level, credentials in memory only (never on disk), and a privacy router that controls what reaches frontier models. Three isolation tiers have converged: microVMs (125ms boot, strongest), gVisor (10-30% I/O overhead), hardened containers (insufficient for untrusted code). Critically, sandbox overhead is negligible compared to LLM inference costs — removing the main objection to strong isolation. Ralph loops are naturally sandboxable: RALPH.md already defines a permission manifest (agent command + commands list), and fresh-context-per-iteration maps to ephemeral sandbox recreation.
 
+25. **The agent protocol stack has converged under shared governance — and credential security is the #1 operational gap.** MCP (agent→tool, 97M monthly SDK downloads), A2A (agent↔agent, 150+ orgs, v0.3 with gRPC), and AG-UI (agent→user, 16 event types) form a three-layer protocol stack, unified under the Linux Foundation's Agentic AI Foundation (Dec 2025) with AWS, Anthropic, Google, Microsoft, and OpenAI as platinum members. Meanwhile, GitGuardian's 2026 report shows AI-assisted commits leak secrets at **2x the baseline rate** (Claude Code at 3.2% vs 1.5%), with 29M hardcoded secrets on public GitHub and 24K secrets in MCP config files. The credential injection proxy — where the agent never holds credentials; an external proxy injects auth headers — is the emerging standard (Vercel, GitHub, NVIDIA converged independently). Keycard (March 19, 2026) adds identity-bound, task-scoped, ephemeral credential injection with full audit trails. Ralph loops are naturally suited: RALPH.md already declares dependencies (agent + commands), and could declare credential scopes for harness-managed provisioning.
+
 ## Chapters
 
 | # | Chapter | Summary |
@@ -79,6 +81,7 @@
 | 21 | [Intent-Failure Detection & Human-Agent Collaboration](chapters/21-intent-failure-human-agent-collaboration.md) | Five intent-failure mechanisms, authority hierarchy (specs>tests>code), independent ground truth, on-the-loop framework, PR Contract, conductor/orchestrator duality, role evolution |
 | 22 | [Middleware Architecture & Eval Methodology](chapters/22-middleware-architecture-eval-methodology.md) | Composable middleware stacks (LangChain Top 30→Top 5), Azure SRE self-improvement loop (45%→75% Intent Met), Open SWE/Attractor patterns, reasoning sandwich, eval hidden variables, multi-model complementarity, practitioner reality (50K lines/month), Kubernetes-native execution |
 | 23 | [Agent Security & Sandboxing](chapters/23-agent-security-sandboxing.md) | 3-tier isolation (microVM/gVisor/container), NVIDIA OpenShell (out-of-process enforcement, browser tab model, privacy router), 4 agent-specific attack vectors, ephemeral sandbox lifecycle, OS-level controls, permission manifests from RALPH.md, "Beyond Agentic Coding" practitioner consensus |
+| 24 | [Protocol Stack & Credential Security](chapters/24-protocol-stack-credential-security.md) | Three-protocol stack (MCP/A2A/AG-UI), AAIF governance, GitGuardian 2x leak rate, credential injection proxy (Vercel/GitHub/NVIDIA), Keycard runtime governance, MCP OAuth gap (53% static secrets), token rotation for long-running loops, zero-secret ralph architecture |
 
 ## Open Questions
 
@@ -92,6 +95,9 @@
 - What's the optimal middleware stack for ralph loops — which layers provide the most value per token of overhead? **[Partially answered in Ch22]** — LangChain's 4-layer stack (env mapping, loop detection, reasoning budget, pre-completion verification) is the best documented example.
 - How does Azure SRE Agent's concurrent memory staleness problem manifest in multi-ralph scenarios with shared state files?
 - Does the "reasoning sandwich" generalize beyond Terminal Bench? **[Partially answered in Ch22]** — Outperforms uniform allocation by 12.6 points, but no real-world ralph loop validation yet.
+- How quickly will A2A adoption close the gap with MCP (97M downloads)? Will multi-ralph coordination benefit from A2A, or is file-based handoff sufficient for most use cases?
+- What's the optimal credential architecture for ralph loops — env vars (simple), vault integration (better), or injection proxy (strongest)? At what scale does the complexity of injection proxies pay off?
+- How does Keycard's runtime governance model interact with ralph loops that run in CI/CD vs. local development? Is the audit trail useful for debugging loop failures?
 
 ## Key Sources
 
@@ -159,6 +165,13 @@
 - [Context Engineering Lessons from Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) — Peak Ji (KV-cache as #1 metric, 100:1 input-to-output, rebuilt 4x)
 - [Stripe Minions at Scale](https://www.infoq.com/news/2026/03/stripe-autonomous-coding-agents/) — InfoQ (1,300+ PRs/week, "Blueprints" architecture)
 - [ETH Zurich: AGENTS.md Value Review](https://www.infoq.com/news/2026/03/agents-context-file-value-review/) — InfoQ (context files reduced success by ~3%, increased costs 19-20%)
+- [State of Secrets Sprawl 2026](https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/) — GitGuardian (29M secrets on GitHub, AI commits 2x leak rate, Claude Code 3.2% vs 1.5% baseline)
+- [Security Boundaries in Agentic Architectures](https://vercel.com/blog/security-boundaries-in-agentic-architectures) — Vercel (credential injection proxy, application sandbox + secret injection)
+- [Keycard: Runtime Governance for Coding Agents](https://www.globenewswire.com/news-release/2026/03/19/3259248/0/en/Keycard-Releases-Runtime-Governance-for-Autonomous-Coding-Agents.html) — Keycard (identity-bound, task-scoped, ephemeral credentials, March 19 2026)
+- [Agentic AI Foundation Formation](https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation) — Linux Foundation (AAIF: MCP + goose + AGENTS.md, Dec 2025)
+- [MCP vs A2A: Complete Guide 2026](https://dev.to/pockit_tools/mcp-vs-a2a-the-complete-guide-to-ai-agent-protocols-in-2026-30li) — DEV Community (protocol roles, complementary positioning, adoption data)
+- [State of MCP Server Security 2025](https://astrix.security/learn/blog/state-of-mcp-server-security-2025/) — Astrix Security (88% need auth, 53% static secrets, 8.5% OAuth, 24K exposed secrets)
+- [AG-UI: Agent-User Interaction Protocol](https://docs.ag-ui.com/introduction) — CopilotKit (16 event types, typed handoffs, mid-flow pause/approve/retry)
 - [QCon: AI for Developers in a Dangerous State](https://www.theregister.com/2026/03/18/ai_for_software_developers_qcon/) — The Register (expertise erosion paradox)
 - [Memory Compression Failure Modes](https://www.indium.tech/blog/agent-memory-compression-failure-modes/) — Indium Tech (5 failure modes for long-running agents)
 - [4 Memory Architectures for AI Agents](https://dev.to/ai_agent_digest/your-ai-agents-memory-is-broken-here-are-4-architectures-racing-to-fix-it-55j1) — DEV Community (Observational, Graph, Self-Editing, RAG)

@@ -314,3 +314,24 @@
 - https://news.ycombinator.com/item?id=46930565 — HN — "Beyond Agentic Coding": plan-mode-first consensus, 2-3 agent cognitive limit, agents lack decision breadcrumbs, trust per-cycle not cumulative, speed doesn't solve sync — **high**
 - https://cycode.com/blog/agent-infrastructure-as-code/ — Cycode / Dor Atias — Agent Infrastructure as Code: repository-level security controls for AI agents — **medium**
 - https://code.claude.com/docs/en/sandboxing — Anthropic — Claude Code built-in sandbox: file access and command restrictions per project — **medium**
+
+## Iteration 23 — Protocol Stack & Credential Security
+
+- https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/ — GitGuardian — 29M hardcoded secrets on GitHub, AI commits 2x leak rate, Claude Code 3.2% vs 1.5% baseline, 81% AI-service secret surge — **critical**
+- https://vercel.com/blog/security-boundaries-in-agentic-architectures — Vercel — Credential injection proxy architecture, application sandbox + secret injection as strongest combined posture — **critical**
+- https://www.globenewswire.com/news-release/2026/03/19/3259248/0/en/Keycard-Releases-Runtime-Governance-for-Autonomous-Coding-Agents.html — Keycard — Runtime governance: identity-bound, task-scoped, ephemeral credentials, point-of-execution policy enforcement, cross-environment portability (March 19, 2026) — **critical**
+- https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation — Linux Foundation — AAIF formation: MCP + goose + AGENTS.md donated, AWS/Anthropic/Google/Microsoft/OpenAI platinum members (Dec 9, 2025) — **critical**
+- https://dev.to/pockit_tools/mcp-vs-a2a-the-complete-guide-to-ai-agent-protocols-in-2026-30li — DEV Community — MCP (97M monthly SDK downloads) vs A2A (150+ orgs), complementary roles, protocol stack overview — **high**
+- https://astrix.security/learn/blog/state-of-mcp-server-security-2025/ — Astrix Security — 88% of MCP servers need auth, 53% use static secrets, 8.5% use OAuth, 24K secrets in MCP configs on GitHub — **critical**
+- https://docs.ag-ui.com/introduction — CopilotKit — AG-UI protocol: 16 event types, typed handoffs, mid-flow pause/approve/retry, agent→frontend standardization — **high**
+- https://github.com/a2aproject/A2A — Google/AAIF — A2A protocol repo: Agent Cards, task-based interaction, v0.3 with gRPC + signed security cards — **high**
+- https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/ — Google — A2A announcement: agent-to-agent coordination, 50+ launch partners, complementary to MCP — **high**
+- https://cloud.google.com/blog/products/ai-machine-learning/agent2agent-protocol-is-getting-an-upgrade — Google Cloud — A2A v0.3: gRPC support, signed security cards, extended Python SDK — **high**
+- https://www.knostic.ai/blog/claude-loads-secrets-without-permission — Knostic / Dor Munis — Claude Code silently reads .env files without notification; proxy billing spike was the tell — **high**
+- https://thehackernews.com/2026/02/claude-code-flaws-allow-remote-code.html — The Hacker News / Check Point — CVE-2026-21852: malicious repo exfiltrates API keys via settings.json hooks before trust dialog — **high**
+- https://github.blog/ai-and-ml/generative-ai/under-the-hood-security-architecture-of-github-agentic-workflows/ — GitHub — Zero-secret agent architecture: separate containers for LLM keys, MCP credentials, GitHub tokens, chroot-jailed filesystem — **high**
+- https://infisical.com/blog/secure-secrets-management-for-cursor-cloud-agents — Infisical — Secrets management for Cursor Cloud Agents: store only machine identity, fetch secrets at runtime — **high**
+- https://aembit.io/blog/securing-ai-agents-without-secrets/ — Aembit — Workload identity + ephemeral credentials, eliminate static secrets from agents entirely — **high**
+- https://1password.com/solutions/agentic-ai — 1Password — Agentic AI SDK for secure agent credential management, vault-backed injection, MCP integration — **medium**
+- https://www.d4b.dev/blog/2026-03-20-agentic-ui-comparing-ag-ui-mcp-ui-and-a2a-protocols — d4b — Comparison of AG-UI, MCP-UI/Apps, and A2A protocols for different use cases — **medium**
+- https://atamel.dev/posts/2026/03-17_agent_protocols_mcp_a2a_a2ui_agui/ — Mete Atamel — Developer's overview of MCP, A2A, A2UI, AG-UI protocol stack — **medium**

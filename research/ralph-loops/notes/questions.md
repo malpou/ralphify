@@ -46,6 +46,11 @@
 - [ ] How does Azure SRE Agent's concurrent memory staleness problem manifest in multi-ralph scenarios with shared state files?
 - [ ] Does the "reasoning sandwich" pattern (heavy reasoning for planning/verification, lighter for implementation) generalize beyond Terminal Bench?
 - [ ] How does the 100+ tools → ~5 tools trajectory (Azure SRE) interact with MCP's push for more tools? Is there an optimal tool count?
+- [ ] How quickly will A2A adoption close the gap with MCP (97M downloads)? Will multi-ralph coordination benefit from A2A, or is file-based handoff sufficient?
+- [ ] What's the optimal credential architecture for ralph loops — env vars, vault integration, or injection proxy? At what scale does proxy complexity pay off?
+- [ ] How does Keycard's runtime governance interact with ralph loops in CI/CD vs. local development? Is the audit trail useful for debugging loop failures?
+- [ ] Will MCP Apps (the UI rendering extension) compete with or complement AG-UI for agent frontend experiences?
+- [ ] How will the AAIF governance affect MCP and A2A evolution speed? Will vendor-neutral governance slow iteration or increase adoption?
 
 ## Answered
 - [x] How does Stripe's "Blueprints" architecture compare to RALPH.md for defining deterministic+agent hybrid workflows? — Blueprints interleave deterministic nodes (linting, testing, file ops) with agentic nodes (code generation, PR writing). RALPH.md already implements this: commands = deterministic nodes, prompt body = agentic directive. Gap: Blueprints have explicit error recovery (bounded retry → human escalation). See Ch20.
