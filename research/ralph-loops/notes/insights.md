@@ -237,6 +237,24 @@
 - **Kubernetes-native agent execution (Axon) maps cleanly to ralph loops.** RALPH.md as Task CRD, K8s controller handles isolation/scaling/cost tracking. Each agent runs in an ephemeral Pod with scoped credentials.
 - **Azure SRE Agent's concurrent memory staleness is an unsolved problem.** Multiple sessions writing conflicting patterns to the same file. Directly relevant to multi-ralph scenarios with shared state.
 
+## Agent Security & Sandboxing (NEW — Iteration 22)
+- **A long-running agent process cannot reliably police itself.** NVIDIA's core insight: out-of-process policy enforcement is the only reliable model for autonomous agents. OpenShell moves governance outside the agent, evaluating every action at the binary/destination/method/path level.
+- **Three isolation tiers have converged: microVMs (strongest), gVisor (moderate), containers (weakest).** Firecracker boots in 125ms with <5MiB overhead — negligible compared to LLM inference latency. gVisor adds 10-30% I/O overhead. Standard containers share the host kernel and are insufficient for untrusted agent code.
+- **Sandbox overhead is negligible compared to LLM costs.** NVIDIA: "Virtualization overhead is frequently modest compared to that induced by LLM calls." A 125ms microVM boot is invisible next to 30-second inference. This removes the main objection to strong isolation for ralph loops.
+- **Approval caching is an anti-pattern.** NVIDIA AI Red Team: approvals should never be cached or persisted. A single legitimate approval enables future adversarial abuse. Every action requires fresh confirmation.
+- **Ephemeral sandboxes solve the accumulation problem.** Long-running environments accumulate downloaded dependencies, cached credentials, and proprietary code — expanding attack surface. Periodic recreation (sandbox-per-iteration) is the architectural fix, and ralph loops' fresh-context pattern maps naturally to this.
+- **The Safety-Capability-Autonomy trilemma.** You can reliably get two at a time: safety+capability (but manual), safety+autonomy (but limited), capability+autonomy (but risky). Out-of-process enforcement claims to solve all three.
+- **Ralph loops are naturally sandboxable.** RALPH.md defines exact capabilities: agent command, commands list, args. This maps directly to a permission manifest. Each iteration can start in a clean sandbox. Commands run in isolated subprocesses.
+
+## Beyond Agentic Coding — HN Practitioner Consensus (NEW — Iteration 22)
+- **Plan-mode-first dominates effective agent usage.** Experienced practitioners extract implementation plans before execution, surfacing wrong design decisions before sprawl.
+- **2-3 concurrent agent sessions is the cognitive ceiling.** Beyond that, developers hit context-switching limits. Parallel work on the same codebase is worse than different projects.
+- **Agents don't leave decision breadcrumbs.** Human juniors explain why they chose approach A over B; agents just produce diffs. This makes review harder despite correctness — reverse-engineering intent is cognitive overhead.
+- **Trust remains per-cycle, not cumulative.** Unlike human juniors where trust builds over time, agents require full verification each cycle. The overhead partially offsets speed gains.
+- **Speed doesn't solve the synchronization problem.** Even at 1000 tok/s, a fixed amount of human time is needed to understand what agents completed. There's a phase ceiling where generation speed becomes irrelevant.
+- **Stacked PRs are the structured alternative to monolithic agent output.** Agents create ordered PRs where each depends only on previous ones, enabling incremental review. Mirrors kernel patch series.
+- **Facet-based project navigation is an emerging concept.** Semantic trees organizing code by feature slices rather than filesystem hierarchy — tackling the review problem where related components scatter across files.
+
 ## Ralphify-Specific
 - **Ralphify's command system naturally supports the "commands as verifiers" pattern.** Running tests/metrics as commands and injecting results into the prompt is exactly what Spotify and Karpathy do — ralphify just needs to formalize verification as a first-class concept.
 - **Agent skills as portable packages is a validated trend.** Ralphify's skill system aligns with the industry direction of installable, reusable instruction sets.

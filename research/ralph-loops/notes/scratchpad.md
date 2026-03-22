@@ -600,3 +600,46 @@
 - Refine cycle (iteration 22): 25 insights, 22 chapters — trim insights to ~22. Consider merging #23 (intent failure + specs + on-the-loop) which is now very long.
 - Update Ch06 (implications) with middleware findings: post-iteration hooks, reasoning budget allocation, middleware as ralphify feature
 - Or: research agent security and sandboxing patterns — NIST public comment period, Axon-style isolation, the security implications of autonomous agents
+
+## Iteration 22 — 2026-03-22
+
+**Decision: HYBRID — refine (primary) + targeted research (secondary)**
+
+After 3 consecutive research iterations (19-21), it's time to tighten. The report has 25 insights (target ~22) and 22 chapters. The research is comprehensive — 190+ sources, deep coverage of architecture, verification, anti-patterns, trust, testing, entropy, MCP, context engineering, orchestration, debugging, cookbook patterns, eval methodology, long-running state, spec-driven workflows, intent failure, and middleware.
+
+**Refine focus:**
+1. REPORT.md: trim 25 → ~22 insights by merging related pairs
+   - #23 (intent failure) is very long — split the mechanisms from the fix (spec-driven development)
+   - #24 (middleware stack) and #22 (middleware architecture chapter) overlap with #12 (test the harness) — tighten
+   - #25 (spec quality as hidden variable) could be folded into #23 or #2 (verification)
+2. Final coherence pass on the full report narrative
+3. Update REPORT.md Open Questions — any newly answered?
+
+**Research focus (secondary):**
+- Quick web sweep for the absolute latest (March 20-22, 2026) on agent loops, harness engineering, or autonomous coding — anything genuinely new
+
+**What was done:**
+- Trimmed REPORT.md from 25 to 23 insights by merging 3 pairs:
+  - #16 (agent throughput > human review) → folded into intro paragraph
+  - #24 (middleware stack) → merged into #10 (test the harness + compose as middleware)
+  - #25 (spec quality as hidden variable) → merged into #23 (intent failure + specs)
+- Renumbered all insights cleanly (1-23)
+- Updated Open Questions with partial answers on middleware stack and reasoning sandwich
+- Searched web for latest content: found agent sandboxing/security as genuinely new territory
+- Deep-read 3 high-signal sources: Northflank (3-tier isolation), NVIDIA (sandboxing guidance + OpenShell), HN "Beyond Agentic Coding"
+- Created chapter 23 (Agent Security & Sandboxing for Autonomous Loops) covering: 3 isolation tiers, NVIDIA OpenShell, 4 attack vectors, long-running security patterns, OS-level controls, implications for ralph loops
+- Added 6 new sources, 14 new insights, 4 new questions
+- Updated REPORT.md with new chapter entry
+
+**Key surprises:**
+- NVIDIA OpenShell (March 16, 2026) is purpose-built for autonomous agents — first production sandbox that handles skill development, long-running sessions, and credential isolation natively
+- "A long-running process cannot reliably police itself" — NVIDIA's core insight validates out-of-process enforcement over in-agent guardrails
+- Sandbox overhead is negligible vs LLM costs: 125ms microVM boot vs 30s inference. The main objection to strong isolation is empirically wrong.
+- Approval caching is an anti-pattern (NVIDIA AI Red Team) — a single legitimate approval enables future adversarial abuse
+- HN consensus: trust is per-cycle not cumulative; 2-3 concurrent agent sessions is the cognitive ceiling; agents don't leave decision breadcrumbs
+- Ralph loops are naturally sandboxable — RALPH.md already defines a permission manifest (agent command + commands list)
+
+**Next iteration should focus on:**
+- Refine cycle: 23 insights, 23 chapters — the chapter count is at the upper limit. Consider merging Ch09 (prompt assembly) into Ch15 (context engineering) or consolidating some of the later chapters.
+- Or: research the "stacked PRs" pattern for agent output — incremental review as alternative to monolithic diffs
+- Or: deeper dive into credential management patterns for autonomous agents — the intersection of secrets, agent loops, and CI/CD

@@ -305,3 +305,12 @@
 - https://github.com/axon-core/axon — Axon — Kubernetes-native agent framework: Task CRD → isolated Pod → autonomous work → branch/PR/cost output; any agent (Claude, Codex, Gemini) — **high**
 - https://devops.com/open-swe-captures-the-architecture-that-stripe-coinbase-and-ramp-built-independently-for-internal-coding-agents/ — DevOps.com — Open SWE captures independently-evolved enterprise patterns; deterministic middleware for critical operations — **high**
 - https://www.mager.co/blog/2026-03-17-open-swe-coding-agents/ — Mager — Build internal coding agent in 10 minutes with Open SWE; middleware handles "what if the LLM forgets" — **medium**
+
+## New Sources — Iteration 22
+
+- https://northflank.com/blog/how-to-sandbox-ai-agents — Northflank — 3-tier isolation (microVM/gVisor/container), adaptive selection pattern, 10-30% gVisor overhead, 125ms Firecracker boot, defense-in-depth stack — **critical**
+- https://developer.nvidia.com/blog/practical-security-guidance-for-sandboxing-agentic-workflows-and-managing-execution-risk/ — NVIDIA AI Red Team — Tiered permission model, approval caching risk, ephemeral sandbox lifecycle, OS-level controls (Landlock/Seatbelt), config file protection — **critical**
+- https://developer.nvidia.com/blog/run-autonomous-self-evolving-agents-more-safely-with-nvidia-openshell/ — NVIDIA — OpenShell: out-of-process policy enforcement, browser tab isolation, privacy router, deny-by-default, zero code changes for Claude Code/Codex — **critical**
+- https://news.ycombinator.com/item?id=46930565 — HN — "Beyond Agentic Coding": plan-mode-first consensus, 2-3 agent cognitive limit, agents lack decision breadcrumbs, trust per-cycle not cumulative, speed doesn't solve sync — **high**
+- https://cycode.com/blog/agent-infrastructure-as-code/ — Cycode / Dor Atias — Agent Infrastructure as Code: repository-level security controls for AI agents — **medium**
+- https://code.claude.com/docs/en/sandboxing — Anthropic — Claude Code built-in sandbox: file access and command restrictions per project — **medium**

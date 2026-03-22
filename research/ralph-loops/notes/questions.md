@@ -5,7 +5,10 @@
 - [ ] What's the optimal balance between plan-mode time and execution time? Boris Cherny iterates on plans extensively — is there a sweet spot?
 - [ ] How will agent skills interoperability evolve — will SKILL.md become a true standard or fragment?
 - [ ] What's the optimal ratio of spec-writing time to execution time in the spec+ralph integrated workflow?
-- [ ] How do teams handle the asymmetric trust problem (one failure erases weeks of accumulated confidence)?
+- [ ] How do teams handle the asymmetric trust problem (one failure erases weeks of accumulated confidence)? **[Partially addressed in Ch23]** — HN consensus: trust is per-cycle not cumulative; agents require full verification every time.
+- [ ] What's the optimal sandbox isolation tier for ralph loops — microVM per iteration is the strongest but is it necessary for trusted ralphs?
+- [ ] How does NVIDIA OpenShell's privacy router interact with ralph loops that need frontier model access for the agent but local models for sensitive commands?
+- [ ] Does sandbox-per-iteration (ephemeral recreation) measurably improve security outcomes vs. long-lived sandboxes with periodic resets?
 - [ ] Does "always-in-prompt" vs "invoked-on-demand" skill placement have a measurable impact at scale? Vercel's small sample (33 vs 29) is suggestive but inconclusive.
 - [ ] What's the right cadence for garbage-collection/cleanup ralphs — daily, weekly, event-triggered? OpenAI did it weekly (Fridays) before automating.
 - [ ] How do teams decide which harness layers to rip when a new model ships — is there a systematic evaluation process?
