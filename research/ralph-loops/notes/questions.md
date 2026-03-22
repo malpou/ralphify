@@ -11,6 +11,9 @@
 - [ ] How do teams decide which harness layers to rip when a new model ships — is there a systematic evaluation process?
 
 ### Medium Priority (emerging patterns worth tracking)
+- [ ] What domain-specific verification patterns emerge for non-code ralph loops? Is there a generalizable "verification adapter" pattern?
+- [ ] How do teams handle the agent observability gap — build custom, adopt enterprise platforms, or use MCP-native tools (Iris)?
+- [ ] Will the AgenticOS concept (ASPLOS 2026) produce practical primitives for ralph loop execution?
 - [ ] How quickly will A2A adoption close the gap with MCP (97M downloads)? Will multi-ralph coordination benefit from A2A, or is file-based handoff sufficient?
 - [ ] Does the "reasoning sandwich" generalize beyond Terminal Bench? **[Partially answered in Ch22]** — Outperforms uniform allocation by 12.6 points, but no real-world ralph loop validation yet.
 - [ ] How does guardrails.md scale — at what point do accumulated guardrails become contradictory or context-consuming?

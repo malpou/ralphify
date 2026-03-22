@@ -76,6 +76,7 @@
 | 22 | [Middleware Architecture & Eval Methodology](chapters/22-middleware-architecture-eval-methodology.md) | Composable middleware stacks (LangChain Top 30→Top 5), Azure SRE self-improvement loop (45%→75% Intent Met), Open SWE/Attractor patterns, reasoning sandwich, eval hidden variables, multi-model complementarity, practitioner reality (50K lines/month), Kubernetes-native execution |
 | 23 | [Agent Security & Sandboxing](chapters/23-agent-security-sandboxing.md) | 3-tier isolation (microVM/gVisor/container), NVIDIA OpenShell (out-of-process enforcement, browser tab model, privacy router), 4 agent-specific attack vectors, ephemeral sandbox lifecycle, OS-level controls, permission manifests from RALPH.md, "Beyond Agentic Coding" practitioner consensus |
 | 24 | [Protocol Stack & Credential Security](chapters/24-protocol-stack-credential-security.md) | Three-protocol stack (MCP/A2A/AG-UI), AAIF governance, GitGuardian 2x leak rate, credential injection proxy (Vercel/GitHub/NVIDIA), Keycard runtime governance, MCP OAuth gap (53% static secrets), token rotation for long-running loops, zero-secret ralph architecture |
+| 25 | [Domain-Specific Loops & The Observability Gap](chapters/25-domain-specific-loops-observability.md) | Ralph loops beyond coding (security/DevOps/data/content/business), Databricks Genie Code (32→77% success), observability crisis (47.1% monitored, 88% incidents), traditional monitoring insufficient, AgenticOS concept, "any metric" positioning |
 
 ## Open Questions
 
@@ -92,6 +93,9 @@
 - How quickly will A2A adoption close the gap with MCP (97M downloads)? Will multi-ralph coordination benefit from A2A, or is file-based handoff sufficient for most use cases?
 - What's the optimal credential architecture for ralph loops — env vars (simple), vault integration (better), or injection proxy (strongest)? At what scale does the complexity of injection proxies pay off?
 - How does Keycard's runtime governance model interact with ralph loops that run in CI/CD vs. local development? Is the audit trail useful for debugging loop failures?
+- What domain-specific verification patterns emerge for non-code ralph loops (DevOps: terraform validate, data: dbt test, security: scanner baselines)? Is there a generalizable "verification adapter" pattern?
+- How do teams handle the agent observability gap — build custom dashboards, adopt enterprise platforms (Splunk/Arize), or use lightweight MCP-native tools (Iris)? What's the minimum viable monitoring for production ralph loops?
+- Will the AgenticOS concept (ASPLOS 2026) produce practical primitives that benefit ralph loop execution, or will containers/VMs remain the dominant runtime?
 
 ## Key Sources
 
@@ -158,6 +162,11 @@
 - [35-Agent AI Coding Swarm](https://earezki.com/ai-news/2026-03-20-i-built-a-35-agent-ai-coding-swarm-that-runs-overnight/) — earezki (6,500+ runs, 124 duplicate PRs, $65/day, 5-layer memory)
 - [Context Engineering Lessons from Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) — Peak Ji (KV-cache as #1 metric, 100:1 input-to-output, rebuilt 4x)
 - [Stripe Minions at Scale](https://www.infoq.com/news/2026/03/stripe-autonomous-coding-agents/) — InfoQ (1,300+ PRs/week, "Blueprints" architecture)
+- [Databricks Genie Code](https://www.databricks.com/company/newsroom/press-releases/databricks-launches-genie-code-bringing-agentic-engineering-data) — Databricks (32.1%→77.1% success rate, 80%+ databases launched by agents)
+- [State of AI Agent Security 2026](https://www.gravitee.io/blog/state-of-ai-agent-security-2026-report-when-adoption-outpaces-control) — Gravitee (47.1% monitored, 88% experienced incidents)
+- [Observability for AI Systems](https://www.microsoft.com/en-us/security/blog/2026/03/18/observability-ai-systems-strengthening-visibility-proactive-risk-detection/) — Microsoft (observability as release requirement, behavioral baselines)
+- [Ralph Pentest Loop](https://mykalseceng.github.io/posts/ralph-pentest-loop/) — Dark Knight Blog (two-stage security pipeline, Burp Suite MCP)
+- [Ralph Loops for DevOps Engineering](https://blog.ogunlana.net/2026/01/22/agentic-frameworks-in-cloud-infrastructure-an-exhaustive-analysis-of-ralph-and-get-shit-done-for-devops-engineering/) — Bola Ogunlana (Day 2 operations, never direct deploy permissions)
 - [ETH Zurich: AGENTS.md Value Review](https://www.infoq.com/news/2026/03/agents-context-file-value-review/) — InfoQ (context files reduced success by ~3%, increased costs 19-20%)
 - [State of Secrets Sprawl 2026](https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/) — GitGuardian (29M secrets on GitHub, AI commits 2x leak rate, Claude Code 3.2% vs 1.5% baseline)
 - [Security Boundaries in Agentic Architectures](https://vercel.com/blog/security-boundaries-in-agentic-architectures) — Vercel (credential injection proxy, application sandbox + secret injection)

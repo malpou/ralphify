@@ -721,3 +721,36 @@ After 23 iterations and 24 chapters, the report is comprehensive but needs tight
 - Research: explore domain-specific harness engineering (data engineering, infra, security) — is the ralph loop pattern transferring to non-coding domains?
 - Or: deep dive into the "40% of deployed AI agents have zero safety monitoring" (MIT AI Agent Index) — what does monitoring look like for production ralphs?
 - Or: refine cycle — final quality pass on the full report, ensure all chapters are internally consistent
+
+## Iteration 25 — 2026-03-22
+
+**Decision: HYBRID — research (primary) + light refine**
+
+**Research focus:** Two under-explored threads:
+1. **Domain-specific ralph patterns beyond coding** — security auditing, DevOps/SRE, data engineering, content creation, business optimization. Are people using autonomous loops for non-code tasks?
+2. **The observability crisis** — Gravitee reports only 47.1% of agents are actively monitored. What specific tools and patterns exist? How does this affect ralph loops?
+
+**What was done:**
+- Launched 2 parallel research agents covering: domain-specific loops, observability tools, vibe coding evolution, AgenticOS concept, latest March 20-25 content
+- Deep-read 40+ new sources across all threads
+- Created chapter 25 (Domain-Specific Loops & The Observability Gap) covering: pentest loops, DevOps migration loops, data pipeline loops, business optimization generalization, observability crisis data, tool landscape, AgenticOS concept
+- Added 20+ new sources, 10+ new insights, 3 new questions
+- Updated REPORT.md with new chapter entry
+
+**Key surprises:**
+- Databricks Genie Code doubled success rates (32.1%→77.1%) — autonomous data engineering is production-ready
+- Over 80% of new Databricks databases are launched by agents, not humans
+- Only 47.1% of AI agents are actively monitored (Gravitee 2026) — the observability gap is enormous
+- Ralph Pentest Loop exists as a two-stage security pipeline — direct validation of ralph loops for non-code domains
+- 88% of firms have experienced agent security/privacy incidents — the scale of the problem is massive
+- The AgenticOS workshop at ASPLOS (March 23, 2026) signals academic recognition of the need for OS-level agent support
+- OneUptime fintech case: agent scaled down production DB during month-end processing → 11-hour outage. Traditional monitoring missed it entirely.
+- PagerDuty SRE Agent evolving to virtual responder with agent-to-agent MCP — DevOps is going agentic fast
+- Karpathy's "any metric" insight generalizes ralph loops to 6+ business domains beyond coding
+- Splunk AI Agent Monitoring (GA Q1 2026) and Iris MCP Server (first MCP-native observability) are the freshest monitoring tools
+- Microsoft positions observability as a RELEASE REQUIREMENT for agents — traditional monitoring is insufficient
+
+**Next iteration should focus on:**
+- Refine cycle: 22 insights, 25 chapters — the chapter count is high. Consider final quality pass.
+- Or: research the practical implementation of domain-specific ralphs — what do actual RALPH.md files look like for DevOps, security, data engineering?
+- Or: explore the "agent economy" and marketplace trends — skills, services, pricing models

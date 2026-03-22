@@ -339,3 +339,26 @@
 - https://composio.dev/blog/secure-ai-agent-infrastructure-guide — Composio — Complete guide to secure AI agent infrastructure: auth, secrets, sandboxing — **medium**
 - https://www.mintmcp.com/blog/ai-agent-security — MintMCP — AI agent security enterprise guide 2026: governance-containment gap as defining challenge — **medium**
 - https://news.ycombinator.com/item?id=47438930 — HN / Altimate Code — Show HN: Open-source agentic data engineering harness, domain-specific harness for SQL (March 20, 2026) — **medium**
+
+## Iteration 25 — Domain-Specific Loops & Observability
+
+- https://mykalseceng.github.io/posts/ralph-pentest-loop/ — Dark Knight Blog — Ralph Pentest Loop: two-stage pipeline (code review → exploitation), 5-iteration retry, Burp Suite MCP — **high**
+- https://github.com/agairola/securing-ralph-loop — agairola — Security-enforced development loop: /self-check → /security-scan, 3-failure escalation — **high**
+- https://blog.ogunlana.net/2026/01/22/agentic-frameworks-in-cloud-infrastructure-an-exhaustive-analysis-of-ralph-and-get-shit-done-for-devops-engineering/ — Bola Ogunlana — Ralph loops for DevOps: Day 2 operations, terraform validate as circuit breaker, never direct deployment permissions — **high**
+- https://www.databricks.com/company/newsroom/press-releases/databricks-launches-genie-code-bringing-agentic-engineering-data — Databricks — Genie Code: 32.1%→77.1% success rate, autonomous pipeline building, 80%+ new databases launched by agents — **critical**
+- https://gradientflow.substack.com/p/data-engineering-for-machine-users — Ben Lorica / Gradient Flow — Write-Audit-Publish pattern for data pipeline agents, brownfield modernization as highest-ROI — **high**
+- https://www.pagerduty.com/newsroom/pagerduty-operations-cloud-spring-2026-release/ — PagerDuty — SRE Agent evolves to virtual responder, agent-to-agent MCP, Q2 2026 early access — **high**
+- https://www.mindstudio.ai/blog/what-is-autoresearch-loop-karpathy-business-optimization — MindStudio — AutoResearch for 6 business domains: email marketing, SEO, sales outreach, pricing, support routing, ad optimization — **high**
+- https://www.gravitee.io/blog/state-of-ai-agent-security-2026-report-when-adoption-outpaces-control — Gravitee — State of AI Agent Security 2026: 47.1% monitored, 88% experienced incidents, 45.6% shared API keys — **critical**
+- https://aiagentindex.mit.edu/ — MIT AI Agent Index — 25/30 agents disclose no safety results, 87% lack safety cards, only 4/13 frontier agents disclose agentic evals — **critical**
+- https://oneuptime.com/blog/post/2026-03-09-ai-agents-observability-crisis/view — OneUptime — Fintech case: agent scaled down production DB during month-end processing → 11-hour outage — **critical**
+- https://www.microsoft.com/en-us/security/blog/2026/03/18/observability-ai-systems-strengthening-visibility-proactive-risk-detection/ — Microsoft — Observability as release requirement for AI agents, behavioral baselines, tool call frequency monitoring — **critical**
+- https://www.microsoft.com/en-us/security/blog/2026/03/20/secure-agentic-ai-end-to-end/ — Microsoft — End-to-end agentic AI security guidance, multi-layered controls — **high**
+- https://www.splunk.com/en_us/blog/observability/splunk-observability-ai-agent-monitoring-innovations.html — Splunk — AI Agent Monitoring GA Q1 2026: hallucination/bias/drift detection, Cisco AI Defense integration — **high**
+- https://github.com/iris-eval/mcp-server — Iris — First MCP-native eval & observability server, 12 built-in rules, zero-SDK integration (March 14, 2026) — **high**
+- https://os-for-agent.github.io/ — AgenticOS Workshop (ASPLOS 2026) — First academic workshop on OS design for AI agents, new process models, security isolation (March 23, 2026) — **high**
+- https://noimosai.com/en/blog/the-ultimate-guide-to-ai-agents-for-content-creation-scale-your-marketing-autonomously-in-2026 — Noimosa — AI agents for content creation: $10.9B market, 80% marketing overhead reduction, 10x content production — **medium**
+- https://www.braintrust.dev/blog/ralph-wiggum-debugging — Braintrust — Debugging Ralph Wiggum loops with Braintrust traces: 274 LLM calls, 95K tokens, $1.38 per 2 user stories — **high**
+- https://o-mega.ai/articles/top-5-ai-agent-observability-platforms-the-ultimate-2026-guide — O-Mega — Top 5 observability platforms: LangSmith, Langfuse, Braintrust, Arize, Maxim AI — **medium**
+- https://klizos.com/ai-agents-are-becoming-operating-systems-in-2026/ — Klizos — AI agents as operating systems: coordination layer with specialized agents — **medium**
+- https://ai-security-blog.com/blog/Ralph-Loop — AI Security Blog — Ralph loops used in malware development: PROMPTFLUX, VoidLink, offensive applications — **medium**
