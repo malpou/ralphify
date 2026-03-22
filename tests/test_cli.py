@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 from helpers import MOCK_ENGINE_SLEEP, MOCK_SKILLS_WHICH, MOCK_SUBPROCESS, MOCK_WHICH, ok_result, fail_result, make_ralph
 from ralphify import __version__
 from ralphify._frontmatter import RALPH_MARKER
-from ralphify.cli import app, _parse_command_items, _parse_user_args
+from ralphify.cli import app, _parse_command_items, _parse_user_args, _discover_ralphs
 
 runner = CliRunner()
 
@@ -773,3 +773,94 @@ class TestCreditFrontmatter:
         assert result.exit_code == 1
         assert "credit" in result.output.lower()
         assert "true or false" in result.output.lower()
+
+
+class TestDiscoverRalphs:
+    def test_finds_ralph_subdirectories(self, tmp_path):
+        for name in ("alpha", "beta", "gamma"):
+            d = tmp_path / name
+            d.mkdir()
+            (d / RALPH_MARKER).write_text("---\nagent: echo\n---\ngo")
+        result = _discover_ralphs(tmp_path)
+        assert [r.name for r in result] == ["alpha", "beta", "gamma"]
+
+    def test_ignores_dirs_without_ralph_md(self, tmp_path):
+        (tmp_path / "has-ralph").mkdir()
+        (tmp_path / "has-ralph" / RALPH_MARKER).write_text("---\nagent: echo\n---\ngo")
+        (tmp_path / "no-ralph").mkdir()
+        result = _discover_ralphs(tmp_path)
+        assert len(result) == 1
+        assert result[0].name == "has-ralph"
+
+    def test_returns_empty_for_no_ralphs(self, tmp_path):
+        (tmp_path / "empty-dir").mkdir()
+        assert _discover_ralphs(tmp_path) == []
+
+    def test_returns_empty_for_nonexistent_dir(self, tmp_path):
+        assert _discover_ralphs(tmp_path / "nope") == []
+
+    def test_ignores_files_at_top_level(self, tmp_path):
+        (tmp_path / RALPH_MARKER).write_text("---\nagent: echo\n---\ngo")
+        assert _discover_ralphs(tmp_path) == []
+
+    def test_does_not_recurse_deeper_than_one_level(self, tmp_path):
+        nested = tmp_path / "a" / "b"
+        nested.mkdir(parents=True)
+        (nested / RALPH_MARKER).write_text("---\nagent: echo\n---\ngo")
+        assert _discover_ralphs(tmp_path) == []
+
+
+@patch(MOCK_WHICH, return_value="/usr/bin/claude")
+class TestFleet:
+    def test_errors_with_nonexistent_path(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = runner.invoke(app, ["fleet", "nonexistent"])
+        assert result.exit_code == 1
+        assert "not a directory" in result.output.lower()
+
+    def test_errors_with_no_ralphs(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        empty = tmp_path / "empty"
+        empty.mkdir()
+        result = runner.invoke(app, ["fleet", str(empty)])
+        assert result.exit_code == 1
+        assert "no ralphs found" in result.output.lower()
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_runs_multiple_ralphs(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        fleet_dir = tmp_path / "fleet"
+        fleet_dir.mkdir()
+        for name in ("alpha", "beta"):
+            d = fleet_dir / name
+            d.mkdir()
+            (d / RALPH_MARKER).write_text("---\nagent: claude -p\n---\ngo")
+        result = runner.invoke(app, ["fleet", str(fleet_dir), "-n", "1"])
+        assert result.exit_code == 0
+        assert mock_run.call_count == 2
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_prints_discovery_summary(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        fleet_dir = tmp_path / "fleet"
+        fleet_dir.mkdir()
+        for name in ("one", "two"):
+            d = fleet_dir / name
+            d.mkdir()
+            (d / RALPH_MARKER).write_text("---\nagent: claude -p\n---\ngo")
+        result = runner.invoke(app, ["fleet", str(fleet_dir), "-n", "1"])
+        assert "2 ralph(s)" in result.output
+        assert "one" in result.output
+        assert "two" in result.output
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_passes_options_to_runs(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        fleet_dir = tmp_path / "fleet"
+        fleet_dir.mkdir()
+        d = fleet_dir / "solo"
+        d.mkdir()
+        (d / RALPH_MARKER).write_text("---\nagent: claude -p\n---\ngo")
+        result = runner.invoke(app, ["fleet", str(fleet_dir), "-n", "2"])
+        assert result.exit_code == 0
+        assert mock_run.call_count == 2
