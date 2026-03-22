@@ -80,6 +80,7 @@ Some tasks seem like they don't fit but can be adapted:
 - **Use `-n 10-20`** for bounded tasks (a TODO list with known items)
 - **Run unlimited** (`ralph run my-ralph` without `-n`) for open-ended improvement tasks with good command feedback — the commands prevent the agent from going off the rails
 - **Use `--stop-on-error`** when each iteration must succeed before the next one makes sense
+- **Set `--timeout`** as a safety net for unattended runs — if the agent enters an unexpected state (interactive prompt, infinite loop), the timeout kills it instead of blocking the loop forever
 
 ## Next steps
 
