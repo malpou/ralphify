@@ -3,7 +3,7 @@
 import pytest
 from rich.console import Console
 
-from ralphify._console_emitter import ConsoleEmitter, _IterationSpinner
+from ralphify._console_emitter import ConsoleEmitter, _DelayCountdown, _IterationSpinner
 from ralphify._events import Event, EventType
 
 
@@ -317,4 +317,27 @@ class TestIterationSpinner:
             EventType.ITERATION_COMPLETED,
             iteration=1, detail="completed (1s)", log_file=None, result_text=None,
         ))
+        assert emitter._live is None
+
+
+class TestDelayCountdown:
+    def test_renders_remaining_time(self):
+        countdown = _DelayCountdown(60.0)
+        console = Console(record=True, width=80)
+        console.print(countdown)
+        output = console.export_text()
+        assert "Waiting" in output
+        assert "s..." in output
+
+    def test_delay_started_creates_live(self):
+        emitter, _ = _capture_emitter()
+        emitter.emit(_make_event(EventType.DELAY_STARTED, delay=10.0))
+        assert emitter._live is not None
+        emitter._stop_live()
+
+    def test_delay_ended_stops_live(self):
+        emitter, _ = _capture_emitter()
+        emitter.emit(_make_event(EventType.DELAY_STARTED, delay=5.0))
+        assert emitter._live is not None
+        emitter.emit(_make_event(EventType.DELAY_ENDED))
         assert emitter._live is None
