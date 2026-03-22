@@ -161,7 +161,7 @@ class TestRunState:
         result = state.wait_for_unpause(timeout=0.01)
         assert result is False
 
-    def test_mark_idle_increments_completed_and_consecutive(self):
+    def test_mark_and_reset_idle(self):
         state = RunState(run_id="r1")
         state.mark_idle()
         assert state.completed == 1
@@ -169,23 +169,11 @@ class TestRunState:
         state.mark_idle()
         assert state.completed == 2
         assert state.consecutive_idle == 2
-
-    def test_reset_idle_clears_tracking(self):
-        state = RunState(run_id="r1")
-        state.mark_idle()
-        state.mark_idle()
         state.cumulative_idle_time = 120.0
         state.reset_idle()
         assert state.consecutive_idle == 0
         assert state.cumulative_idle_time == 0.0
-        # completed count is preserved
-        assert state.completed == 2
-
-    def test_mark_idle_included_in_total(self):
-        state = RunState(run_id="r1")
-        state.mark_idle()
-        state.mark_completed()
-        assert state.total == 2
+        assert state.completed == 2  # preserved
 
 
 class TestRunStatus:

@@ -1006,10 +1006,14 @@ class TestIdleDetection:
         stop = events_of_type(events, EventType.RUN_STOPPED)[0]
         assert stop.data["reason"] == "max_idle"
 
+    @pytest.mark.parametrize("agent_result, expected_type", [
+        (AgentResult(returncode=0, elapsed=1.0, result_text=None), EventType.ITERATION_COMPLETED),
+        (AgentResult(returncode=1, elapsed=1.0, result_text=IDLE_STATE_MARKER), EventType.ITERATION_FAILED),
+    ])
     @patch(MOCK_EXECUTE_AGENT)
-    def test_idle_result_text_none_not_detected_as_idle(self, mock_agent, tmp_path):
-        """Agent result with result_text=None should not be detected as idle."""
-        mock_agent.return_value = AgentResult(returncode=0, elapsed=1.0, result_text=None)
+    def test_non_idle_cases(self, mock_agent, tmp_path, agent_result, expected_type):
+        """result_text=None or failed agent should not be detected as idle."""
+        mock_agent.return_value = agent_result
         config = make_config(tmp_path, max_iterations=1, idle=IdleConfig())
         state = make_state()
         q = QueueEmitter()
@@ -1018,22 +1022,5 @@ class TestIdleDetection:
 
         events = drain_events(q)
         types = event_types(events)
-        assert EventType.ITERATION_COMPLETED in types
-        assert EventType.ITERATION_IDLE not in types
-
-    @patch(MOCK_EXECUTE_AGENT)
-    def test_failed_agent_not_detected_as_idle(self, mock_agent, tmp_path):
-        """Failed agent result should not be detected as idle even if marker is present."""
-        mock_agent.return_value = AgentResult(
-            returncode=1, elapsed=1.0, result_text=IDLE_STATE_MARKER,
-        )
-        config = make_config(tmp_path, max_iterations=1, idle=IdleConfig())
-        state = make_state()
-        q = QueueEmitter()
-
-        run_loop(config, state, q)
-
-        events = drain_events(q)
-        types = event_types(events)
-        assert EventType.ITERATION_FAILED in types
+        assert expected_type in types
         assert EventType.ITERATION_IDLE not in types

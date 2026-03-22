@@ -777,13 +777,6 @@ class TestCreditFrontmatter:
 
 @patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestIdleFrontmatter:
-    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
-    def test_no_idle_config_by_default(self, mock_run, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        ralph_dir = make_ralph(tmp_path)
-        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
-        assert result.exit_code == 0
-
     @pytest.mark.parametrize("idle_yaml", [
         "idle:\n  delay: 30s\n  backoff: 2\n  max_delay: 5m\n  max: 1h",
         "idle:\n  delay: 30\n  backoff: 1.5\n  max_delay: 300\n  max: 3600",

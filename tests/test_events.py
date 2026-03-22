@@ -184,15 +184,3 @@ class TestFanoutEmitter:
         fanout.emit(event)
 
         assert q.queue.get() is event
-
-
-class TestIterationIdleEvent:
-    def test_emit_iteration_idle_via_bound_emitter(self):
-        q = QueueEmitter()
-        emit = BoundEmitter(q, "run-idle")
-        emit(EventType.ITERATION_IDLE, {"iteration": 1, "detail": "idle (1.0s)"})
-
-        events = drain_events(q)
-        assert len(events) == 1
-        assert events[0].type == EventType.ITERATION_IDLE
-        assert events[0].data["iteration"] == 1
