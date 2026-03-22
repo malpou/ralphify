@@ -157,3 +157,11 @@ ralph run test-coverage -n 5 --target "focus on error handling paths"
 ```
 
 The coverage report gives the agent a clear metric to improve and shows exactly which lines are missing, so it always knows where to focus.
+
+---
+
+## Next steps
+
+- [Writing Prompts](writing-prompts.md) — customize your recipe's prompt with patterns for task sources, constraints, and live editing
+- [CLI Reference](cli.md) — all `ralph run` options (`--timeout`, `--stop-on-error`, `--delay`, user args)
+- [Troubleshooting](troubleshooting.md) — when the agent hangs, commands fail, or output looks wrong
