@@ -784,26 +784,17 @@ class TestIdleFrontmatter:
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
         assert result.exit_code == 0
 
+    @pytest.mark.parametrize("idle_yaml", [
+        "idle:\n  delay: 30s\n  backoff: 2\n  max_delay: 5m\n  max: 1h",
+        "idle:\n  delay: 30\n  backoff: 1.5\n  max_delay: 300\n  max: 3600",
+    ])
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
-    def test_idle_with_all_fields(self, mock_run, mock_which, tmp_path, monkeypatch):
+    def test_idle_config_accepted(self, mock_run, mock_which, tmp_path, monkeypatch, idle_yaml):
         monkeypatch.chdir(tmp_path)
         ralph_dir = tmp_path / "my-ralph"
         ralph_dir.mkdir(exist_ok=True)
         (ralph_dir / RALPH_MARKER).write_text(
-            "---\nagent: claude -p --dangerously-skip-permissions\n"
-            "idle:\n  delay: 30s\n  backoff: 2\n  max_delay: 5m\n  max: 1h\n---\ngo"
-        )
-        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
-        assert result.exit_code == 0
-
-    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
-    def test_idle_with_numeric_values(self, mock_run, mock_which, tmp_path, monkeypatch):
-        monkeypatch.chdir(tmp_path)
-        ralph_dir = tmp_path / "my-ralph"
-        ralph_dir.mkdir(exist_ok=True)
-        (ralph_dir / RALPH_MARKER).write_text(
-            "---\nagent: claude -p --dangerously-skip-permissions\n"
-            "idle:\n  delay: 30\n  backoff: 1.5\n  max_delay: 300\n  max: 3600\n---\ngo"
+            f"---\nagent: claude -p --dangerously-skip-permissions\n{idle_yaml}\n---\ngo"
         )
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
         assert result.exit_code == 0
@@ -834,26 +825,14 @@ class TestValidateIdle:
         assert config.max_delay == 120.0
         assert config.max == 600.0
 
-    def test_not_a_dict_errors(self):
+    @pytest.mark.parametrize("raw", [
+        "30s",                                  # not a dict
+        {"delay": "not-valid"},                  # invalid duration string
+        {"delay": -5},                           # negative delay
+        {"delay": 0},                            # zero delay
+        {"delay": True},                         # boolean delay
+        {"delay": "30s", "extra": "oops"},       # unknown field
+    ])
+    def test_invalid_input_errors(self, raw):
         with pytest.raises(typer.Exit):
-            _validate_idle("30s")
-
-    def test_invalid_duration_string_errors(self):
-        with pytest.raises(typer.Exit):
-            _validate_idle({"delay": "not-valid"})
-
-    def test_negative_delay_errors(self):
-        with pytest.raises(typer.Exit):
-            _validate_idle({"delay": -5})
-
-    def test_zero_delay_errors(self):
-        with pytest.raises(typer.Exit):
-            _validate_idle({"delay": 0})
-
-    def test_boolean_delay_errors(self):
-        with pytest.raises(typer.Exit):
-            _validate_idle({"delay": True})
-
-    def test_unknown_fields_errors(self):
-        with pytest.raises(typer.Exit):
-            _validate_idle({"delay": "30s", "extra": "oops"})
+            _validate_idle(raw)

@@ -43,19 +43,13 @@ class TestCommand:
 
 
 class TestIdleConfig:
-    def test_defaults(self):
-        cfg = IdleConfig()
-        assert cfg.delay == 30
-        assert cfg.backoff == 2.0
-        assert cfg.max_delay == 300
-        assert cfg.max is None
-
-    def test_custom_values(self):
-        cfg = IdleConfig(delay=10, backoff=1.5, max_delay=120, max=3600)
-        assert cfg.delay == 10
-        assert cfg.backoff == 1.5
-        assert cfg.max_delay == 120
-        assert cfg.max == 3600
+    @pytest.mark.parametrize("kwargs, expected", [
+        ({}, (30, 2.0, 300, None)),
+        ({"delay": 10, "backoff": 1.5, "max_delay": 120, "max": 3600}, (10, 1.5, 120, 3600)),
+    ])
+    def test_values(self, kwargs, expected):
+        cfg = IdleConfig(**kwargs)
+        assert (cfg.delay, cfg.backoff, cfg.max_delay, cfg.max) == expected
 
 
 class TestRunConfig:

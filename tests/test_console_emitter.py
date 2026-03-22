@@ -218,24 +218,19 @@ class TestLogMessage:
 
 
 class TestIterationIdle:
-    def test_idle_shows_dimmed_output(self):
+    @pytest.mark.parametrize("iteration, detail, log_file, expected", [
+        (3, "idle (2s)", None, ["Iteration 3", "idle (2s)"]),
+        (1, "idle (1s)", "/tmp/idle.log", ["/tmp/idle.log"]),
+    ])
+    def test_idle_renders_details(self, iteration, detail, log_file, expected):
         emitter, console = _capture_emitter()
         emitter.emit(_make_event(
             EventType.ITERATION_IDLE,
-            iteration=3, detail="idle (2s)", log_file=None, result_text=None,
+            iteration=iteration, detail=detail, log_file=log_file, result_text=None,
         ))
         output = console.export_text()
-        assert "Iteration 3" in output
-        assert "idle (2s)" in output
-
-    def test_idle_shows_log_file(self):
-        emitter, console = _capture_emitter()
-        emitter.emit(_make_event(
-            EventType.ITERATION_IDLE,
-            iteration=1, detail="idle (1s)", log_file="/tmp/idle.log", result_text=None,
-        ))
-        output = console.export_text()
-        assert "/tmp/idle.log" in output
+        for text in expected:
+            assert text in output
 
     def test_idle_stops_live_display(self):
         emitter, console = _capture_emitter()
