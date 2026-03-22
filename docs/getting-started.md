@@ -227,6 +227,9 @@ Read TODO.md and focus only on the API module.
 
 This is the most powerful part of ralph loops — you're steering a running agent with a text file. See [Tuning a running loop](writing-prompts.md#tuning-a-running-loop) for more patterns.
 
+!!! warning "Frontmatter changes need a restart"
+    Only the **prompt body** is re-read each iteration. Frontmatter fields (`agent`, `commands`, `args`) are parsed once at startup. If you add a new command or change the agent, stop the loop with `Ctrl+C` and restart it.
+
 ## Next steps
 
 - [Writing Prompts](writing-prompts.md) — patterns for writing effective autonomous loop prompts
