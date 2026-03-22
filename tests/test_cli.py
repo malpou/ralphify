@@ -529,6 +529,21 @@ class TestParseUserArgs:
         result = _parse_user_args(["--key="], None)
         assert result == {"key": ""}
 
+    def test_invalid_name_in_flag_rejected(self):
+        """--my.arg should be rejected — dots are invalid in placeholder names."""
+        with pytest.raises(typer.BadParameter, match="invalid characters"):
+            _parse_user_args(["--my.arg", "value"], None)
+
+    def test_invalid_name_in_equals_syntax_rejected(self):
+        """--my.arg=value should be rejected — dots are invalid in placeholder names."""
+        with pytest.raises(typer.BadParameter, match="invalid characters"):
+            _parse_user_args(["--my.arg=value"], None)
+
+    def test_empty_name_rejected(self):
+        """--=value should be rejected — empty arg name."""
+        with pytest.raises(typer.BadParameter, match="invalid characters"):
+            _parse_user_args(["--=value"], None)
+
 
 @patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestRunWithUserArgs:

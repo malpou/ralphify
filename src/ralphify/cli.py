@@ -30,6 +30,7 @@ from ralphify._frontmatter import (
     FIELD_COMMANDS,
     FIELD_CREDIT,
     RALPH_MARKER,
+    VALID_NAME_CHARS_MSG,
     parse_frontmatter,
 )
 from ralphify._run_types import Command, DEFAULT_COMMAND_TIMEOUT, RunConfig, RunState, generate_run_id
@@ -197,6 +198,11 @@ def _parse_user_args(
                     value = next(it)
                 except StopIteration:
                     raise typer.BadParameter(f"Flag '--{name}' requires a value.") from None
+            if not CMD_NAME_RE.fullmatch(name):
+                raise typer.BadParameter(
+                    f"Arg name '{name}' contains invalid characters. "
+                    f"{VALID_NAME_CHARS_MSG}"
+                )
             result[name] = value
         else:
             if not declared_names:
@@ -229,7 +235,7 @@ def _parse_commands(raw_commands: list[dict[str, Any]]) -> list[Command]:
         if not CMD_NAME_RE.fullmatch(cmd_name):
             _exit_error(
                 f"Command name '{cmd_name}' contains invalid characters. "
-                f"Names may only contain letters, digits, hyphens, and underscores."
+                f"{VALID_NAME_CHARS_MSG}"
             )
         if cmd_name in seen_names:
             _exit_error(f"Duplicate command name '{cmd_name}'.")
@@ -316,7 +322,7 @@ def _build_run_config(
             if not CMD_NAME_RE.fullmatch(arg_name):
                 _exit_error(
                     f"Arg name '{arg_name}' contains invalid characters. "
-                    f"Names may only contain letters, digits, hyphens, and underscores."
+                    f"{VALID_NAME_CHARS_MSG}"
                 )
     ralph_args: dict[str, str] = {}
     if extra_args:
