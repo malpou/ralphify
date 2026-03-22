@@ -45,7 +45,7 @@ docs/contributing/      # Contributor documentation (this section)
 
 ## Architecture: how the pieces connect
 
-The CLI entry point is `cli.py:run()`, which parses options, reads the ralph directory path, and delegates to `engine.py:run_loop()` for the actual iteration cycle. The engine emits structured events via an `EventEmitter`, making the same loop reusable from both the CLI and any external orchestration layer (such as `manager.py`).
+The CLI entry point is `cli.py:run()`, which parses options, reads the ralph directory path, and delegates to `engine.py:run_loop()` for the actual iteration cycle. The `fleet` command discovers ralph subdirectories and runs them concurrently via `manager.py:RunManager`. The engine emits structured events via an `EventEmitter`, making the same loop reusable from both the CLI and any external orchestration layer (such as `manager.py`).
 
 ```
 ralph run my-ralph
@@ -64,6 +64,17 @@ ralph run my-ralph
             ├── Emit iteration events (started, completed, failed, timed_out)
             ├── Handle pause/resume/stop requests via RunState
             └── Repeat
+
+ralph fleet ralphs/
+  │
+  ├── cli.py:fleet() — discover ralph subdirectories
+  │   ├── Scan directory for subdirectories containing RALPH.md
+  │   ├── Build a RunConfig for each discovered ralph
+  │   └── Create runs via RunManager, attach ConsoleEmitter
+  │
+  └── manager.py:RunManager — start each run in a daemon thread
+       └── Each thread runs engine.run_loop() independently
+            └── ConsoleEmitter prefixes output with ralph name
 ```
 
 ### Placeholder resolution
@@ -113,7 +124,7 @@ The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders 
 
 1. **`engine.py`** — The core run loop. Uses `RunConfig` and `RunState` (from `_run_types.py`) and `EventEmitter`. This is where iteration logic lives.
 2. **`_run_types.py`** — `RunConfig`, `RunState`, `RunStatus`, and `Command`. These are the shared data types used by the engine, CLI, and manager.
-3. **`cli.py`** — All CLI commands. Validates frontmatter fields via extracted helpers (`_validate_agent`, `_validate_commands`, `_validate_credit`, `_validate_run_options`, `_validate_declared_args`), builds a `RunConfig`, and delegates to `engine.run_loop()` for the actual loop. Terminal event rendering lives in `_console_emitter.py`.
+3. **`cli.py`** — All CLI commands (`run`, `fleet`, `init`, `new`). Validates frontmatter fields via extracted helpers (`_validate_agent`, `_validate_commands`, `_validate_credit`, `_validate_run_options`, `_validate_declared_args`), builds a `RunConfig`, and delegates to `engine.run_loop()` for the actual loop. The `fleet` command discovers ralphs in subdirectories and runs them concurrently via `RunManager`. Terminal event rendering lives in `_console_emitter.py`.
 4. **`_frontmatter.py`** — YAML frontmatter parsing. Extracts `agent`, `commands`, `args` from the RALPH.md file.
 5. **`_resolver.py`** — Template placeholder logic. Small file but critical.
 6. **`_skills.py`** + **`skills/`** — The skill system behind `ralph new`. `_skills.py` handles agent detection, reads bundled skill definitions from `skills/`, installs them into the agent's skill directory, and builds the command to launch the agent.

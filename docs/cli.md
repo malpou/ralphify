@@ -1,7 +1,7 @@
 ---
 title: Ralph CLI Reference
-description: Full CLI reference for ralphify — ralph run, ralph init, ralph new, all options, user arguments, and RALPH.md frontmatter format.
-keywords: ralph CLI, ralph run, ralph init, ralph new, CLI reference, RALPH.md format, frontmatter options, agent arguments
+description: Full CLI reference for ralphify — ralph run, ralph fleet, ralph init, ralph new, all options, user arguments, and RALPH.md frontmatter format.
+keywords: ralph CLI, ralph run, ralph fleet, ralph init, ralph new, CLI reference, RALPH.md format, frontmatter options, agent arguments
 ---
 
 # CLI Reference
@@ -113,6 +113,54 @@ ralph init              # Creates RALPH.md in the current directory
 The generated template includes an example command (`git-log`), an example arg (`focus`), and a prompt body with placeholders for both. Edit it, then run `ralph run`.
 
 Errors if `RALPH.md` already exists at the target location.
+
+---
+
+## `ralph fleet`
+
+Run multiple ralphs in parallel from a single directory.
+
+```bash
+ralph fleet ralphs/                         # Run all ralphs found in ralphs/
+ralph fleet ralphs/ -n 3                    # Run 3 iterations per ralph
+ralph fleet ralphs/ --stop-on-error         # Stop any ralph whose agent exits non-zero
+ralph fleet ralphs/ --delay 10              # Wait 10s between iterations
+ralph fleet ralphs/ --timeout 300           # Kill agent after 5 minutes per iteration
+ralph fleet ralphs/ --log-dir fleet_logs    # Save output to log files
+```
+
+| Argument / Option | Short | Default | Description |
+|---|---|---|---|
+| `PATH` | | (required) | Directory containing ralph subdirectories |
+| `-n` | | unlimited | Max number of iterations per ralph |
+| `--stop-on-error` | `-s` | off | Stop a ralph if its agent exits non-zero or times out |
+| `--delay` | `-d` | `0` | Seconds to wait between iterations |
+| `--timeout` | `-t` | none | Max seconds per iteration |
+| `--log-dir` | `-l` | none | Directory for iteration log files |
+
+### How it works
+
+The fleet command scans the given directory for immediate subdirectories that contain a `RALPH.md` file. Each discovered ralph is started concurrently in its own thread. Terminal output is prefixed with the ralph name so you can tell which ralph produced each line.
+
+Press Ctrl+C to gracefully stop all running ralphs.
+
+### Directory layout
+
+```
+ralphs/
+├── lint-fixer/
+│   └── RALPH.md
+├── test-writer/
+│   └── RALPH.md
+└── docs-updater/
+    └── RALPH.md
+```
+
+```bash
+ralph fleet ralphs/   # Runs lint-fixer, test-writer, and docs-updater in parallel
+```
+
+Only immediate subdirectories are checked — the command does not recurse deeper.
 
 ---
 
