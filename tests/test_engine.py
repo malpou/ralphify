@@ -8,15 +8,34 @@ from unittest.mock import patch
 import pytest
 from helpers import MOCK_RUN_COMMAND, MOCK_SUBPROCESS, drain_events, event_types, events_of_type, fail_result, make_config, make_state, ok_result, ok_run_result
 
+from ralphify._agent import AgentResult
 from ralphify._events import BoundEmitter, EventType, NullEmitter, QueueEmitter
-from ralphify._run_types import Command, RunStatus
+from ralphify._frontmatter import IDLE_STATE_MARKER
+from ralphify._run_types import Command, IdleConfig, RunStatus
 from ralphify.engine import (
     _assemble_prompt,
+    _compute_idle_delay,
     _delay_if_needed,
     _handle_control_signals,
     _run_commands,
     run_loop,
 )
+
+MOCK_EXECUTE_AGENT = "ralphify.engine.execute_agent"
+
+
+def _idle_agent_result(**kwargs):
+    """Create an AgentResult that signals idle state."""
+    defaults = dict(returncode=0, elapsed=1.0, result_text=IDLE_STATE_MARKER)
+    defaults.update(kwargs)
+    return AgentResult(**defaults)
+
+
+def _active_agent_result(**kwargs):
+    """Create an AgentResult for a normal (non-idle) iteration."""
+    defaults = dict(returncode=0, elapsed=1.0, result_text="did some work")
+    defaults.update(kwargs)
+    return AgentResult(**defaults)
 
 
 class TestRunLoop:
@@ -894,3 +913,173 @@ class TestCreditInLoop:
 
         call_input = mock_run.call_args.kwargs["input"]
         assert "Co-authored-by" not in call_input
+
+
+class TestComputeIdleDelay:
+    """Unit tests for _compute_idle_delay — backoff math."""
+
+    def test_returns_zero_without_idle_config(self, tmp_path):
+        config = make_config(tmp_path, idle=None)
+        state = make_state()
+        state.consecutive_idle = 3
+
+        assert _compute_idle_delay(config, state) == 0
+
+    def test_returns_zero_when_not_idle(self, tmp_path):
+        config = make_config(tmp_path, idle=IdleConfig(delay=30))
+        state = make_state()
+        state.consecutive_idle = 0
+
+        assert _compute_idle_delay(config, state) == 0
+
+    def test_first_idle_returns_base_delay(self, tmp_path):
+        config = make_config(tmp_path, idle=IdleConfig(delay=30, backoff=2.0, max_delay=300))
+        state = make_state()
+        state.consecutive_idle = 1
+
+        assert _compute_idle_delay(config, state) == 30
+
+    def test_second_idle_applies_backoff(self, tmp_path):
+        config = make_config(tmp_path, idle=IdleConfig(delay=30, backoff=2.0, max_delay=300))
+        state = make_state()
+        state.consecutive_idle = 2
+
+        assert _compute_idle_delay(config, state) == 60  # 30 * 2^1
+
+    def test_third_idle_applies_backoff_squared(self, tmp_path):
+        config = make_config(tmp_path, idle=IdleConfig(delay=30, backoff=2.0, max_delay=300))
+        state = make_state()
+        state.consecutive_idle = 3
+
+        assert _compute_idle_delay(config, state) == 120  # 30 * 2^2
+
+    def test_caps_at_max_delay(self, tmp_path):
+        config = make_config(tmp_path, idle=IdleConfig(delay=30, backoff=2.0, max_delay=100))
+        state = make_state()
+        state.consecutive_idle = 10  # 30 * 2^9 = 15360, way over 100
+
+        assert _compute_idle_delay(config, state) == 100
+
+
+class TestIdleDetection:
+    """Integration tests for idle detection in the run loop."""
+
+    @patch(MOCK_EXECUTE_AGENT, return_value=_idle_agent_result())
+    def test_idle_marker_triggers_idle_event(self, mock_agent, tmp_path):
+        config = make_config(tmp_path, max_iterations=1, idle=IdleConfig())
+        state = make_state()
+        q = QueueEmitter()
+
+        run_loop(config, state, q)
+
+        events = drain_events(q)
+        types = event_types(events)
+        assert EventType.ITERATION_IDLE in types
+        assert EventType.ITERATION_COMPLETED not in types
+
+    @patch(MOCK_EXECUTE_AGENT, return_value=_idle_agent_result())
+    def test_idle_increments_consecutive_idle(self, mock_agent, tmp_path):
+        config = make_config(tmp_path, max_iterations=2, idle=IdleConfig(delay=0))
+        state = make_state()
+
+        run_loop(config, state, NullEmitter())
+
+        assert state.consecutive_idle == 2
+        assert state.completed == 2
+
+    @patch(MOCK_EXECUTE_AGENT)
+    def test_non_idle_resets_idle_tracking(self, mock_agent, tmp_path):
+        """After idle iterations, a normal iteration resets the idle counters."""
+        mock_agent.side_effect = [
+            _idle_agent_result(),
+            _idle_agent_result(),
+            _active_agent_result(),
+        ]
+        config = make_config(tmp_path, max_iterations=3, idle=IdleConfig(delay=0))
+        state = make_state()
+
+        run_loop(config, state, NullEmitter())
+
+        assert state.consecutive_idle == 0
+        assert state.cumulative_idle_time == 0.0
+
+    @patch(MOCK_EXECUTE_AGENT, return_value=_idle_agent_result())
+    def test_idle_without_config_still_marks_completed(self, mock_agent, tmp_path):
+        """When no idle config is set, idle marker in result_text still
+        triggers ITERATION_IDLE but no backoff delay is applied."""
+        config = make_config(tmp_path, max_iterations=1, idle=None)
+        state = make_state()
+        q = QueueEmitter()
+
+        run_loop(config, state, q)
+
+        events = drain_events(q)
+        types = event_types(events)
+        assert EventType.ITERATION_IDLE in types
+        assert state.completed == 1
+
+    @patch(MOCK_EXECUTE_AGENT, return_value=_idle_agent_result())
+    def test_max_idle_stops_loop(self, mock_agent, tmp_path):
+        """Loop stops when cumulative idle time exceeds idle.max."""
+        config = make_config(
+            tmp_path, max_iterations=100,
+            idle=IdleConfig(delay=10, backoff=1.0, max_delay=10, max=25),
+        )
+        state = make_state()
+        q = QueueEmitter()
+
+        run_loop(config, state, q)
+
+        assert state.status == RunStatus.IDLE_EXCEEDED
+        events = drain_events(q)
+        stop = events_of_type(events, EventType.RUN_STOPPED)[0]
+        assert stop.data["reason"] == "max_idle"
+
+    @patch(MOCK_EXECUTE_AGENT)
+    def test_idle_backoff_delay_applied(self, mock_agent, tmp_path):
+        """Idle iterations should apply backoff delay, not the base delay."""
+        mock_agent.return_value = _idle_agent_result()
+        config = make_config(
+            tmp_path, max_iterations=2, delay=0,
+            idle=IdleConfig(delay=0.15, backoff=1.0, max_delay=300),
+        )
+        state = make_state()
+
+        start = time.monotonic()
+        run_loop(config, state, NullEmitter())
+        elapsed = time.monotonic() - start
+
+        # First idle delay should be ~0.15s, no delay after last iteration
+        assert elapsed >= 0.1
+
+    @patch(MOCK_EXECUTE_AGENT)
+    def test_idle_result_text_none_not_detected_as_idle(self, mock_agent, tmp_path):
+        """Agent result with result_text=None should not be detected as idle."""
+        mock_agent.return_value = AgentResult(returncode=0, elapsed=1.0, result_text=None)
+        config = make_config(tmp_path, max_iterations=1, idle=IdleConfig())
+        state = make_state()
+        q = QueueEmitter()
+
+        run_loop(config, state, q)
+
+        events = drain_events(q)
+        types = event_types(events)
+        assert EventType.ITERATION_COMPLETED in types
+        assert EventType.ITERATION_IDLE not in types
+
+    @patch(MOCK_EXECUTE_AGENT)
+    def test_failed_agent_not_detected_as_idle(self, mock_agent, tmp_path):
+        """Failed agent result should not be detected as idle even if marker is present."""
+        mock_agent.return_value = AgentResult(
+            returncode=1, elapsed=1.0, result_text=IDLE_STATE_MARKER,
+        )
+        config = make_config(tmp_path, max_iterations=1, idle=IdleConfig())
+        state = make_state()
+        q = QueueEmitter()
+
+        run_loop(config, state, q)
+
+        events = drain_events(q)
+        types = event_types(events)
+        assert EventType.ITERATION_FAILED in types
+        assert EventType.ITERATION_IDLE not in types

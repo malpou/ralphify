@@ -30,7 +30,7 @@ from ralphify._events import (
     RunStartedData,
     RunStoppedData,
 )
-from ralphify._frontmatter import FIELD_AGENT, FIELD_COMMANDS, RALPH_MARKER, parse_frontmatter
+from ralphify._frontmatter import FIELD_AGENT, FIELD_COMMANDS, IDLE_STATE_MARKER, RALPH_MARKER, parse_frontmatter
 from ralphify._output import format_duration
 from ralphify._run_types import (
     Command,
@@ -172,10 +172,20 @@ def _run_agent_phase(
 
     duration = format_duration(agent.elapsed)
 
+    is_idle = (
+        agent.success
+        and agent.result_text is not None
+        and IDLE_STATE_MARKER in agent.result_text
+    )
+
     if agent.timed_out:
         state.mark_timed_out()
         event_type = EventType.ITERATION_TIMED_OUT
         state_detail = f"timed out after {duration}"
+    elif is_idle:
+        state.mark_idle()
+        event_type = EventType.ITERATION_IDLE
+        state_detail = f"idle ({duration})"
     elif agent.success:
         state.mark_completed()
         event_type = EventType.ITERATION_COMPLETED
@@ -194,6 +204,7 @@ def _run_agent_phase(
         log_file=str(agent.log_file) if agent.log_file else None,
         result_text=agent.result_text,
     ))
+
     return agent.success
 
 
@@ -244,17 +255,36 @@ def _run_iteration(
     return True
 
 
+def _compute_idle_delay(config: RunConfig, state: RunState) -> float:
+    """Compute the backoff delay for the current idle streak.
+
+    Formula: ``delay * backoff^(consecutive_idle - 1)`` capped at ``max_delay``.
+    Returns 0 when no idle config is present or idle count is zero.
+    """
+    if config.idle is None or state.consecutive_idle <= 0:
+        return 0
+    raw = config.idle.delay * (config.idle.backoff ** (state.consecutive_idle - 1))
+    return min(raw, config.idle.max_delay)
+
+
 def _delay_if_needed(config: RunConfig, state: RunState, emit: BoundEmitter) -> None:
     """Sleep between iterations when a delay is configured.
 
-    The sleep is broken into small chunks so that stop requests are
-    respected promptly rather than blocking for the full delay.
+    When idle backoff is active, the idle delay takes precedence over
+    the base delay.  The sleep is broken into small chunks so that stop
+    requests are respected promptly rather than blocking for the full delay.
     """
-    if config.delay > 0 and (
+    # Determine effective delay: idle backoff overrides base delay
+    if state.consecutive_idle > 0 and config.idle is not None:
+        delay = _compute_idle_delay(config, state)
+    else:
+        delay = config.delay
+
+    if delay > 0 and (
         config.max_iterations is None or state.iteration < config.max_iterations
     ):
-        emit.log_info(f"Waiting {config.delay}s...")
-        remaining = config.delay
+        emit.log_info(f"Waiting {delay}s...")
+        remaining = delay
         while remaining > 0 and not state.stop_requested:
             chunk = min(remaining, _PAUSE_POLL_INTERVAL)
             time.sleep(chunk)
@@ -297,11 +327,28 @@ def run_loop(
             if config.max_iterations is not None and state.iteration > config.max_iterations:
                 break
 
+            idle_before = state.consecutive_idle
             should_continue = _run_iteration(config, state, emit)
             if not should_continue:
                 break
 
+            # Detect whether this iteration was idle (mark_idle increments
+            # consecutive_idle; mark_completed/mark_failed do not).
+            iteration_was_idle = state.consecutive_idle > idle_before
+
+            if not iteration_was_idle and idle_before > 0:
+                state.reset_idle()
+
             _delay_if_needed(config, state, emit)
+
+            # Track cumulative idle time and check max idle limit
+            if iteration_was_idle and config.idle is not None:
+                idle_delay = _compute_idle_delay(config, state)
+                state.cumulative_idle_time += idle_delay
+                if config.idle.max is not None and state.cumulative_idle_time >= config.idle.max:
+                    state.status = RunStatus.IDLE_EXCEEDED
+                    emit.log_info("Max idle time exceeded, stopping.")
+                    break
 
     except KeyboardInterrupt:
         state.status = RunStatus.STOPPED
