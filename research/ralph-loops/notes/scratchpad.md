@@ -330,3 +330,32 @@
 - Research: deeper dive into codebase readiness metrics — is Code Health 9.5+ validated by others? What does "AI-ready code" look like?
 - Or: explore the Anthropic 2026 Agentic Coding Trends Report PDF for new data points
 - Or: refine cycle — 15 chapters is still at the upper limit, consider merging Ch09 (prompt assembly) into Ch14 (context engineering)
+
+## Iteration 14 — 2026-03-22
+
+**Decision: RESEARCH**
+
+**Focus area:** Two high-value threads that are under-explored:
+1. **Eval-driven loop optimization and the meta-ralph pattern** — how teams systematically improve their loop configurations. Open question: is the meta-ralph pattern (a ralph that optimizes other ralphs) being done in practice beyond Arize's system prompt optimization?
+2. **Real-world practitioner workflows and cookbook-ready patterns** — concrete, copy-paste-ready ralph configurations people are actually sharing. YouTube transcripts, Reddit threads, and personal blog posts showing actual loop setups.
+
+**What was done:**
+- Launched 3 parallel research agents; 1 (self-repair/resilience) returned excellent results with 20+ sources, 2 couldn't access web
+- Deep-read 8 high-signal sources: Boucle (220 loops empirical data), SinghDevHub (CRED 8 safeguards), James Phoenix (git checkpoint patterns), Microsoft AgentRx (9-category failure taxonomy), Nick Winder (trace-driven development), tumf (circuit breaker thresholds), Andromeda (emergent cross-agent recovery), Ramlochan (2026 playbook)
+- Created chapter 16 (Self-Repair, Resilience & Agent Debugging) covering git checkpoints, circuit breakers, 220-loop empirical data, AgentRx taxonomy, trace-driven development, emergent recovery
+- Added 2 new insights to REPORT.md (#23-#24), 10 new insights to notes, 12 new sources, 4 new questions, 1 question answered
+- Verified circuit breaker thresholds from multiple independent sources — convergence on 3 loops/5 errors/70% decline
+
+**Key surprises:**
+- Only 50% of automated remediation responses work (Boucle, 220 loops) — half of all auto-fixes are ineffective
+- Feedback amplification is real: a silence detector created a 13.3x amplification loop, worsening its target problem
+- AgentRx's 9-category failure taxonomy provides the first structured vocabulary for debugging agent loops — each category maps to a specific fix
+- Trace-driven development (LangSmith MCP + Claude Code) reduces fix time from "days to weeks" to "minutes to hours"
+- Emergent cross-agent recovery without pre-programming — backend agent from different provider fixed frontend agent's config error
+- CRED's dual-threshold circuit breaker (soft nudge + hard stop) is the most nuanced production pattern found
+- James Phoenix's 4 git checkpoint patterns form a natural hierarchy that maps directly to ralph loop iteration boundaries
+
+**Next iteration should focus on:**
+- Refine cycle (iteration 15): 24 insights, 16 chapters — trim insights to ~22, consider whether Ch07 (anti-patterns) and Ch16 (self-repair) overlap
+- Update Ch06 (implications) with self-repair findings: checkpoint commands, signal-based health, circuit breaker config
+- Or: research the eval-driven/meta-ralph thread in more depth — the web research agents couldn't cover it

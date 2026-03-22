@@ -48,6 +48,10 @@
 
 22. **Loop fingerprinting detects stuck agents without LLM calls.** Track the combination of last tool call + result hash. If this fingerprint repeats 3+ times, the agent is looping, not progressing. Map failure types to actions: non-retryable → STOP, rate limits → bounded RETRY, transient → ESCALATE. Deterministic, zero-cost, production-proven.
 
+23. **Half of all automated loop remediation is ineffective.** Boucle's 220-loop empirical study: only 6 of 12 automated responses reduced their target signals. Feedback amplification is real — a silence detector created a 13.3x amplification loop, worsening the problem it aimed to fix. Test your monitoring infrastructure for second-order effects. Agent self-reporting drifts; mechanical signal counting (file changes, error repetitions, output volume) is the reliable alternative.
+
+24. **A debugging taxonomy turns loop failures into structured fixes.** Microsoft's AgentRx identifies 9 failure categories (plan adherence, hallucination, invalid invocation, misinterpretation, intent misalignment, under-specification, unsupported intent, guardrails, system failure) with +23.6% better failure localization. Each category maps to a specific harness fix — don't guess, classify.
+
 ## Chapters
 
 | # | Chapter | Summary |
@@ -67,6 +71,7 @@
 | 13 | [MCP & the Agent Infrastructure Layer](chapters/13-mcp-agent-infrastructure.md) | 5,000+ MCP servers, dynamic tool loading, context window management, ralph+MCP integration |
 | 14 | [Context Engineering & Loop Maturation](chapters/14-context-engineering-advances.md) | Context rot, compaction hierarchy, guardrails as infrastructure, two-tier loops, intent-failure detection |
 | 15 | [Production Orchestration & Budget-Aware Loops](chapters/15-production-orchestration-patterns.md) | Cursor's planner-worker-judge, loop fingerprinting, worktree isolation, observability stack, Meridian 3,190 cycles |
+| 16 | [Self-Repair, Resilience & Agent Debugging](chapters/16-self-repair-resilience-debugging.md) | Git checkpoint hierarchy, circuit breaker thresholds, 220-loop empirical data, AgentRx 9-category taxonomy, trace-driven development |
 
 ## Open Questions
 
@@ -84,8 +89,10 @@
 - Does Vercel's feedback injection pattern outperform persistent guardrails files for guided recovery?
 - At what point does architectural drift from agent-generated code become unrepairable?
 - What's the optimal planner-to-worker ratio in role-based multi-agent architectures?
-- How do teams calibrate loop fingerprint thresholds (3 repeats? 5?) for different task types?
+- ~~How do teams calibrate loop fingerprint thresholds (3 repeats? 5?) for different task types?~~ Answered in Ch16: production converges on 3 loops/no changes, 5 same errors, 70% output decline. Mechanical counting over self-assessment.
 - Does continuous budget signaling measurably change agent behavior vs. hard cutoffs alone?
+- How effective are reflection prompts as loop breakers vs. hard circuit breakers? Complementary or redundant?
+- How does AgentRx's 9-category failure taxonomy transfer to coding agent loops specifically?
 
 ## Key Sources
 
@@ -133,3 +140,8 @@
 - [The Loop as Laboratory: 3,190 Cycles](https://dev.to/meridian-ai/the-loop-as-laboratory-what-3190-cycles-of-autonomous-ai-operation-reveal-23je) — Meridian AI (30-day autonomous operation, identity persistence, 9 sub-agents)
 - [Agent Loops Forever: How to Stop](https://matrixtrak.com/blog/agents-loop-forever-how-to-stop) — MatrixTrak (fingerprint detection, error classification, stopping conditions)
 - [Agentic AI Coding: Best Practice Patterns](https://codescene.com/blog/agentic-ai-coding-best-practice-patterns-for-speed-with-quality) — CodeScene (Code Health 9.5+ threshold, multi-level safeguarding, 2-3x speedup)
+- [How to Tell If Your AI Agent Is Stuck (220 Loops)](https://dev.to/boucle2026/how-to-tell-if-your-ai-agent-is-stuck-with-real-data-from-220-loops-4d4h) — Boucle (55%/45% productive/problematic, 50% remediation effectiveness, 13.3x feedback amplification)
+- [AgentRx: Systematic Debugging for AI Agents](https://www.microsoft.com/en-us/research/blog/systematic-debugging-for-ai-agents-introducing-the-agentrx-framework/) — Microsoft Research (+23.6% failure localization, 9-category taxonomy, 115 trajectories)
+- [Checkpoint Commit Patterns](https://understandingdata.com/posts/checkpoint-commit-patterns/) — James Phoenix (4 git checkpoint patterns for AI-assisted development)
+- [Trace-Driven Development](https://www.nickwinder.com/blog/trace-driven-development-langsmith-claude-code) — Nick Winder (LangSmith MCP + Claude Code, autonomous fix proposals)
+- [Preventing Agent Drift at CRED](https://dev.to/singhdevhub/how-we-prevent-ai-agents-drift-code-slop-generation-2eb7) — SinghDevHub (8 safeguards, dual-threshold circuit breakers, explicit termination tools)

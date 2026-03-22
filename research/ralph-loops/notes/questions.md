@@ -26,11 +26,15 @@
 - [ ] How does Vercel's feedback injection pattern (verify → reason string → next prompt) compare to the "signs" pattern (persistent guardrails file) for guided recovery?
 - [ ] At what point does architectural drift from agent-generated code become unrepairable — is there a measurable "point of no return"?
 - [ ] What's the optimal planner-to-worker ratio in role-based multi-agent architectures? Cursor uses recursive sub-planners — at what depth do they add more noise than value?
-- [ ] How do teams calibrate loop fingerprint thresholds (3 repeats? 5?) for different task types? Creative tasks may show more repetition than deterministic ones.
+- [x] How do teams calibrate loop fingerprint thresholds (3 repeats? 5?) for different task types? — Production systems converge on 3 consecutive repeats for stuck detection. ralph-claude-code uses 3 loops/no changes, 5 same errors, 70% output decline. Boucle's 220-loop study validates mechanical counting over agent self-assessment. See Ch16.
 - [ ] Does continuous budget signaling (Google's BATS) measurably change agent behavior vs. hard cutoffs alone? No controlled study yet.
 - [x] What does multi-agent coordination look like at scale (1M+ lines)? — Cursor's planner-worker-judge: flat coordination fails, optimistic concurrency fails, role-based hierarchy succeeds. Workers must be fully independent. See Ch15.
 - [ ] What Code Health thresholds do teams target before deploying agents on a codebase? CodeScene says 9.5+ — is this validated by other teams?
 - [ ] Does DAG-based ralph orchestration (swarm-cli) outperform sequential phase execution for multi-phase workflows?
+- [ ] How effective are reflection prompts ("What assumption might be wrong?") as loop breakers compared to hard circuit breakers? Are they complementary or redundant?
+- [ ] What's the optimal cadence for re-evaluating automated remediation responses? Boucle found 50% are ineffective — how do teams identify and replace bad auto-fixes?
+- [ ] How well does Microsoft's AgentRx 9-category taxonomy transfer to coding agent loops specifically? It was validated on τ-bench, Flash, and Magentic-One — do coding agents show different failure distributions?
+- [ ] Can trace-driven development (LangSmith + agent MCP) work in a ralph loop context, where each iteration gets fresh context? How do you carry trace insights across iterations?
 
 ## Answered
 - [x] What are the most effective patterns for keeping agents on track during long-running loops? — Fresh context resets + file-based state + verification gates. See chapters 01-02.

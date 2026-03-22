@@ -174,6 +174,19 @@
 - https://missing.csail.mit.edu/2026/agentic-coding/ — MIT Missing Semester — Academic curriculum on agentic coding: "intern not subordinate" mental model, /llms.txt standard, subagent delegation, 200-line agent architecture — **medium**
 - https://github.com/swarm-cli — swarm-cli — DAG pipeline orchestration for ralph loops: planner→implementer→reviewer as continuous pipeline, Docker-like CLI — **medium**
 
+- https://dev.to/boucle2026/how-to-tell-if-your-ai-agent-is-stuck-with-real-data-from-220-loops-4d4h — Boucle — Empirical analysis of 220 agent loops: 55% productive/45% problematic, 6 signal types, 13.3x feedback amplification, 50% remediation effectiveness — **high**
+- https://dev.to/singhdevhub/how-we-prevent-ai-agents-drift-code-slop-generation-2eb7 — SinghDevHub (CRED) — 8 interconnected safeguards from production: dual-threshold circuit breakers, structured output contracts, explicit termination tools, AI-reviewing-AI — **high**
+- https://understandingdata.com/posts/checkpoint-commit-patterns/ — James Phoenix — 4 git checkpoint patterns for AI-assisted development: Validation Gate, Incremental Checkpoint, Safety Bracket, End-of-Session Commit — **high**
+- https://www.microsoft.com/en-us/research/blog/systematic-debugging-for-ai-agents-introducing-the-agentrx-framework/ — Microsoft Research (Barke et al.) — AgentRx: 4-stage debugging pipeline, 9-category failure taxonomy, +23.6% failure localization, 115 annotated trajectories — **high**
+- https://www.nickwinder.com/blog/trace-driven-development-langsmith-claude-code — Nick Winder — Trace-driven development: LangSmith MCP + Claude Code for autonomous fix proposals, "days to minutes" fix time — **high**
+- https://dev.to/tumf/ralph-claude-code-the-technology-to-stop-ai-agents-how-the-circuit-breaker-pattern-prevents-3di4 — tumf — Circuit breaker implementation: 3 states, concrete thresholds (3/5/70%), two-stage error filtering, $10.50/hour per agent — **high**
+- https://earezki.com/ai-news/2026-02-23-does-ai-have-a-hero-gene/ — Evangelos Letsos (Andromeda) — Emergent cross-agent recovery: backend agent autonomously diagnosed and fixed frontend agent's config error, peer review by third agent — **high**
+- https://promptengineering.org/agents-at-work-the-2026-playbook-for-building-reliable-agentic-workflows/ — Sunil Ramlochan — 5-stage production agent loop, structured outputs for 100% schema compliance, immutable audit logs, least-privilege design — **high**
+- https://markaicode.com/fix-ai-agent-looping-autonomous-coding/ — Mark (Markaicode) — 5 anti-looping techniques with code: action history tracking, result-based detection, reflection prompts, circuit breakers, escalation protocol — **medium**
+- https://tech.eu/2026/03/17/agent-debugging-startup-laminar-raises-3m-seed-to-tackle-the-observability-gap-in-ai-agents/ — Laminar — Agent Debugger: replay from any step, AI-powered failure pattern detection, browser session recording synced with traces — **medium**
+- https://opentelemetry.io/blog/2025/ai-agent-observability/ — OpenTelemetry (IBM/Google) — Standardized semantic conventions for AI agent observability across CrewAI, AutoGen, LangGraph — **medium**
+- https://www.gocodeo.com/post/error-recovery-and-fallback-strategies-in-ai-agent-development — GoCodeo — Progressive failure response: self-correct → fallback → graceful degradation → human escalation, error type classification — **medium**
+
 ## Lower Relevance
 
 - https://www.permit.io/blog/human-in-the-loop-for-ai-agents-best-practices-frameworks-use-cases-and-demo — Permit.io — Human-in-the-loop patterns for AI agents — **low**
