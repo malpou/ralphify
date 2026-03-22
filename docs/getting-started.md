@@ -33,7 +33,7 @@ The fastest way to scaffold a ralph is `ralph init`:
 ralph init my-ralph
 ```
 
-This creates `my-ralph/RALPH.md` with a ready-to-customize template including an example command, arg, and prompt. Edit the task section, then skip to [Step 3](#step-3-do-a-test-run) to verify it works.
+This creates `my-ralph/RALPH.md` with a ready-to-customize template including an example command, arg, and prompt. Edit the task section, [test it](#step-3-do-a-test-run), then [run the loop](#step-7-run-the-loop) — the template already has commands and placeholders wired up. Steps 4–6 below explain these concepts if you want to customize further.
 
 Alternatively, use `ralph new` for AI-guided setup, or create the file manually as shown below.
 
