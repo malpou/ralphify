@@ -92,7 +92,7 @@
         "name": "What is a ralph loop?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "A ralph loop is an autonomous AI coding cycle: read a prompt, run the agent, validate with checks, and repeat. Each iteration starts fresh with a clean context window, so the agent never accumulates stale conversation history."
+          "text": "A ralph loop is an autonomous AI coding cycle: run commands, assemble a prompt with live data, pipe it to an agent, and repeat. Each iteration starts fresh with a clean context window, so the agent never accumulates stale conversation history."
         }
       },
       {
@@ -100,7 +100,7 @@
         "name": "How is Ralphify different from running my AI coding agent once?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "A single agent run fills up its context window, slows down, and loses focus. Ralphify resets the agent every iteration — it re-reads the codebase, gets fresh check results, and follows your latest prompt. You steer, the loop executes."
+          "text": "A single agent run fills up its context window, slows down, and loses focus. Ralphify resets the agent every iteration — it re-reads the codebase, runs commands for fresh data, and follows your latest prompt. You steer, the loop executes."
         }
       },
       {
@@ -404,7 +404,7 @@
             </p>
             <ul class="ralph-features">
               <li><strong>agent</strong> &mdash; which CLI agent to run</li>
-              <li><strong>commands</strong> &mdash; checks that validate each iteration</li>
+              <li><strong>commands</strong> &mdash; live data injected into each iteration</li>
               <li><strong>The prompt body</strong> &mdash; what the agent sees every loop</li>
             </ul>
           </div>
