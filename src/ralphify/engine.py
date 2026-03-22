@@ -17,8 +17,6 @@ from pathlib import Path
 
 from ralphify._agent import execute_agent
 from ralphify._events import (
-    LOG_ERROR,
-    LOG_INFO,
     AgentActivityData,
     BoundEmitter,
     CommandsCompletedData,
@@ -27,7 +25,6 @@ from ralphify._events import (
     EventType,
     IterationEndedData,
     IterationStartedData,
-    LogMessageData,
     NullEmitter,
     PromptAssembledData,
     RunStartedData,
@@ -220,7 +217,7 @@ def _run_iteration(
 
     if not agent_succeeded and config.stop_on_error:
         state.status = RunStatus.FAILED
-        emit(EventType.LOG_MESSAGE, LogMessageData(message="Stopping due to --stop-on-error.", level=LOG_ERROR))
+        emit.log_error("Stopping due to --stop-on-error.")
         return False
 
     return True
@@ -235,7 +232,7 @@ def _delay_if_needed(config: RunConfig, state: RunState, emit: BoundEmitter) -> 
     if config.delay > 0 and (
         config.max_iterations is None or state.iteration < config.max_iterations
     ):
-        emit(EventType.LOG_MESSAGE, LogMessageData(message=f"Waiting {config.delay}s...", level=LOG_INFO))
+        emit.log_info(f"Waiting {config.delay}s...")
         remaining = config.delay
         while remaining > 0 and not state.stop_requested:
             chunk = min(remaining, _PAUSE_POLL_INTERVAL)
@@ -289,11 +286,7 @@ def run_loop(
     except Exception as exc:
         state.status = RunStatus.FAILED
         tb = traceback.format_exc()
-        emit(EventType.LOG_MESSAGE, LogMessageData(
-            message=f"Run crashed: {exc}",
-            level=LOG_ERROR,
-            traceback=tb,
-        ))
+        emit.log_error(f"Run crashed: {exc}", traceback=tb)
 
     if state.status == RunStatus.RUNNING:
         state.status = RunStatus.COMPLETED

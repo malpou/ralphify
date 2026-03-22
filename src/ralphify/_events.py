@@ -222,3 +222,14 @@ class BoundEmitter:
         self._emitter.emit(Event(
             type=event_type, run_id=self._run_id, data=data if data is not None else {},
         ))
+
+    def log_info(self, message: str) -> None:
+        """Emit a ``LOG_MESSAGE`` event at info level."""
+        self(EventType.LOG_MESSAGE, LogMessageData(message=message, level=LOG_INFO))
+
+    def log_error(self, message: str, *, traceback: str | None = None) -> None:
+        """Emit a ``LOG_MESSAGE`` event at error level."""
+        data = LogMessageData(message=message, level=LOG_ERROR)
+        if traceback is not None:
+            data["traceback"] = traceback
+        self(EventType.LOG_MESSAGE, data)
