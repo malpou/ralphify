@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 from helpers import MOCK_ENGINE_SLEEP, MOCK_SKILLS_WHICH, MOCK_SUBPROCESS, MOCK_WHICH, ok_result, fail_result, make_ralph
 from ralphify import __version__
 from ralphify._frontmatter import RALPH_MARKER
-from ralphify.cli import app, _parse_command_items, _parse_user_args
+from ralphify.cli import app, _parse_command_items, _parse_user_args, _validate_idle
 
 runner = CliRunner()
 
@@ -773,3 +773,176 @@ class TestCreditFrontmatter:
         assert result.exit_code == 1
         assert "credit" in result.output.lower()
         assert "true or false" in result.output.lower()
+
+
+@patch(MOCK_WHICH, return_value="/usr/bin/claude")
+class TestIdleFrontmatter:
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_no_idle_config_by_default(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = make_ralph(tmp_path)
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 0
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_idle_with_all_fields(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p --dangerously-skip-permissions\n"
+            "idle:\n  delay: 30s\n  backoff: 2\n  max_delay: 5m\n  max: 1h\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 0
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_idle_with_numeric_values(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p --dangerously-skip-permissions\n"
+            "idle:\n  delay: 30\n  backoff: 1.5\n  max_delay: 300\n  max: 3600\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 0
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_idle_with_only_delay(self, mock_run, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p --dangerously-skip-permissions\n"
+            "idle:\n  delay: 10s\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 0
+
+    def test_idle_not_a_mapping_errors(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p\nidle: true\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "must be a mapping" in result.output.lower()
+
+    def test_idle_string_errors(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p\nidle: 30s\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "must be a mapping" in result.output.lower()
+
+    def test_idle_invalid_delay_errors(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p\nidle:\n  delay: not-a-duration\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "idle.delay" in result.output.lower()
+
+    def test_idle_negative_delay_errors(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p\nidle:\n  delay: -5\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "positive" in result.output.lower()
+
+    def test_idle_zero_backoff_errors(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p\nidle:\n  backoff: 0\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "positive" in result.output.lower()
+
+    def test_idle_boolean_backoff_errors(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p\nidle:\n  backoff: true\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "positive number" in result.output.lower()
+
+    def test_idle_unknown_field_errors(self, mock_which, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        (ralph_dir / RALPH_MARKER).write_text(
+            "---\nagent: claude -p\nidle:\n  delay: 30s\n  unknown: foo\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 1
+        assert "unknown" in result.output.lower()
+
+
+class TestValidateIdle:
+    def test_none_returns_none(self):
+        assert _validate_idle(None) is None
+
+    def test_empty_dict_returns_defaults(self):
+        from ralphify._run_types import DEFAULT_IDLE_BACKOFF, DEFAULT_IDLE_DELAY, DEFAULT_IDLE_MAX_DELAY
+        config = _validate_idle({})
+        assert config.delay == DEFAULT_IDLE_DELAY
+        assert config.backoff == DEFAULT_IDLE_BACKOFF
+        assert config.max_delay == DEFAULT_IDLE_MAX_DELAY
+        assert config.max is None
+
+    def test_duration_strings_parsed(self):
+        config = _validate_idle({"delay": "30s", "max_delay": "5m", "max": "1h"})
+        assert config.delay == 30.0
+        assert config.max_delay == 300.0
+        assert config.max == 3600.0
+
+    def test_numeric_values_accepted(self):
+        config = _validate_idle({"delay": 10, "backoff": 1.5, "max_delay": 120, "max": 600})
+        assert config.delay == 10.0
+        assert config.backoff == 1.5
+        assert config.max_delay == 120.0
+        assert config.max == 600.0
+
+    def test_not_a_dict_errors(self):
+        with pytest.raises(typer.Exit):
+            _validate_idle("30s")
+
+    def test_invalid_duration_string_errors(self):
+        with pytest.raises(typer.Exit):
+            _validate_idle({"delay": "not-valid"})
+
+    def test_negative_delay_errors(self):
+        with pytest.raises(typer.Exit):
+            _validate_idle({"delay": -5})
+
+    def test_zero_delay_errors(self):
+        with pytest.raises(typer.Exit):
+            _validate_idle({"delay": 0})
+
+    def test_boolean_delay_errors(self):
+        with pytest.raises(typer.Exit):
+            _validate_idle({"delay": True})
+
+    def test_unknown_fields_errors(self):
+        with pytest.raises(typer.Exit):
+            _validate_idle({"delay": "30s", "extra": "oops"})

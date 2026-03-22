@@ -29,11 +29,17 @@ from ralphify._frontmatter import (
     FIELD_ARGS,
     FIELD_COMMANDS,
     FIELD_CREDIT,
+    FIELD_IDLE,
+    IDLE_FIELD_BACKOFF,
+    IDLE_FIELD_DELAY,
+    IDLE_FIELD_MAX,
+    IDLE_FIELD_MAX_DELAY,
     RALPH_MARKER,
     VALID_NAME_CHARS_MSG,
+    parse_duration,
     parse_frontmatter,
 )
-from ralphify._run_types import Command, DEFAULT_COMMAND_TIMEOUT, RunConfig, RunState, generate_run_id
+from ralphify._run_types import Command, DEFAULT_COMMAND_TIMEOUT, IdleConfig, RunConfig, RunState, generate_run_id
 from ralphify.engine import run_loop
 
 if sys.platform == "win32":
@@ -373,6 +379,65 @@ def _validate_credit(raw_credit: Any) -> bool:
     return raw_credit
 
 
+def _parse_idle_duration(value: Any, field_name: str) -> float:
+    """Parse a duration value from idle config — accepts numbers (seconds) or duration strings."""
+    if isinstance(value, bool):
+        _exit_error(f"'{FIELD_IDLE}.{field_name}' must be a number or duration string, got {value!r}.")
+    if isinstance(value, (int, float)):
+        if not math.isfinite(value) or value <= 0:
+            _exit_error(f"'{FIELD_IDLE}.{field_name}' must be positive, got {value!r}.")
+        return float(value)
+    if isinstance(value, str):
+        try:
+            result = parse_duration(value)
+        except ValueError as exc:
+            _exit_error(f"'{FIELD_IDLE}.{field_name}': {exc}")
+        if result <= 0:
+            _exit_error(f"'{FIELD_IDLE}.{field_name}' must be positive.")
+        return result
+    _exit_error(f"'{FIELD_IDLE}.{field_name}' must be a number or duration string, got {type(value).__name__}.")
+
+
+def _validate_idle(raw_idle: Any) -> IdleConfig | None:
+    """Validate the ``idle`` frontmatter block and return an IdleConfig.
+
+    Returns ``None`` when *raw_idle* is ``None`` (field absent).
+    Exits with an error when the value is malformed.
+    """
+    if raw_idle is None:
+        return None
+    if not isinstance(raw_idle, dict):
+        _exit_error(f"'{FIELD_IDLE}' must be a mapping, got {type(raw_idle).__name__}.")
+
+    kwargs: dict[str, Any] = {}
+
+    if IDLE_FIELD_DELAY in raw_idle:
+        kwargs["delay"] = _parse_idle_duration(raw_idle[IDLE_FIELD_DELAY], IDLE_FIELD_DELAY)
+
+    if IDLE_FIELD_MAX_DELAY in raw_idle:
+        kwargs["max_delay"] = _parse_idle_duration(raw_idle[IDLE_FIELD_MAX_DELAY], IDLE_FIELD_MAX_DELAY)
+
+    if IDLE_FIELD_MAX in raw_idle:
+        kwargs["max"] = _parse_idle_duration(raw_idle[IDLE_FIELD_MAX], IDLE_FIELD_MAX)
+
+    if IDLE_FIELD_BACKOFF in raw_idle:
+        backoff = raw_idle[IDLE_FIELD_BACKOFF]
+        if isinstance(backoff, bool):
+            _exit_error(f"'{FIELD_IDLE}.{IDLE_FIELD_BACKOFF}' must be a positive number, got {backoff!r}.")
+        if not isinstance(backoff, (int, float)):
+            _exit_error(f"'{FIELD_IDLE}.{IDLE_FIELD_BACKOFF}' must be a positive number, got {type(backoff).__name__}.")
+        if not math.isfinite(backoff) or backoff <= 0:
+            _exit_error(f"'{FIELD_IDLE}.{IDLE_FIELD_BACKOFF}' must be positive, got {backoff!r}.")
+        kwargs["backoff"] = float(backoff)
+
+    known_fields = {IDLE_FIELD_DELAY, IDLE_FIELD_BACKOFF, IDLE_FIELD_MAX_DELAY, IDLE_FIELD_MAX}
+    unknown = set(raw_idle.keys()) - known_fields
+    if unknown:
+        _exit_error(f"Unknown field(s) in '{FIELD_IDLE}': {', '.join(sorted(unknown))}.")
+
+    return IdleConfig(**kwargs)
+
+
 def _validate_run_options(
     max_iterations: int | None,
     delay: float,
@@ -416,6 +481,7 @@ def _build_run_config(
         ralph_args = _parse_user_args(extra_args, declared_names)
 
     credit = _validate_credit(fm.get(FIELD_CREDIT))
+    idle = _validate_idle(fm.get(FIELD_IDLE))
 
     return RunConfig(
         agent=agent,
@@ -430,6 +496,7 @@ def _build_run_config(
         log_dir=Path(log_dir) if log_dir else None,
         project_root=Path.cwd(),
         credit=credit,
+        idle=idle,
     )
 
 
