@@ -35,6 +35,7 @@ from ralphify._frontmatter import (
 )
 from ralphify._run_types import Command, DEFAULT_COMMAND_TIMEOUT, RunConfig, RunState, generate_run_id
 from ralphify.engine import run_loop
+from ralphify.manager import RunManager
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -466,3 +467,74 @@ def run(
     emitter = ConsoleEmitter(_console)
 
     run_loop(config, state, emitter)
+
+
+def _discover_ralphs(directory: Path) -> list[Path]:
+    """Find all subdirectories of *directory* that contain a RALPH.md file.
+
+    Returns sorted paths for deterministic ordering.  Does not recurse
+    deeper than one level — only immediate children are checked.
+    """
+    ralphs: list[Path] = []
+    if not directory.is_dir():
+        return ralphs
+    for child in sorted(directory.iterdir()):
+        if child.is_dir() and (child / RALPH_MARKER).is_file():
+            ralphs.append(child)
+    return ralphs
+
+
+@app.command()
+def fleet(
+    path: str = typer.Argument(..., help="Directory containing ralph subdirectories."),
+    n: int | None = typer.Option(None, "-n", help="Max number of iterations per ralph. Infinite if not set."),
+    stop_on_error: bool = typer.Option(False, "--stop-on-error", "-s", help="Stop a ralph if its agent exits non-zero or times out."),
+    delay: float = typer.Option(0, "--delay", "-d", help="Seconds to wait between iterations."),
+    log_dir: str | None = typer.Option(None, "--log-dir", "-l", help="Save iteration output to log files in this directory."),
+    timeout: float | None = typer.Option(None, "--timeout", "-t", help="Max seconds per iteration. Kill agent if exceeded."),
+) -> None:
+    """Run multiple ralphs in parallel.
+
+    Discovers all subdirectories of PATH that contain a RALPH.md file
+    and runs them concurrently.  Ctrl+C stops all running ralphs.
+    """
+    _validate_run_options(n, delay, timeout)
+
+    fleet_dir = Path(path)
+    if not fleet_dir.is_dir():
+        _exit_error(f"'{path}' is not a directory.")
+
+    ralph_dirs = _discover_ralphs(fleet_dir)
+    if not ralph_dirs:
+        _exit_error(f"No ralphs found in '{path}'. Each subdirectory needs a {RALPH_MARKER} file.")
+
+    _console.print(f"\n[bold #A78BF5]Fleet:[/bold #A78BF5] Found {len(ralph_dirs)} ralph(s) in [bold]{path}[/bold]")
+    for d in ralph_dirs:
+        _console.print(f"  [dim]• {d.name}[/dim]")
+
+    configs: list[RunConfig] = []
+    for ralph_dir in ralph_dirs:
+        config = _build_run_config(
+            str(ralph_dir), n, stop_on_error, delay, log_dir, timeout,
+        )
+        configs.append(config)
+
+    manager = RunManager()
+    emitter = ConsoleEmitter(_console)
+
+    for config in configs:
+        managed = manager.create_run(config)
+        managed.add_listener(emitter)
+        manager.start_run(managed.state.run_id)
+
+    try:
+        for managed in manager.list_runs():
+            if managed.thread is not None:
+                managed.thread.join()
+    except KeyboardInterrupt:
+        _console.print("\n[yellow]Stopping all ralphs…[/yellow]")
+        for managed in manager.list_runs():
+            managed.state.request_stop()
+        for managed in manager.list_runs():
+            if managed.thread is not None:
+                managed.thread.join(timeout=10)
