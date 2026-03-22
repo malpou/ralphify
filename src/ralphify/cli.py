@@ -87,7 +87,7 @@ BANNER = [
     ("╚═╝░░╚═╝╚═╝░░╚═╝╚══════╝╚═╝░░░░░╚═╝░░╚═╝╚═╝╚═╝░░░░░░░░╚═╝░░░", "#E06030"),
 ]
 
-TAGLINE = "Stop stressing over not having an agent running. Ralph is always running"
+TAGLINE = "Ralph is always running"
 
 _INIT_TEMPLATE = """\
 ---
@@ -130,12 +130,8 @@ def _print_banner() -> None:
     for line, color in BANNER:
         _console.print(f"[bold {color}]{prefix}{line}[/bold {color}]")
     _console.print()
-    _console.print(f"[italic #A78BF5]{TAGLINE:^{width}}[/italic #A78BF5]")
-    _console.print()
-    help_text = "Run 'ralph --help' for usage information"
-    _console.print(f"[dim]{help_text:^{width}}[/dim]")
-    star_text = "⭐ Star us on GitHub: https://github.com/computerlovetech/ralphify"
-    _console.print(f"[dim]{star_text:^{width}}[/dim]")
+    version_tag = f"v{__version__} — {TAGLINE}"
+    _console.print(f"[italic #A78BF5]{version_tag:^{width}}[/italic #A78BF5]")
     _console.print()
 
 
