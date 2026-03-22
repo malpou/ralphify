@@ -12,6 +12,7 @@ from functools import partial
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.live import Live
+from rich.markdown import Markdown
 from rich.markup import escape as escape_markup
 from rich.spinner import Spinner
 from rich.text import Text
@@ -122,7 +123,7 @@ class ConsoleEmitter:
             self._console.print(f"  [dim]{_ICON_ARROW} {escape_markup(log_file)}[/dim]")
         result_text = data["result_text"]
         if result_text:
-            self._console.print(f"  [dim]{escape_markup(result_text)}[/dim]")
+            self._console.print(Markdown(result_text))
 
     def _on_commands_completed(self, data: CommandsCompletedData) -> None:
         count = data["count"]
