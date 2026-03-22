@@ -417,3 +417,36 @@
 - Research: eval-driven loop optimization (agents couldn't access web in iterations 14-15)
 - Or: deep dive into production deployment patterns — CI/CD for ralph loops, scheduled ralphs, team workflows
 - Or: explore the "intent-failure" problem more deeply — the hardest unsolved gap (agents pass all tests but build the wrong thing)
+
+## Iteration 17 — 2026-03-22
+
+**Decision: RESEARCH**
+
+**Focus area:** Two high-value threads that keep getting deferred:
+1. **Eval-driven loop optimization & the meta-ralph pattern** — how do teams systematically measure and improve loop configurations? The meta-ralph (a ralph that optimizes other ralphs) has been validated by Arize (+5-10% SWE-bench) but under-explored in practice. Previous agents couldn't access web — doing this manually.
+2. **Production deployment patterns** — CI/CD for ralph loops, scheduled ralphs, team workflows, cron-based autonomous execution. How do teams move from "run ralph locally" to "ralph runs in prod"?
+
+**What was done:**
+- Launched 3 parallel research agents (2 returned excellent results, 1 couldn't access web)
+- Eval-driven agent: found 25+ sources on EDD methodology, meta-loop implementations, pass@k/pass^k metrics, CI/CD eval tooling
+- Production deployment agent: found 30+ sources on GitHub Agentic Workflows, cloud agents, scheduled execution, team workflows, observability
+- Created chapter 18 (Eval-Driven Optimization & Production Deployment) covering meta-loop pattern (5 implementations), EDD methodology, pass@k vs pass^k, 3 deployment tiers, scheduled execution, team workflows, observability
+- Added 3 new insights to REPORT.md (#23-#25), 16 new insights to notes, 29 new sources, 4 new questions, 2 questions answered
+- Updated Ch06 with eval-driven optimization section (meta-ralph, `ralph eval`, enterprise tiers) and production deployment section (3 tiers, `ralph ci`, scheduled patterns)
+- Enhanced competitive positioning from 8 to 10 differentiators (added meta-ralph support, production deployment)
+
+**Key surprises:**
+- OpenAI acquired Promptfoo (March 16, 2026) — eval tooling is now a platform play, not just open-source
+- The meta-loop pattern has FIVE independent implementations (OpenAI, Weco, Arize, IBM, Evidently) — more mature than expected
+- pass^k kills deployment hopes: 70% success = 97% pass@3 but only 34% pass^3 — the marketing-reality gap is extreme
+- Cursor Cloud Agents produce 35% of Cursor's INTERNAL merged PRs — this is real production use
+- GitHub calls CI/CD-integrated agents "Continuous AI" — positioning agent loops as CI/CD extension, not replacement
+- Geta Team manages 100+ agents with ~200 lines of JavaScript — centralized scheduling is simpler than expected
+- earezki runs 23 concurrent agent cron jobs with a daily schedule (7AM-11PM) — production agent orchestration exists
+- Anthropic 2026 report: only 0-20% of tasks can be fully delegated — even the vendor admits the ceiling is low
+- AGENTS.md emerging as cross-tool team coordination standard — works across Claude/Cursor/Codex
+
+**Next iteration should focus on:**
+- Refine cycle (iteration 18): 25 insights, 18 chapters — trim insights to ~22-23, consider whether any chapters should merge
+- Or: explore the "continuous AI" concept more deeply — how does CI/CD change when agents are part of the pipeline?
+- Or: deep dive into AGENTS.md as cross-tool standard — implications for RALPH.md portability

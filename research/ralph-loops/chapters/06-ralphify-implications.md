@@ -379,16 +379,89 @@ Adam Tuttle exhausted $100/month in ~1 hour of looping. Each iteration loads ful
 - **Model tiering** — cheaper models for routine iterations, premium for complex logic
 - **Surfacing iteration cost** — "Iteration 7 of 20 (~$2.30 spent)" enables informed decisions
 
+## Eval-Driven Loop Optimization
+
+Ch18 research reveals the meta-loop pattern — agents that optimize other agents' configurations via eval feedback — is production-ready with 5 independent implementations. This maps directly to ralphify:
+
+### The Meta-Ralph Pattern
+
+A meta-ralph wraps an inner ralph and iteratively improves its configuration:
+
+1. Inner ralph runs against eval dataset (commands capture pass/fail per test case)
+2. Prompt instructs meta-agent to analyze failures and rewrite inner RALPH.md
+3. Loop repeats until eval scores plateau
+
+Arize achieved +6% SWE-bench improvement by optimizing only the CLAUDE.md file. Weco's tree-search engine is the purest implementation — "provide an eval script, it does the rest."
+
+### `ralph eval` Command (High Priority)
+
+No tool in ralphify's weight class supports the EDD flywheel. A native eval command would:
+
+```bash
+ralph eval my-ralph/ --dataset golden.jsonl --repeat 3
+# Output: pass@1=72%, pass@3=94%, pass^3=37%, avg_cost=$0.42/run
+```
+
+This enables:
+- **pass@k/pass^k reporting** — the converged metrics for agent reliability
+- **Before-vs-after comparison** on RALPH.md changes
+- **CI/CD integration** — eval gates on PRs that modify ralph configurations
+
+Key finding from Phil Schmid: 70% success = 97% pass@3 but 34% pass^3. Teams need both metrics to make promotion decisions.
+
+### Enterprise Readiness Tiers
+
+Paul Simmering's framework maps to ralph loop deployment:
+- **Internal tools** (74-90% pass^1): PRD-driven ralphs for internal features
+- **Customer-facing** (80% pass^1, degrades at pass^8): ralphs with strong verification gates
+- **Long-running autonomous** (not ready): agents "spiral rather than self-correct" — circuit breakers and fingerprinting are non-negotiable
+
+## Production Deployment
+
+Ch18 research identifies three deployment tiers for ralph loops. Ralphify ralphs are already portable across all three without format changes — RALPH.md is just Markdown + YAML frontmatter.
+
+### Tier 1: Local (`ralph run`)
+
+What ralphify does today. Enhanced by `/loop`-style scheduling for monitoring tasks.
+
+### Tier 2: CI/CD-Integrated (High Priority)
+
+GitHub's Agentic Workflows (Feb 2026) prove that Markdown + YAML frontmatter → compiled to CI/CD works. RALPH.md is already this format. A `ralph ci` command could generate a GitHub Actions workflow from a ralph:
+
+```bash
+ralph ci my-ralph/ --schedule "0 9 * * MON-FRI" --max-cost 5.00
+```
+
+This would generate a `.github/workflows/ralph-my-ralph.yml` that installs ralphify and runs the ralph on schedule with cost limits.
+
+### Tier 3: Cloud-Native (Future)
+
+Cursor Cloud Agents (35% of internal PRs, each gets own VM) and Codex Cloud Sandbox (two-phase: network setup → offline agent) show the target state. For ralphify, this means:
+- Dockerized ralph execution in cloud sandboxes
+- Pre-built images with common agents (Claude Code, Codex) + ralphify
+- Integration with Coder Tasks or Runloop for infrastructure
+
+### Scheduled Ralph Patterns
+
+Production patterns from earezki (23 concurrent cron jobs) and Geta Team (100+ agents):
+- **Daily schedule**: 7AM discovery → 8AM research → 9AM prep → 11AM execution → 11PM review
+- **Centralized scheduler**: one daemon managing all agent cron jobs
+- **Stateless workers**: agents as stateless; all coordination through durable external storage
+
+A `ralph schedule` command could generate cron entries or systemd timers for local execution, complementing `ralph ci` for remote.
+
 ## Competitive Positioning
 
 Ralphify sits at a validated sweet spot: simpler than full orchestration frameworks (LangGraph, CrewAI) but more structured than raw bash loops. The Karpathy autoresearch moment — 630 lines running 700 experiments — proves that "simple harness, powerful results" wins.
 
 The key differentiators to develop:
 1. **Verification as a first-class citizen.** Every major system has converged on this. Making it native to RALPH.md frontmatter would be the single highest-impact framework improvement, and no other tool in ralphify's weight class offers it.
-2. **Eval-driven loop development.** No tool in ralphify's weight class supports the EDD flywheel. A `ralph eval` command that runs a ralph against a golden dataset and reports pass@k/pass^k would be a unique capability.
-3. **Cost-aware loops.** `max_iterations`, iteration metrics, and prompt caching guidance would address the #1 operational pain point practitioners report.
-4. **Skills ecosystem integration.** With 500+ skills in a compatible format, ralphify can offer a rich library of pre-built ralphs out of the box.
-5. **Iteration observability.** Per-iteration metrics (duration, command pass/fail, iteration count, estimated cost) surfaced in CLI output. Ralph TUI shows the market wants this — completion rate, stuck detection, cost per feature are the three metrics practitioners track. Ralphify can provide this natively without requiring a separate dashboard.
-6. **Loop fingerprinting & circuit breakers.** Zero-cost stuck detection built into the loop — no other tool in this weight class offers deterministic doom loop prevention. Concrete thresholds (3 no-change, 5 same-error, 70% output decline) are validated by production data.
-7. **Rippable-by-design architecture.** As models improve, ralphify should get simpler. Design features to be removable (e.g., loop detection can be a plugin, not core). This positions ralphify as a framework that evolves with models rather than fighting them.
-8. **Practitioner-to-production bridge.** The 6 converged cookbook patterns are individual-use today. Ralphify can be the framework that adds operational safeguards (revert, fingerprinting, budget, circuit breakers) to make them production-ready. This is the most differentiated positioning: not a new pattern, but the production wrapper around patterns people already use.
+2. **Eval-driven loop development.** `ralph eval` with pass@k/pass^k reporting. No other tool in this weight class supports the EDD flywheel. CI/CD eval gates on ralph configuration changes.
+3. **Meta-ralph support.** The meta-loop pattern (outer ralph optimizes inner ralph via eval feedback) is production-ready with 5 independent implementations. Ralphify can be the first framework to make this a first-class workflow.
+4. **Production deployment.** `ralph ci` generates GitHub Actions from RALPH.md. `ralph schedule` generates cron/systemd entries. Portable across local/CI/cloud without format changes.
+5. **Cost-aware loops.** `max_iterations`, iteration metrics, and prompt caching guidance would address the #1 operational pain point practitioners report.
+6. **Skills ecosystem integration.** With 500+ skills in a compatible format, ralphify can offer a rich library of pre-built ralphs out of the box.
+7. **Iteration observability.** Per-iteration metrics (duration, command pass/fail, iteration count, estimated cost) surfaced in CLI output. Ralph TUI shows the market wants this — completion rate, stuck detection, cost per feature are the three metrics practitioners track. Ralphify can provide this natively without requiring a separate dashboard.
+8. **Loop fingerprinting & circuit breakers.** Zero-cost stuck detection built into the loop — no other tool in this weight class offers deterministic doom loop prevention. Concrete thresholds (3 no-change, 5 same-error, 70% output decline) are validated by production data.
+9. **Rippable-by-design architecture.** As models improve, ralphify should get simpler. Design features to be removable (e.g., loop detection can be a plugin, not core). This positions ralphify as a framework that evolves with models rather than fighting them.
+10. **Practitioner-to-production bridge.** The 6 converged cookbook patterns are individual-use today. Ralphify can be the framework that adds operational safeguards (revert, fingerprinting, budget, circuit breakers) to make them production-ready. This is the most differentiated positioning: not a new pattern, but the production wrapper around patterns people already use.

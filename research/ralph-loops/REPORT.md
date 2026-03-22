@@ -48,6 +48,12 @@
 
 22. **Six practitioner cookbook patterns have converged independently.** PRD-driven feature loops (3 implementations), two-phase plan-then-build, TDD loops, guardrails accumulation, permission-gated loops, and stale recovery. All share five properties: one task per iteration, binary completion signal, deterministic verification, append-only progress, git as checkpoint. The gap between practitioner patterns and production-grade loops is operational safeguards (revert-on-failure, loop fingerprinting, budget awareness) — none of the shared implementations include these.
 
+23. **The meta-loop pattern — agents that optimize other agents via eval feedback — is production-ready.** Five independent implementations (OpenAI Self-Evolving Agents, Weco tree-search, Arize PromptLearning, IBM AutoPDL, Evidently mistake-driven) converge on the same structure: execute → evaluate → meta-agent rewrites config → redeploy. Arize improved SWE-bench +6% by optimizing only the CLAUDE.md file. The eval script is the only domain-specific component — everything else is reusable infrastructure.
+
+24. **Agent loops have graduated to three deployment tiers.** Session-scoped (Claude Code `/loop`, dies with terminal), CI/CD-integrated (GitHub Agentic Workflows, Claude/Codex Actions with cron schedules), and cloud-native (Cursor Cloud Agents — 35% of internal PRs, each agent gets its own VM). GitHub calls CI/CD-integrated agents "Continuous AI." RALPH.md files are already portable across all three tiers without format changes.
+
+25. **pass^k, not pass@k, is the production-readiness metric.** An agent with 70% success rate shows 97% pass@3 but only 34% pass^3. Enterprise tiers: internal tools (74-90% pass^1 acceptable), customer-facing (80% pass^1 but degrades on pass^8), long-running autonomous (not ready — agents "spiral rather than self-correct" once misaligned). Promotion gates should require pass^k stability across multiple k values.
+
 ## Chapters
 
 | # | Chapter | Summary |
@@ -69,13 +75,14 @@
 | 15 | [Production Orchestration & Budget-Aware Loops](chapters/15-production-orchestration-patterns.md) | Cursor's planner-worker-judge, loop fingerprinting, worktree isolation, observability stack, Meridian 3,190 cycles |
 | 16 | [Self-Repair, Resilience & Agent Debugging](chapters/16-self-repair-resilience-debugging.md) | Git checkpoint hierarchy, circuit breaker thresholds, 220-loop empirical data, AgentRx 9-category taxonomy, trace-driven development |
 | 17 | [Practitioner Cookbook Patterns](chapters/17-practitioner-cookbook-patterns.md) | 6 concrete loop configurations from the wild: PRD-driven, plan-then-build, TDD, guardrails accumulation, permission-gated, stale recovery |
+| 18 | [Eval-Driven Optimization & Production Deployment](chapters/18-eval-driven-optimization-production-deployment.md) | Meta-loop pattern (5 implementations), EDD methodology, pass@k vs pass^k, 3 deployment tiers, scheduled execution, team workflows, observability |
 
 ## Open Questions
 
 - How do cross-company model diversity reviewers compare to same-family self-review in measurable quality?
 - What's the optimal ratio of spec-writing time to execution time in spec+ralph integrated workflows?
-- What pass@k / pass^k thresholds do teams target before promoting a ralph configuration to production?
-- How effective is the "meta-ralph" pattern — a ralph that optimizes other ralphs via eval feedback?
+- How do teams decide between session-scoped, CI/CD-integrated, and cloud-native deployment for their agent loops?
+- What's the optimal eval dataset size for meta-loop prompt optimization (Arize used 150 train/150 test — is that enough)?
 - What's the right cadence for garbage-collection/cleanup ralphs — daily, weekly, event-triggered?
 - What's the optimal number of MCP servers per agent loop before tool selection accuracy degrades?
 - Does Vercel's feedback injection pattern outperform persistent guardrails files for guided recovery?
@@ -136,3 +143,12 @@
 - [Checkpoint Commit Patterns](https://understandingdata.com/posts/checkpoint-commit-patterns/) — James Phoenix (4 git checkpoint patterns for AI-assisted development)
 - [Trace-Driven Development](https://www.nickwinder.com/blog/trace-driven-development-langsmith-claude-code) — Nick Winder (LangSmith MCP + Claude Code, autonomous fix proposals)
 - [Preventing Agent Drift at CRED](https://dev.to/singhdevhub/how-we-prevent-ai-agents-drift-code-slop-generation-2eb7) — SinghDevHub (8 safeguards, dual-threshold circuit breakers, explicit termination tools)
+- [Self-Evolving Agents Cookbook](https://developers.openai.com/cookbook/examples/partners/self_evolving_agents/autonomous_agent_retraining) — OpenAI + Weco (canonical meta-loop: execute → evaluate → metaprompt → redeploy)
+- [Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) — Anthropic (Swiss Cheese Model, 8-step eval roadmap)
+- [Pass@k vs Pass^k](https://www.philschmid.de/agents-pass-at-k-pass-power-k) — Phil Schmid (reliability gap: 70% success = 97% pass@3 but 34% pass^3)
+- [The Reliability Gap](https://simmering.dev/blog/agent-benchmarks/) — Paul Simmering (3-tier enterprise readiness based on pass^k degradation)
+- [GitHub Agentic Workflows](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/) — GitHub ("Continuous AI" — Markdown+YAML frontmatter compiled to Actions)
+- [Cursor Cloud Agents](https://devops.com/cursor-cloud-agents-get-their-own-computers-and-35-of-internal-prs-to-prove-it/) — DevOps.com (35% of internal PRs, each agent gets own VM)
+- [Cron Scheduler for AI Agents at Scale](https://blog.geta.team/how-we-built-a-cron-scheduler-for-ai-agents-at-scale/) — Geta Team (100+ agents, centralized scheduler, ~200 lines JS)
+- [Optimizing Coding Agent Rules](https://arize.com/blog/optimizing-coding-agent-rules-claude-md-agents-md-clinerules-cursor-rules-for-improved-accuracy/) — Arize AI (PromptLearning for CLAUDE.md, +6% on SWE-bench)
+- [Promptfoo: Evaluate Coding Agents](https://www.promptfoo.dev/docs/guides/evaluate-coding-agents/) — Promptfoo/OpenAI (trajectory tracing, cost assertions, CI/CD eval gates)

@@ -172,6 +172,24 @@
 - **All practitioner patterns share 5 properties but none include production safeguards.** One task per iteration, binary completion, deterministic verification, append-only progress, git as checkpoint — universal. But no revert-on-failure, no loop fingerprinting, no budget awareness. The gap is ralphify's opportunity.
 - **PRD-driven loops exhaust $100/month quotas in ~1 hour.** Each iteration loads full PRD + progress + test output. Cost optimization (prompt caching, output redirection, model tiering) is essential for sustained use.
 
+## Eval-Driven Optimization & Production Deployment (NEW — Iteration 17)
+- **The meta-loop pattern exists under 5+ names but follows one universal structure.** OpenAI's Self-Evolving Agents, Weco's tree-search, Arize PromptLearning, IBM AutoPDL, Evidently mistake-driven — all: execute → evaluate → meta-agent rewrites config → redeploy. The eval script is the only domain-specific component.
+- **Arize improved SWE-bench +6% by optimizing only CLAUDE.md via automated meta-prompting.** Generated rulesets of 20-50 rules emphasizing edge case handling, root-cause diagnosis, and API contract preservation. GPT-4.1 closed the gap to Sonnet-level without retraining.
+- **Weco's tree-search engine is the purest meta-loop implementation.** Provide an eval script; Weco proposes changes, tests them, iterates autonomously. "Claude Code helps you build. Weco helps you evolve." (Founder Collective)
+- **IBM's AutoPDL achieves up to 67.5pp accuracy gains by framing prompt optimization as AutoML.** Successive halving across prompting patterns (Zero-Shot, CoT, ReAct, ReWOO). Solutions are human-readable PDL programs.
+- **Anthropic's Swiss Cheese Model layers 4 eval types.** Automated evals → production monitoring → A/B testing → manual transcript review. Each catches different failures. Start with 20-50 tasks from actual user failures.
+- **OpenAI acquired Promptfoo (March 16, 2026).** Now used by 25%+ of Fortune 500. GitHub Action for before-vs-after eval on every PR. Supports Claude Agent SDK and Codex SDK. Trajectory tracing via `trajectory:step-count`.
+- **pass^k is the production-readiness metric, not pass@k.** 70% success = 97% pass@3 but only 34% pass^3. Enterprise tiers: internal tools (74-90%), customer-facing (limited at pass^8), long-running autonomous (not ready — agents spiral).
+- **Three deployment tiers have emerged for agent loops.** Session-scoped (Claude /loop, dies with terminal), CI/CD-integrated (GitHub Agentic Workflows, cron schedules), cloud-native (Cursor Cloud Agents — 35% internal PRs, each agent gets own VM).
+- **GitHub Agentic Workflows compile Markdown+YAML frontmatter to Actions lock files.** AI agents interpret natural-language instructions for event-triggered or scheduled jobs. Read-only by default; PRs never auto-merged. GitHub calls this "Continuous AI."
+- **Cursor Cloud Agents produce 35% of Cursor's internal merged PRs.** Each agent gets own VM, environment, sandbox. Up to 8 parallel on a single prompt. 99.9% reliability claimed. Triggered from Slack, Linear, GitHub.
+- **earezki runs 23 concurrent agent cron jobs in production.** SQLite+WAL coordination, file-based locks, logrotate. Schedule: 7AM discovery → 8AM research → 9AM prep → 11AM execution → 11PM review. Two failure modes: context pollution, data loss without item-level commits.
+- **Geta Team manages 100+ agents with ~200 lines of JavaScript.** One centralized cron daemon, hot config reload via file watchers (~200ms), per-agent JSON config.
+- **Agent observability has consolidated around 5 platforms.** Braintrust (eval-integrated), Langfuse (open-source), Helicone (proxy/cost), Galileo (safety), Datadog (enterprise). Common pattern: proxy gateway + eval platform + token alerts.
+- **Anthropic 2026 report: 95% of devs use AI weekly, 75% for half+ of work.** Rakuten: 99.9% accuracy on 12.5M lines. TELUS: 30% faster, 500K+ hours saved. Zapier: 89% AI adoption, 800+ agents. Only 0-20% fully delegatable.
+- **The reliability math: 99% per step × 20 steps = 82% end-to-end.** Fresh-context loops reduce step count per iteration. Budget-aware execution prevents compounding cost from quality degradation.
+- **AGENTS.md is emerging as the cross-tool team coordination standard.** Works across Claude Code, Cursor, Codex. For multi-tool teams: shared rules in AGENTS.md + tool-specific config in CLAUDE.md/.cursor/rules.
+
 ## Ralphify-Specific
 - **Ralphify's command system naturally supports the "commands as verifiers" pattern.** Running tests/metrics as commands and injecting results into the prompt is exactly what Spotify and Karpathy do — ralphify just needs to formalize verification as a first-class concept.
 - **Agent skills as portable packages is a validated trend.** Ralphify's skill system aligns with the industry direction of installable, reusable instruction sets.

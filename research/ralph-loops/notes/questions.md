@@ -11,8 +11,8 @@
 - [x] How do practitioners test their harness/loop configurations themselves (not the agent output, but the harness)? — Block's TestProvider (record/playback pattern), LangChain's composable middleware with per-layer testing, Datadog's 5-layer verification pyramid. Key rule: live LLM tests never run in CI. See chapter 11.
 - [ ] What's the optimal ratio of spec-writing time to execution time in the spec+ralph integrated workflow?
 - [ ] How do teams handle the asymmetric trust problem (one failure erases weeks of accumulated confidence)?
-- [ ] What pass@k / pass^k thresholds do teams target before promoting an agent configuration to production?
-- [ ] How effective is the "meta-ralph" pattern — a ralph that optimizes other ralphs via eval feedback? Arize showed +5-10% on SWE-bench, but has anyone applied this to ralph loops specifically?
+- [x] What pass@k / pass^k thresholds do teams target before promoting an agent configuration to production? — pass^k is the production metric. 70% success = 97% pass@3 but 34% pass^3. Three enterprise tiers: internal (74-90%), customer-facing (limited at pass^8), autonomous (not ready). Promotion gates require pass^k stability across multiple k. Promptfoo recommends --repeat 3 minimum; high-reliability teams run k=5 or k=10. See Ch18.
+- [x] How effective is the "meta-ralph" pattern — a ralph that optimizes other ralphs via eval feedback? — Five independent implementations exist: OpenAI Self-Evolving Agents, Weco tree-search, Arize PromptLearning (+6% SWE-bench), IBM AutoPDL (up to 67.5pp gains), Evidently mistake-driven. The eval script is the only domain-specific component. See Ch18.
 - [ ] Does "always-in-prompt" vs "invoked-on-demand" skill placement have a measurable impact at scale? Vercel's small sample (33 vs 29) is suggestive but inconclusive.
 - [x] What does a "rippable" harness look like in practice? — Permanent layers (context, constraints, safety) vs temporary (reasoning optimization, loop detection, planning scaffolding). Vercel removed 80% of tools and improved. Manus refactored 5x in 6 months. See chapter 12.
 - [ ] What's the right cadence for garbage-collection/cleanup ralphs — daily, weekly, event-triggered? OpenAI did it weekly (Fridays) before automating.
@@ -39,6 +39,10 @@
 - [ ] Does the two-phase plan-then-build pattern measurably reduce "built the wrong thing" failures compared to single-phase loops?
 - [ ] What's the optimal PRD granularity — how many features, how detailed should each story be, before the PRD itself becomes a context burden?
 - [ ] How does guardrails.md scale — at what point do accumulated guardrails become contradictory or context-consuming?
+- [ ] How do teams decide between session-scoped, CI/CD-integrated, and cloud-native deployment tiers for their agent loops?
+- [ ] What's the optimal eval dataset size for meta-loop prompt optimization? Arize used 150 train/150 test — is that enough for ralph loops?
+- [ ] How do teams handle the reliability math problem (99%^20 = 82%) in practice — shorter loops, better per-step accuracy, or acceptance of failure rates?
+- [ ] Does GitHub's "Continuous AI" (agentic workflows) change team dynamics vs. traditional CI/CD? Early adoption data?
 
 ## Answered
 - [x] What are the most effective patterns for keeping agents on track during long-running loops? — Fresh context resets + file-based state + verification gates. See chapters 01-02.

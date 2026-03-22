@@ -194,6 +194,36 @@
 - https://asdlc.io/patterns/ralph-loop/ — ASDLC.io — Completion promise formalization, convergence formula P(C) = 1-(1-p)^n, anti-pattern warnings for vague prompts — **medium**
 - https://popularaitools.ai/claude-code-loops-skills-guide/ — Popular AI Tools — Claude Code /loop command (time-based), max 50 concurrent tasks, complementary to iteration-based loops — **low**
 
+- https://developers.openai.com/cookbook/examples/partners/self_evolving_agents/autonomous_agent_retraining — OpenAI + Weco — Canonical meta-loop: execute → evaluate → metaprompt → redeploy, 75% pass threshold for promotion — **high**
+- https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents — Anthropic — Swiss Cheese Model for layered evals, 8-step roadmap, eval saturation detection — **high**
+- https://www.philschmid.de/agents-pass-at-k-pass-power-k — Phil Schmid — Definitive pass@k vs pass^k analysis: 70% success = 97% pass@3 but 34% pass^3 — **high**
+- https://simmering.dev/blog/agent-benchmarks/ — Paul Simmering — The Reliability Gap: 3-tier enterprise readiness model based on pass^k degradation, "meltdown" spiraling — **high**
+- https://www.weco.ai/ — Weco AI — Tree-search engine for autonomous prompt/code optimization given an eval script — **high**
+- https://arize.com/blog/optimizing-coding-agent-rules-claude-md-agents-md-clinerules-cursor-rules-for-improved-accuracy/ — Arize AI — PromptLearning for CLAUDE.md: +6% SWE-bench accuracy, 20-50 rule rulesets — **high**
+- https://arxiv.org/abs/2504.04365 — IBM Research — AutoPDL: AutoML over prompting patterns, up to 67.5pp accuracy gains — **high**
+- https://www.evidentlyai.com/blog/automated-prompt-optimization — Evidently AI — Mistake-driven prompt optimization with train/val/test splits and early stopping — **medium**
+- https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/ — GitHub — Agentic Workflows: Markdown+YAML frontmatter compiled to Actions, "Continuous AI" — **high**
+- https://code.claude.com/docs/en/github-actions — Anthropic — Claude Code GitHub Action: cron schedules, @claude mentions, issue assignments — **high**
+- https://developers.openai.com/codex/github-action — OpenAI — Codex GitHub Action: scheduled execution, future "automation cloud" — **high**
+- https://devops.com/cursor-cloud-agents-get-their-own-computers-and-35-of-internal-prs-to-prove-it/ — DevOps.com — 35% of Cursor internal PRs by cloud agents, each gets own VM, 99.9% reliability — **high**
+- https://openai.com/index/introducing-codex/ — OpenAI — Codex cloud sandbox: two-phase runtime (network setup → offline agent), secrets removed before agent — **high**
+- https://earezki.com/ai-news/2026-03-12-how-to-schedule-ai-agent-tasks-with-cron-the-missing-guide/ — earezki — Production cron: 23 concurrent jobs, SQLite+WAL, daily schedule pattern — **high**
+- https://blog.geta.team/how-we-built-a-cron-scheduler-for-ai-agents-at-scale/ — Geta Team — Centralized scheduler for 100+ agents, ~200 lines JS, hot config reload — **high**
+- https://code.claude.com/docs/en/agent-teams — Anthropic — Agent Teams: 3-5 teammates, independent context windows, direct communication — **high**
+- https://benjamincrozat.com/agents-md — Benjamin Crozat — AGENTS.md as cross-tool standard, works across Claude/Cursor/Codex — **medium**
+- https://www.promptfoo.dev/docs/guides/evaluate-coding-agents/ — Promptfoo/OpenAI — Agent eval: trajectory tracing, cost assertions, Claude/Codex SDK support — **high**
+- https://docs.langchain.com/langsmith/cicd-pipeline-example — LangChain — Full CI/CD pipeline with quality-gated production releases — **high**
+- https://www.braintrust.dev/articles/eval-driven-development — Braintrust — EDD methodology: define → optimize → refine, regression gates, CI/CD integration — **high**
+- https://foundercollective.com/blog/eval-driven-development/ — Founder Collective — Evals as "top-level abstraction in the AI stack", Weco exemplar — **medium**
+- https://www.braintrust.dev/articles/best-ai-observability-tools-2026 — Braintrust — 2026 AI observability buyer's guide: Braintrust, Langfuse, Helicone, Galileo, Datadog — **medium**
+- https://galileo.ai/blog/best-agent-monitoring-tools-production — Galileo — Agent monitoring: graph tracing, per-step eval, tool usage, latency/cost tracking — **medium**
+- https://news.ycombinator.com/item?id=44623207 — HN — "What actually works in production": 99%^20=82%, $25/1-2hrs on large codebases, zero companies without HITL — **high**
+- https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf — Anthropic — 95% weekly AI use, Rakuten 99.9% on 12.5M lines, TELUS 500K+ hours saved, 0-20% fully delegatable — **high**
+- https://www.builder.io/blog/best-ai-background-agents-for-developers-2026 — Builder.io — Background agents comparison: Cursor, Copilot, Builder, Devin, Claude Code — **medium**
+- https://coder.com/blog/launch-dec-2025-coder-tasks — Coder — Cloud dev environments for Claude Code, GitHub issue to PR — **medium**
+- https://www.nxcode.io/resources/news/cursor-cloud-agents-virtual-machines-autonomous-coding-guide-2026 — NxCode — Cursor cloud agents: clone repo, branch, test, video demo, merge-ready PR — **medium**
+- https://deepeval.com/docs/prompt-optimization-introduction — Confident AI — GEPA (Pareto) and MIPROv2 (surrogate-based) prompt optimization — **medium**
+
 ## Lower Relevance
 
 - https://www.permit.io/blog/human-in-the-loop-for-ai-agents-best-practices-frameworks-use-cases-and-demo — Permit.io — Human-in-the-loop patterns for AI agents — **low**
