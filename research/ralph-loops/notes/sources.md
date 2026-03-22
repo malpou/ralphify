@@ -158,6 +158,18 @@
 - https://news.ycombinator.com/item?id=46737630 — HN — Codex agent loop internals: encrypted compaction, reasoning token lifecycle, skills as JIT context — **high**
 - https://openai.com/index/unrolling-the-codex-agent-loop/ — OpenAI — Codex loop internals: call-tool-append-repeat, /responses/compact endpoint, encrypted latent-space compaction — **high**
 
+- https://cursor.com/blog/scaling-agents — Cursor — Planner-worker-judge architecture, 1M+ lines, hundreds of concurrent agents, role-based pipeline evolution — **high**
+- https://mikemason.ca/writing/ai-coding-agents-jan-2026/ — Mike Mason — 8-13% real productivity gains (Thoughtworks), GitClear code quality data, Cursor Browser scrutiny, production anti-patterns — **high**
+- https://www.augmentcode.com/guides/how-to-run-a-multi-agent-coding-workspace — Augment Code — 6 coordination patterns, worktree isolation, failure taxonomy, sequential merge — **high**
+- https://dev.to/meridian-ai/the-loop-as-laboratory-what-3190-cycles-of-autonomous-ai-operation-reveal-23je — Meridian AI — 3,190 cycles over 30 days, 9 sub-agents, identity persistence, 110+ hour session — **high**
+- https://matrixtrak.com/blog/agents-loop-forever-how-to-stop — MatrixTrak — Loop fingerprint detection, error classification matrix, stopping conditions, logging schema — **high**
+- https://writing.alteredcraft.com/p/the-ralph-wiggum-agent-loop-is-really — Sam Keen — Ralph loop as engineering discipline, spec-driven development, validation gates — **high**
+- https://earezki.com/ai-news/2026-03-19-the-inception-loop-a-month-in-the-life-of-a-self-improving-ai-sidekick/ — earezki — Inception loop: self-improving AI agent, autonomous PR submission, 12-hour maintenance cycles — **medium**
+- https://www.braintrust.dev/articles/best-ai-agent-observability-tools-2026 — Braintrust — Top 5 agent observability platforms: Braintrust, Helicone, Galileo, Fiddler, Vellum — **medium**
+- https://news.ycombinator.com/item?id=46651646 — HN — Controller-enforced alternative to agent-driven ralph loops, tests as sole acceptance gate — **medium**
+- https://ralphable.com/blog/ralph-loop-methodology — Ralphable — 75+ ralph loop examples across coding, writing, analysis — **medium**
+- https://docs.bswen.com/blog/2026-03-21-git-worktrees-parallel-claude-code/ — BSWEN — Git worktrees for parallel Claude Code agents, practical setup guide — **medium**
+
 ## Lower Relevance
 
 - https://www.permit.io/blog/human-in-the-loop-for-ai-agents-best-practices-frameworks-use-cases-and-demo — Permit.io — Human-in-the-loop patterns for AI agents — **low**

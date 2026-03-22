@@ -26,6 +26,10 @@
 - [ ] What's the right threshold for "show output only on failure" — should all command output be suppressed by default, or only output above a certain size?
 - [ ] How does Vercel's feedback injection pattern (verify → reason string → next prompt) compare to the "signs" pattern (persistent guardrails file) for guided recovery?
 - [ ] At what point does architectural drift from agent-generated code become unrepairable — is there a measurable "point of no return"?
+- [ ] What's the optimal planner-to-worker ratio in role-based multi-agent architectures? Cursor uses recursive sub-planners — at what depth do they add more noise than value?
+- [ ] How do teams calibrate loop fingerprint thresholds (3 repeats? 5?) for different task types? Creative tasks may show more repetition than deterministic ones.
+- [ ] Does continuous budget signaling (Google's BATS) measurably change agent behavior vs. hard cutoffs alone? No controlled study yet.
+- [x] What does multi-agent coordination look like at scale (1M+ lines)? — Cursor's planner-worker-judge: flat coordination fails, optimistic concurrency fails, role-based hierarchy succeeds. Workers must be fully independent. See Ch15.
 
 ## Answered
 - [x] What are the most effective patterns for keeping agents on track during long-running loops? — Fresh context resets + file-based state + verification gates. See chapters 01-02.

@@ -129,6 +129,20 @@
 - **The quadratic cost problem: tool call chains multiply tokens unpredictably.** By 50K tokens, cached input tokens dominate costs. Each tool hop compounds. Structured per-step logging identifies bottlenecks.
 - **"Show output only on failure" preserves context budget.** Van Eyck: when tools pass, emit "OK." Reserve context for error details. This is the operational version of output redirection.
 
+## Production Orchestration (NEW — Iteration 12)
+- **Cursor's planner-worker-judge is the first validated multi-agent architecture at 1M+ line scale.** Flat coordination and optimistic concurrency both failed. Role-based hierarchy with distinct responsibilities succeeded. Key: workers are fully independent; planners can spawn sub-planners recursively.
+- **Model selection per role outperforms single-model deployment.** GPT-5.2 is a better planner than coding-specialized GPT-5.1-Codex. Match model capability to role requirements, not task type.
+- **"Prompting over architecture" — system behavior depends more on prompts than system design.** Cursor found extensive prompt experimentation yielded better results than architectural refinements. This echoes the harness engineering principle: the model is probably fine, it's a skill issue.
+- **Real productivity gains are 8-13%, not the 50% claimed.** Thoughtworks' grounded calculation accounts for the fraction of time that's coding, the fraction where AI helps, and the speedup when useful. Marketing claims are 4-6x inflated.
+- **Code quality is measurably deteriorating under agent-generated code.** GitClear: code churn doubled, copy-paste code up 50%, refactoring dropped from 25% to under 10%, 8-fold increase in duplicated blocks. Entropy management (Ch12) is validated as essential.
+- **SWE-Bench Pro (multi-file) drops below 25% vs 70%+ on single-issue.** The performance cliff on multi-file coordination is the empirical basis for "one item per loop." Legacy codebases hit ~35%.
+- **Loop fingerprinting is the production-proven pattern for stuck agent detection.** Track tool+result hash; 3+ consecutive repeats = stuck. Zero LLM cost, deterministic, and provides actionable logging schema for debugging.
+- **3-5 parallel worktrees is the practical ceiling.** Boris Cherny and Augment Code converge: beyond 5-7 agents, rate limits, merge conflicts, and review bottleneck eat the gains. Sequential merge with rebase is the validated integration strategy.
+- **The Meridian experiment: 3,190 cycles over 30 days proves long-term agent coherence is achievable.** 9 sub-agents, 497 journal entries, 110+ hour uninterrupted session. Key finding: operational knowledge transmits through state files, but experiential texture doesn't.
+- **Budget awareness should be continuous, not binary.** Google's BATS framework surfaces real-time resource availability inside the agent's reasoning loop. Agents with budget visibility make qualitatively different (better) decisions.
+- **Agent observability has consolidated around 5 platforms but none target ralph loops specifically.** Braintrust, Helicone, Galileo, Fiddler, Vellum — all general-purpose. Ralph-loop-specific metrics (iteration count, command pass/fail, loop fingerprint) are a gap ralphify could fill.
+- **The ralph loop's power comes from enforced engineering discipline, not the bash loop.** Sam Keen: specs before implementation, automated validation gates, fresh context per iteration. "The skills that matter most may be the ones we've always had." Converges with Van Eyck's "XP rediscovered" and Fowler's "relocating rigor."
+
 ## Ralphify-Specific
 - **Ralphify's command system naturally supports the "commands as verifiers" pattern.** Running tests/metrics as commands and injecting results into the prompt is exactly what Spotify and Karpathy do — ralphify just needs to formalize verification as a first-class concept.
 - **Agent skills as portable packages is a validated trend.** Ralphify's skill system aligns with the industry direction of installable, reusable instruction sets.

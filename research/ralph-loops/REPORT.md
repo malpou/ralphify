@@ -30,7 +30,7 @@
 
 13. **Hibernate-and-wake > polling for long operations.** Meta's REA shuts down between async jobs rather than maintaining sessions. Ralphify's loop-with-commands already enables this pattern.
 
-14. **Multi-agent orchestration works for independent tasks, fails for coordination.** Parallel agents on separate branches/files succeed; shared-state coordination is fragile and 4-15x more expensive. Filesystem coordination beats message-passing.
+14. **Multi-agent orchestration works for independent tasks, fails for coordination.** Cursor's planner-worker-judge architecture scales to 1M+ lines across hundreds of agents — but only because workers are fully independent. Flat coordination and optimistic concurrency both failed; role-based hierarchy with 3-5 parallel worktrees is the practical ceiling. Shared-state coordination is fragile and 4-15x more expensive.
 
 15. **Measure iterations in actions, not time.** Successful agents complete tasks in 3-7 meaningful actions. Beyond 15 actions, success probability drops sharply. Action count is a better circuit breaker signal than wall clock time.
 
@@ -52,6 +52,12 @@
 
 24. **Agent throughput exceeds human review capacity.** The new bottleneck is human attention, not agent speed. 78% of Claude Code sessions involve multi-file edits with 47 tool calls. Intent-failure detection — agents that follow rules but miss product intent — is the hardest gap. Agents can pass all tests while building the wrong thing.
 
+25. **Real productivity gains are 8-13%, not 50%.** Thoughtworks' grounded calculation: ~40% of time is coding × ~60% of that is AI-useful × ~55% faster when useful = 8-13% net. Code churn doubled, copy-paste code increased 50%, refactoring dropped from 25% to under 10%. Agent loops must be designed for this reality, not marketing claims.
+
+26. **Budget awareness should be continuous, not binary.** Google's BATS framework surfaces real-time resource availability inside the agent's reasoning loop. Agents that see their remaining budget make qualitatively different decisions — choosing simpler approaches, skipping optional improvements, flagging limits. Hard cutoffs are necessary but insufficient; continuous budget signals enable smarter execution.
+
+27. **Loop fingerprinting detects stuck agents without LLM calls.** Track the combination of last tool call + result hash. If this fingerprint repeats 3+ times, the agent is looping, not progressing. Map failure types to actions: non-retryable → STOP, rate limits → bounded RETRY, transient → ESCALATE. Deterministic, zero-cost, production-proven.
+
 ## Chapters
 
 | # | Chapter | Summary |
@@ -70,6 +76,7 @@
 | 12 | [Harness Evolution & Entropy Management](chapters/12-harness-evolution-entropy.md) | Rippable harnesses, garbage collection agents, completion promises, evolutionary software |
 | 13 | [MCP & the Agent Infrastructure Layer](chapters/13-mcp-agent-infrastructure.md) | 5,000+ MCP servers, dynamic tool loading, context window management, ralph+MCP integration |
 | 14 | [Context Engineering & Loop Maturation](chapters/14-context-engineering-advances.md) | Context rot, compaction hierarchy, guardrails as infrastructure, two-tier loops, intent-failure detection |
+| 15 | [Production Orchestration & Budget-Aware Loops](chapters/15-production-orchestration-patterns.md) | Cursor's planner-worker-judge, loop fingerprinting, worktree isolation, observability stack, Meridian 3,190 cycles |
 
 ## Open Questions
 
@@ -86,6 +93,9 @@
 - How do teams implement "closed knowledge loops" (observation harnesses analyzing JSONL logs) in practice?
 - Does Vercel's feedback injection pattern outperform persistent guardrails files for guided recovery?
 - At what point does architectural drift from agent-generated code become unrepairable?
+- What's the optimal planner-to-worker ratio in role-based multi-agent architectures?
+- How do teams calibrate loop fingerprint thresholds (3 repeats? 5?) for different task types?
+- Does continuous budget signaling measurably change agent behavior vs. hard cutoffs alone?
 
 ## Key Sources
 
@@ -127,3 +137,8 @@
 - [Harness Engineering: Infrastructure Moat](https://earezki.com/ai-news/2026-03-15-harness-engineering-why-the-model-is-a-commodity-and-the-infrastructure-is-your-moat/) — earezki (Evolve 5-layer control plane, closed knowledge loops)
 - [Guardrails for Agentic Coding](https://jvaneyck.wordpress.com/2026/02/22/guardrails-for-agentic-coding-how-to-move-up-the-ladder-without-lowering-your-bar/) — Van Eyck (6 guardrails, hooks as superpower, XP rediscovered)
 - [Anthropic Agentic Coding Trends 2026](https://getbeam.dev/blog/anthropic-agentic-coding-trends-2026.html) — Beam (78% multi-file, 23-min sessions, 47 tool calls, 40% fewer errors with docs)
+- [Scaling Long-Running Autonomous Coding](https://cursor.com/blog/scaling-agents) — Cursor (planner-worker-judge, 1M+ lines, role-based pipeline)
+- [AI Coding Agents: Coherence Through Orchestration](https://mikemason.ca/writing/ai-coding-agents-jan-2026/) — Mike Mason (8-13% real productivity, code quality data, production anti-patterns)
+- [How to Run a Multi-Agent Coding Workspace](https://www.augmentcode.com/guides/how-to-run-a-multi-agent-coding-workspace) — Augment Code (6 coordination patterns, worktree isolation, failure taxonomy)
+- [The Loop as Laboratory: 3,190 Cycles](https://dev.to/meridian-ai/the-loop-as-laboratory-what-3190-cycles-of-autonomous-ai-operation-reveal-23je) — Meridian AI (30-day autonomous operation, identity persistence, 9 sub-agents)
+- [Agent Loops Forever: How to Stop](https://matrixtrak.com/blog/agents-loop-forever-how-to-stop) — MatrixTrak (fingerprint detection, error classification, stopping conditions)

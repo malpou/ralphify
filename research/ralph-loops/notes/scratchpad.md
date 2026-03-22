@@ -234,7 +234,6 @@
 - Deep-read 12+ new sources: Anthropic context engineering, Phil Schmid Part 2, Epsilla harness engineering, earezki infrastructure moat, Van Eyck guardrails, Anthropic 2026 trends, Alexander Gekov ralph loops, An Tran ralph implementations, Vercel ralph-loop-agent, iannuttall/ralph, MindStudio context rot, OpenAI Codex loop unrolling
 - Created chapter 14 (Context Engineering & Loop Maturation) covering context rot, compaction hierarchy, guardrails as infrastructure, two-tier loops, intent-failure detection
 - Added 3 new insights to REPORT.md (#22-#24), 14 new insights to notes, 16 new sources, 5 new questions
-- Found HN skepticism thread on autonomous coding astroturfing — essential counterpoint
 
 **Key surprises:**
 - Context rot degrades output after just 20-30 exchanges — lower than expected, validates fresh-context-per-iteration
@@ -250,3 +249,42 @@
 **Next iteration should focus on:**
 - Refine cycle (iteration 12): 24 insights in REPORT.md — trim back to ~20. 14 chapters may be too many — consider merging Ch09 (prompt assembly) and Ch14 (context engineering).
 - Update Ch06 (implications) with new context engineering findings: output minimization, guardrails file, feedback injection, 30-60-90 roadmap.
+
+## Iteration 12 — 2026-03-22
+
+**Decision: HYBRID — research + refine**
+
+**Research focus:** Latest practitioner content from mid-to-late March 2026. Specifically looking for:
+1. New concrete ralph/loop implementations and cookbook patterns
+2. Emerging techniques for agent self-repair and error recovery
+3. YouTube/podcast content on harness engineering (still under-represented)
+4. Any new data on the open questions (cross-model review, meta-ralph, cleanup cadence)
+
+**Refine focus:**
+1. REPORT.md: 24 insights is too many — trim to ~20 by merging related pairs
+2. Update Ch06 with context engineering findings from iteration 11
+3. Consider merging Ch09 (prompt assembly) and Ch14 (context engineering) — significant overlap
+
+**What was done:**
+- Searched across 8 parallel web queries: agent self-repair, cookbook patterns, harness engineering latest, production lessons, YouTube/podcasts, cleanup agents, production metrics, HN discussions
+- Fetched and deep-read 8 new high-signal sources: Cursor's scaling agents, Mike Mason's orchestration analysis, Augment Code's multi-agent workspace guide, Meridian's 3,190-cycle experiment, MatrixTrak's loop detection patterns, Sam Keen's engineering discipline reframe, earezki's inception loop, Braintrust observability tools
+- Created chapter 15 (Production Orchestration & Budget-Aware Loops) covering Cursor's architecture evolution, production metrics, budget-aware execution, loop fingerprinting, worktree isolation at scale, and observability stack
+- Added 3 new insights to REPORT.md (#25-#27), 12 new insights to notes, 11 new sources, 4 new questions, 1 question answered
+- Updated multi-agent insight #14 with Cursor's architecture data
+- Decided against merging Ch09+Ch14 — they serve different purposes (prompt assembly techniques vs. context lifecycle management)
+
+**Key surprises:**
+- Cursor tried flat coordination AND optimistic concurrency before finding role-based hierarchy — the failure modes are instructive
+- Real productivity gains are 8-13% (Thoughtworks), not 50% — the marketing-reality gap is 4-6x
+- GitClear data: refactoring dropped from 25% to under 10% — agents replicate but don't improve
+- SWE-Bench Pro (multi-file) drops to <25% vs >70% on single-issue — empirical proof for "one item per loop"
+- Meridian ran 3,190 cycles over 30 days with 110+ hour uninterrupted session — agent coherence is achievable with proper state design
+- "Prompting over architecture" — Cursor found prompt experimentation outperformed system design changes
+- Loop fingerprinting (tool+result hash, 3 repeats = stuck) is zero-cost and production-proven
+- The "engineering discipline" reframe is converging across 3 independent voices: Keen, Van Eyck, Fowler
+
+**Next iteration should focus on:**
+- Refine cycle (iteration 13): 27 insights in REPORT.md — need to trim to ~22-24 by merging related pairs. 15 chapters is at the upper limit.
+- Update Ch05 (multi-agent) with Cursor's architecture and worktree scaling data
+- Update Ch06 (implications) with production orchestration findings: fingerprinting, budget signals, worktree-native parallel execution
+- Consider adding a "Practitioner Cookbook" chapter with concrete, copy-paste-ready ralph patterns
