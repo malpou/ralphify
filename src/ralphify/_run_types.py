@@ -17,6 +17,15 @@ from pathlib import Path
 from ralphify._events import STOP_COMPLETED, STOP_ERROR, STOP_USER_REQUESTED, StopReason
 
 
+DEFAULT_IDLE_DELAY: float = 30
+"""Default initial delay in seconds when idle state is detected."""
+
+DEFAULT_IDLE_BACKOFF: float = 2.0
+"""Default backoff multiplier applied each consecutive idle iteration."""
+
+DEFAULT_IDLE_MAX_DELAY: float = 300
+"""Default maximum delay in seconds (5 minutes) for idle backoff."""
+
 DEFAULT_COMMAND_TIMEOUT: float = 60
 """Default timeout in seconds for commands defined in RALPH.md frontmatter."""
 
@@ -68,6 +77,22 @@ _STATUS_REASONS: dict[RunStatus, StopReason] = {
 
 
 @dataclass
+class IdleConfig:
+    """Configuration for idle detection and backoff behavior.
+
+    When an agent signals idle state, the engine waits ``delay`` seconds
+    before the next iteration, multiplying by ``backoff`` each consecutive
+    idle iteration, capped at ``max_delay``.  If cumulative idle time
+    exceeds ``max``, the loop stops.
+    """
+
+    delay: float = DEFAULT_IDLE_DELAY
+    backoff: float = DEFAULT_IDLE_BACKOFF
+    max_delay: float = DEFAULT_IDLE_MAX_DELAY
+    max: float | None = None
+
+
+@dataclass
 class Command:
     """A named command from RALPH.md frontmatter."""
 
@@ -97,6 +122,7 @@ class RunConfig:
     log_dir: Path | None = None
     project_root: Path = field(default=Path("."))
     credit: bool = True
+    idle: IdleConfig | None = None
 
 
 @dataclass
@@ -120,6 +146,8 @@ class RunState:
     failed: int = 0
     timed_out: int = 0
     started_at: datetime | None = None
+    consecutive_idle: int = 0
+    cumulative_idle_time: float = 0.0
 
     _stop_requested: bool = field(default=False, init=False, repr=False, compare=False)
     _resume_event: threading.Event = field(default_factory=threading.Event, init=False, repr=False, compare=False)
@@ -174,3 +202,13 @@ class RunState:
         """Record a timed-out iteration (also counts as failed)."""
         self.timed_out += 1
         self.mark_failed()
+
+    def mark_idle(self) -> None:
+        """Record an idle iteration (counts as completed, increments idle tracking)."""
+        self.completed += 1
+        self.consecutive_idle += 1
+
+    def reset_idle(self) -> None:
+        """Reset idle tracking after a non-idle iteration."""
+        self.consecutive_idle = 0
+        self.cumulative_idle_time = 0.0

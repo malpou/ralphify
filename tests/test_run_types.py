@@ -8,8 +8,12 @@ import pytest
 from ralphify._frontmatter import RALPH_MARKER
 from ralphify._run_types import (
     DEFAULT_COMMAND_TIMEOUT,
+    DEFAULT_IDLE_BACKOFF,
+    DEFAULT_IDLE_DELAY,
+    DEFAULT_IDLE_MAX_DELAY,
     RUN_ID_LENGTH,
     Command,
+    IdleConfig,
     RunConfig,
     RunState,
     RunStatus,
@@ -41,6 +45,22 @@ class TestCommand:
         assert cmd.timeout == 300
 
 
+class TestIdleConfig:
+    def test_defaults(self):
+        cfg = IdleConfig()
+        assert cfg.delay == DEFAULT_IDLE_DELAY
+        assert cfg.backoff == DEFAULT_IDLE_BACKOFF
+        assert cfg.max_delay == DEFAULT_IDLE_MAX_DELAY
+        assert cfg.max is None
+
+    def test_custom_values(self):
+        cfg = IdleConfig(delay=10, backoff=1.5, max_delay=120, max=3600)
+        assert cfg.delay == 10
+        assert cfg.backoff == 1.5
+        assert cfg.max_delay == 120
+        assert cfg.max == 3600
+
+
 class TestRunConfig:
     def test_default_project_root_is_dot(self, tmp_path):
         config = RunConfig(
@@ -64,6 +84,7 @@ class TestRunConfig:
         assert config.stop_on_error is False
         assert config.log_dir is None
         assert config.credit is True
+        assert config.idle is None
 
 
 class TestRunState:
@@ -75,6 +96,8 @@ class TestRunState:
         assert state.failed == 0
         assert state.timed_out == 0
         assert state.started_at is None
+        assert state.consecutive_idle == 0
+        assert state.cumulative_idle_time == 0.0
 
     def test_total_is_completed_plus_failed(self):
         state = RunState(run_id="r1")
@@ -146,6 +169,32 @@ class TestRunState:
         state.request_pause()
         result = state.wait_for_unpause(timeout=0.01)
         assert result is False
+
+    def test_mark_idle_increments_completed_and_consecutive(self):
+        state = RunState(run_id="r1")
+        state.mark_idle()
+        assert state.completed == 1
+        assert state.consecutive_idle == 1
+        state.mark_idle()
+        assert state.completed == 2
+        assert state.consecutive_idle == 2
+
+    def test_reset_idle_clears_tracking(self):
+        state = RunState(run_id="r1")
+        state.mark_idle()
+        state.mark_idle()
+        state.cumulative_idle_time = 120.0
+        state.reset_idle()
+        assert state.consecutive_idle == 0
+        assert state.cumulative_idle_time == 0.0
+        # completed count is preserved
+        assert state.completed == 2
+
+    def test_mark_idle_included_in_total(self):
+        state = RunState(run_id="r1")
+        state.mark_idle()
+        state.mark_completed()
+        assert state.total == 2
 
 
 class TestRunStatus:

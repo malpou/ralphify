@@ -3,8 +3,10 @@
 import pytest
 
 from ralphify._frontmatter import (
+    IDLE_STATE_MARKER,
     RALPH_MARKER,
     _extract_frontmatter_block,
+    parse_duration,
     parse_frontmatter,
     serialize_frontmatter,
 )
@@ -151,6 +153,33 @@ class TestParseFrontmatter:
         text = "---\njust a string\n---\nBody"
         with pytest.raises(ValueError, match="must be a YAML mapping"):
             parse_frontmatter(text)
+
+
+class TestParseDuration:
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            ("30s", 30.0),
+            ("5m", 300.0),
+            ("6h", 21600.0),
+            ("1d", 86400.0),
+            ("1.5h", 5400.0),
+            ("0.5m", 30.0),
+            (" 30s ", 30.0),
+        ],
+    )
+    def test_valid_durations(self, value, expected):
+        assert parse_duration(value) == expected
+
+    @pytest.mark.parametrize("value", ["", "30", "abc", "30x", "m5", "-5s"])
+    def test_invalid_durations_raise(self, value):
+        with pytest.raises(ValueError, match="Invalid duration"):
+            parse_duration(value)
+
+
+class TestIdleStateMarker:
+    def test_marker_value(self):
+        assert IDLE_STATE_MARKER == "<!-- ralph:state idle -->"
 
 
 class TestSerializeFrontmatter:

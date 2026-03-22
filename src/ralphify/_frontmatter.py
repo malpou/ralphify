@@ -25,6 +25,13 @@ FIELD_AGENT = "agent"
 FIELD_COMMANDS = "commands"
 FIELD_ARGS = "args"
 FIELD_CREDIT = "credit"
+FIELD_IDLE = "idle"
+
+# Sub-field names within the idle configuration mapping.
+IDLE_FIELD_DELAY = "delay"
+IDLE_FIELD_BACKOFF = "backoff"
+IDLE_FIELD_MAX_DELAY = "max_delay"
+IDLE_FIELD_MAX = "max"
 
 # Sub-field names within each command mapping.
 CMD_FIELD_NAME = "name"
@@ -41,8 +48,40 @@ CMD_NAME_RE = re.compile(r"[a-zA-Z0-9_-]+")
 # Human-readable description of allowed name characters, paired with CMD_NAME_RE.
 VALID_NAME_CHARS_MSG = "Names may only contain letters, digits, hyphens, and underscores."
 
+# Marker that agents emit to signal idle state.
+IDLE_STATE_MARKER = "<!-- ralph:state idle -->"
+
 # Pre-compiled pattern to strip HTML comments from body text.
 _HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+
+# Pattern for human-readable duration strings (e.g. "30s", "5m", "6h", "1d").
+_DURATION_RE = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*([smhd])\s*$")
+
+_DURATION_MULTIPLIERS: dict[str, float] = {
+    "s": 1,
+    "m": 60,
+    "h": 3600,
+    "d": 86400,
+}
+
+
+def parse_duration(value: str) -> float:
+    """Parse a human-readable duration string into seconds.
+
+    Supported suffixes: ``s`` (seconds), ``m`` (minutes), ``h`` (hours),
+    ``d`` (days).  Examples: ``"30s"`` → 30.0, ``"5m"`` → 300.0.
+
+    Raises :class:`ValueError` for invalid formats.
+    """
+    match = _DURATION_RE.match(value)
+    if not match:
+        raise ValueError(
+            f"Invalid duration '{value}'. Use a number with a suffix: "
+            f"s (seconds), m (minutes), h (hours), d (days). Examples: 30s, 5m, 6h."
+        )
+    amount = float(match.group(1))
+    unit = match.group(2)
+    return amount * _DURATION_MULTIPLIERS[unit]
 
 
 def _extract_frontmatter_block(text: str) -> tuple[str, str]:
