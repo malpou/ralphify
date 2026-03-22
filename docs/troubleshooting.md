@@ -162,6 +162,28 @@ commands:
 
 ## Command issues
 
+### "Command '...' binary not found"
+
+A command in your `commands` field references a binary that isn't installed or isn't on your PATH. The error message tells you which command failed:
+
+```
+Command 'lint' binary not found: 'mypy src/'. Check the 'commands' field in your RALPH.md frontmatter.
+```
+
+Verify the binary exists by running it directly:
+
+```bash
+mypy --version
+```
+
+If it's installed in a virtual environment, prefix the command with `uv run` or the appropriate runner:
+
+```yaml
+commands:
+  - name: lint
+    run: uv run mypy src/
+```
+
 ### Command with pipes or redirections not working
 
 Commands in the `run` field are parsed with `shlex` and run **directly** — not through a shell. Shell features like pipes (`|`), redirections (`2>&1`), chaining (`&&`), and variable expansion (`$VAR`) silently fail or produce unexpected results.

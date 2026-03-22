@@ -12,6 +12,7 @@ All notable changes to ralphify are documented here.
 
 ### Fixed
 
+- **Helpful error when command binary is not found** — when a `commands` entry references a binary that isn't installed (e.g. `run: mypy src/`), the error now identifies which command failed and points to the `commands` field. Previously this surfaced as a generic crash with no context.
 - **Timed-out agent output not echoed when logging enabled** — when using `--log-dir` and the agent timed out, partial output was written to the log file but silently swallowed from the terminal. Both completion and timeout paths now echo consistently.
 - **`--` separator not ending flag parsing in user args** — `ralph run my-ralph -- --verbose ./src` now correctly treats `--verbose` as a positional value instead of parsing it as a flag.
 - **Command output garbled when stdout lacked trailing newline** — when a command's stdout didn't end with a newline and stderr was non-empty, the two streams were concatenated directly (e.g. `"test passedwarning: dep"`), producing garbled output in log files and `{{ commands.* }}` placeholder values.
