@@ -1,9 +1,9 @@
 # Tasks
 
 ## Active
-- [ ] dashboard-poc — Visual dashboard for ralphify (#15)
 
 ## Done
+- [x] dashboard-poc — Visual dashboard for ralphify (#15) → PR #33
 - [x] fleet-parallel-ralphs — Add `ralph fleet` command to run multiple ralphs in parallel (#1) → PR #32
 - [x] merge-countdown-to-idle — Move countdown timer from PR #31 into PR #29 (idle-detection), fix live ticking → PR #29
 - [x] reliable-idle-detection — Check full agent stdout for idle marker as fallback → PR #29

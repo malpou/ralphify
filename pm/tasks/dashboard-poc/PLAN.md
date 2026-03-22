@@ -25,11 +25,11 @@ This is a **proof-of-concept** — the draft PR will include a POC disclaimer.
 
 ## Steps
 
-- [ ] 1. Create `_dashboard.py` with a minimal HTTP server that serves static HTML and exposes an SSE `/events` endpoint that streams RunManager events as JSON
-- [ ] 2. Create `_dashboard_static/index.html` — the dashboard UI adapted from the reference design, connecting to the SSE endpoint for live updates
-- [ ] 3. Add `ralph dashboard` command to `cli.py` that starts the dashboard server (with `--port` option, default 8420)
-- [ ] 4. Write tests for the dashboard server (server starts, serves HTML, SSE endpoint streams events)
-- [ ] 5. Add changelog entry and create draft PR with POC disclaimer
+- [x] 1. Create `_dashboard.py` with a minimal HTTP server that serves static HTML and exposes an SSE `/events` endpoint that streams RunManager events as JSON
+- [x] 2. Create `_dashboard_static/index.html` — the dashboard UI adapted from the reference design, connecting to the SSE endpoint for live updates
+- [x] 3. Add `ralph dashboard` command to `cli.py` that starts the dashboard server (with `--port` option, default 8420)
+- [x] 4. Write tests for the dashboard server (server starts, serves HTML, SSE endpoint streams events)
+- [x] 5. Add changelog entry and create draft PR with POC disclaimer
 
 ## Acceptance criteria
 
