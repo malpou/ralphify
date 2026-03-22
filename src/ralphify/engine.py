@@ -313,10 +313,13 @@ def run_loop(
         state.status = RunStatus.COMPLETED
 
     reason = state.status.reason
+    now = datetime.now(timezone.utc)
+    total_elapsed = (now - state.started_at).total_seconds() if state.started_at else 0.0
     emit(EventType.RUN_STOPPED, RunStoppedData(
         reason=reason,
         total=state.total,
         completed=state.completed,
         failed=state.failed,
         timed_out=state.timed_out,
+        total_elapsed=total_elapsed,
     ))

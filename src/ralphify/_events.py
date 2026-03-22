@@ -94,6 +94,7 @@ class RunStoppedData(TypedDict):
     completed: int
     failed: int
     timed_out: int
+    total_elapsed: float
 
 
 class IterationStartedData(TypedDict):
