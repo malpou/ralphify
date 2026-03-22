@@ -134,6 +134,14 @@ class TestParseFrontmatter:
         assert "---" in fm["notes"]
         assert body == "Body"
 
+    def test_utf8_bom_does_not_break_frontmatter(self):
+        """Files saved with a UTF-8 BOM (common on Windows) must still
+        have their frontmatter parsed correctly."""
+        text = "\ufeff---\nagent: claude\n---\nDo the thing"
+        fm, body = parse_frontmatter(text)
+        assert fm == {"agent": "claude"}
+        assert body == "Do the thing"
+
     def test_non_dict_frontmatter_raises_value_error(self):
         text = "---\n- item1\n- item2\n---\nBody"
         with pytest.raises(ValueError, match="must be a YAML mapping"):

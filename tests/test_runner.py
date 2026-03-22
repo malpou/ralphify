@@ -90,3 +90,26 @@ class TestRunCommand:
     def test_raises_when_command_is_whitespace_only(self):
         with pytest.raises(ValueError, match="no tokens after parsing"):
             run_command(command="   ", cwd=Path("/project"), timeout=60)
+
+    def test_raises_when_command_is_empty_string(self):
+        with pytest.raises(ValueError, match="no tokens after parsing"):
+            run_command(command="", cwd=Path("/project"), timeout=60)
+
+    @patch(MOCK_RUNNER_SUBPROCESS)
+    def test_file_not_found_propagates(self, mock_run):
+        mock_run.side_effect = FileNotFoundError("No such file")
+        with pytest.raises(FileNotFoundError, match="No such file"):
+            run_command(command="nonexistent-binary", cwd=Path("/project"), timeout=60)
+
+    @patch(MOCK_RUNNER_SUBPROCESS)
+    def test_timeout_preserves_captured_output(self, mock_run):
+        exc = subprocess.TimeoutExpired(cmd="slow", timeout=5)
+        exc.stdout = "partial out\n"
+        exc.stderr = "partial err\n"
+        mock_run.side_effect = exc
+        result = run_command(command="slow", cwd=Path("/project"), timeout=5)
+
+        assert result.timed_out is True
+        assert result.returncode is None
+        assert "partial out" in result.output
+        assert "partial err" in result.output

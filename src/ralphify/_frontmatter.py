@@ -71,8 +71,13 @@ def parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     Full YAML is supported (nested lists, dicts).  HTML comments are
     stripped from the body so they don't leak into the assembled prompt.
 
+    A leading UTF-8 BOM (``\\ufeff``) is stripped so files saved with a
+    BOM (common on Windows) are handled transparently.
+
     Returns ``(frontmatter_dict, body_text)``.
     """
+    if text.startswith("\ufeff"):
+        text = text[1:]
     fm_raw, body = _extract_frontmatter_block(text)
     if fm_raw:
         try:
