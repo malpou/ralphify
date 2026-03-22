@@ -51,6 +51,7 @@ class AgentResult(ProcessResult):
     elapsed: float = 0.0
     log_file: Path | None = None
     result_text: str | None = None
+    stdout_text: str | None = None
 
 
 @dataclass(frozen=True)
@@ -206,6 +207,7 @@ def _run_agent_streaming(
         log_file=log_file,
         result_text=stream.result_text,
         timed_out=stream.timed_out,
+        stdout_text="".join(stream.stdout_lines),
     )
 
 
@@ -254,6 +256,7 @@ def _run_agent_blocking(
         elapsed=time.monotonic() - start,
         log_file=log_file,
         timed_out=timed_out,
+        stdout_text=ensure_str(stdout) if stdout else None,
     )
 
 
