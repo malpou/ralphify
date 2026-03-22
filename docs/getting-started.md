@@ -33,7 +33,7 @@ The fastest way to scaffold a ralph is `ralph init`:
 ralph init my-ralph
 ```
 
-This creates `my-ralph/RALPH.md` with a ready-to-customize template including an example command, arg, and prompt. Edit the task section, [test it](#step-3-do-a-test-run), then [run the loop](#step-7-run-the-loop) — the template already has commands and placeholders wired up. Steps 4–6 below explain these concepts if you want to customize further.
+This creates `my-ralph/RALPH.md` with a ready-to-customize template including an example command, arg, and prompt. Edit the task section, [test it](#step-3-do-a-test-run), then [run the loop](#step-6-run-the-loop) — the template already has commands and placeholders wired up. Steps 4–5 below explain these concepts if you want to customize further.
 
 Alternatively, use `ralph new` for AI-guided setup, or create the file manually as shown below.
 
@@ -93,36 +93,7 @@ If the agent produced useful work, you're ready to add test feedback.
 
 ## Step 4: Add a test command
 
-Commands run each iteration and their output is available in the prompt via placeholders. Add a test command to your `RALPH.md` frontmatter:
-
-```markdown
----
-agent: claude -p --dangerously-skip-permissions
-commands:
-  - name: tests
-    run: uv run pytest -x
----
-
-You are an autonomous coding agent running in a loop. Each iteration
-starts with a fresh context. Your progress lives in the code and git.
-
-Read TODO.md for the current task list. Pick the top uncompleted task,
-implement it fully, then mark it done.
-
-## Rules
-
-- One task per iteration
-- No placeholder code — full, working implementations only
-- Run tests before committing
-- Commit with a descriptive message like `feat: add X` or `fix: resolve Y`
-- Mark the completed task in TODO.md
-```
-
-The `tests` command runs `uv run pytest -x` each iteration. Its output is available via `{{ commands.tests }}` — but you don't have to use the placeholder if you just want the command to run.
-
-## Step 5: Add the command output to the prompt
-
-Place the `{{ commands.tests }}` placeholder where you want the test output to appear:
+Commands run each iteration and their output is injected into the prompt via `{{ commands.<name> }}` placeholders. Add a test command and its placeholder:
 
 ```markdown
 ---
@@ -154,9 +125,9 @@ If tests are failing, fix them before starting new work.
 - Mark the completed task in TODO.md
 ```
 
-Now each iteration, the agent sees the current test output. If tests fail, the agent fixes them — that's the self-healing loop.
+The `tests` command runs `uv run pytest -x` each iteration. Its output replaces `{{ commands.tests }}` in the prompt, so the agent always sees the current test results. If tests fail, the agent fixes them — that's the self-healing loop.
 
-## Step 6: Add more commands
+## Step 5: Add more commands
 
 Add a lint command and a git log for context:
 
@@ -202,7 +173,7 @@ If tests or lint are failing, fix them before starting new work.
 - Mark the completed task in TODO.md
 ```
 
-## Step 7: Run the loop
+## Step 6: Run the loop
 
 Start with a few iterations to verify everything works:
 
