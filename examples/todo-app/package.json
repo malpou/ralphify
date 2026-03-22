@@ -1,0 +1,13 @@
+{
+  "name": "todo-app",
+  "version": "0.1.0",
+  "description": "A simple todo CLI app built by ralphs",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "todo": "./index.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
