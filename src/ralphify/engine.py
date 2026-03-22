@@ -30,7 +30,7 @@ from ralphify._events import (
     RunStartedData,
     RunStoppedData,
 )
-from ralphify._frontmatter import parse_frontmatter
+from ralphify._frontmatter import FIELD_AGENT, FIELD_COMMANDS, RALPH_MARKER, parse_frontmatter
 from ralphify._output import format_duration
 from ralphify._run_types import (
     Command,
@@ -44,8 +44,8 @@ from ralphify._resolver import resolve_all, resolve_args
 
 _PAUSE_POLL_INTERVAL = 0.25  # seconds between pause/resume checks
 _RELATIVE_CMD_PREFIX = "./"  # commands starting with this run from the ralph directory
-_AGENT_FIELD_HINT = "Check the 'agent' field in your RALPH.md frontmatter."
-_COMMANDS_FIELD_HINT = "Check the 'commands' field in your RALPH.md frontmatter."
+_AGENT_FIELD_HINT = f"Check the '{FIELD_AGENT}' field in your {RALPH_MARKER} frontmatter."
+_COMMANDS_FIELD_HINT = f"Check the '{FIELD_COMMANDS}' field in your {RALPH_MARKER} frontmatter."
 
 _CREDIT_INSTRUCTION = (
     "\n\n---\n\n"
