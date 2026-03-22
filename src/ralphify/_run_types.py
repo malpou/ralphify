@@ -14,7 +14,13 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
-from ralphify._events import STOP_COMPLETED, STOP_ERROR, STOP_USER_REQUESTED, StopReason
+from ralphify._events import (
+    STOP_COMPLETED,
+    STOP_ERROR,
+    STOP_MAX_IDLE,
+    STOP_USER_REQUESTED,
+    StopReason,
+)
 
 
 DEFAULT_IDLE_DELAY: float = 30
@@ -52,6 +58,7 @@ class RunStatus(Enum):
     STOPPED = "stopped"
     COMPLETED = "completed"
     FAILED = "failed"
+    IDLE_EXCEEDED = "idle_exceeded"
 
     @property
     def reason(self) -> StopReason:
@@ -73,6 +80,7 @@ _STATUS_REASONS: dict[RunStatus, StopReason] = {
     RunStatus.COMPLETED: STOP_COMPLETED,
     RunStatus.FAILED: STOP_ERROR,
     RunStatus.STOPPED: STOP_USER_REQUESTED,
+    RunStatus.IDLE_EXCEEDED: STOP_MAX_IDLE,
 }
 
 

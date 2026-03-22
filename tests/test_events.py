@@ -8,10 +8,12 @@ from helpers import drain_events
 from ralphify._events import (
     LOG_ERROR,
     LOG_INFO,
+    STOP_MAX_IDLE,
     BoundEmitter,
     Event,
     EventType,
     FanoutEmitter,
+    IterationIdleData,
     NullEmitter,
     QueueEmitter,
 )
@@ -184,3 +186,40 @@ class TestFanoutEmitter:
         fanout.emit(event)
 
         assert q.queue.get() is event
+
+
+class TestIterationIdleEvent:
+    def test_iteration_idle_event_type_exists(self):
+        assert EventType.ITERATION_IDLE.value == "iteration_idle"
+
+    def test_iteration_idle_data_structure(self):
+        data: IterationIdleData = {
+            "iteration": 3,
+            "consecutive_idle": 2,
+            "next_delay": 60.0,
+            "cumulative_idle_time": 90.0,
+        }
+        assert data["iteration"] == 3
+        assert data["consecutive_idle"] == 2
+        assert data["next_delay"] == 60.0
+        assert data["cumulative_idle_time"] == 90.0
+
+    def test_emit_iteration_idle_via_bound_emitter(self):
+        q = QueueEmitter()
+        emit = BoundEmitter(q, "run-idle")
+        data: IterationIdleData = {
+            "iteration": 1,
+            "consecutive_idle": 1,
+            "next_delay": 30.0,
+            "cumulative_idle_time": 30.0,
+        }
+        emit(EventType.ITERATION_IDLE, data)
+
+        events = drain_events(q)
+        assert len(events) == 1
+        assert events[0].type == EventType.ITERATION_IDLE
+        assert events[0].data["consecutive_idle"] == 1
+        assert events[0].data["next_delay"] == 30.0
+
+    def test_stop_max_idle_reason(self):
+        assert STOP_MAX_IDLE == "max_idle"

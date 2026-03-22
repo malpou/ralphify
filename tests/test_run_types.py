@@ -207,6 +207,7 @@ class TestRunStatus:
             (RunStatus.STOPPED, "stopped"),
             (RunStatus.COMPLETED, "completed"),
             (RunStatus.FAILED, "failed"),
+            (RunStatus.IDLE_EXCEEDED, "idle_exceeded"),
         ],
     )
     def test_enum_values(self, status, value):
@@ -218,6 +219,7 @@ class TestRunStatus:
             (RunStatus.COMPLETED, "completed"),
             (RunStatus.FAILED, "error"),
             (RunStatus.STOPPED, "user_requested"),
+            (RunStatus.IDLE_EXCEEDED, "max_idle"),
         ],
     )
     def test_reason_for_terminal_statuses(self, status, expected_reason):

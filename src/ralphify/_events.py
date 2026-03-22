@@ -19,12 +19,13 @@ LogLevel = Literal["info", "error"]
 LOG_INFO: LogLevel = "info"
 LOG_ERROR: LogLevel = "error"
 
-StopReason = Literal["completed", "error", "user_requested"]
+StopReason = Literal["completed", "error", "user_requested", "max_idle"]
 """Valid reason strings for :class:`RunStoppedData` events."""
 
 STOP_COMPLETED: StopReason = "completed"
 STOP_ERROR: StopReason = "error"
 STOP_USER_REQUESTED: StopReason = "user_requested"
+STOP_MAX_IDLE: StopReason = "max_idle"
 
 
 class EventType(Enum):
@@ -37,7 +38,7 @@ class EventType(Enum):
 
     **Iteration lifecycle** — emitted once per iteration:
     ``ITERATION_STARTED``, ``ITERATION_COMPLETED``, ``ITERATION_FAILED``,
-    ``ITERATION_TIMED_OUT``.
+    ``ITERATION_TIMED_OUT``, ``ITERATION_IDLE``.
 
     **Commands** — emitted around command execution:
     ``COMMANDS_STARTED``, ``COMMANDS_COMPLETED``.
@@ -63,6 +64,7 @@ class EventType(Enum):
     ITERATION_COMPLETED = "iteration_completed"
     ITERATION_FAILED = "iteration_failed"
     ITERATION_TIMED_OUT = "iteration_timed_out"
+    ITERATION_IDLE = "iteration_idle"
 
     # ── Commands ────────────────────────────────────────────────
     COMMANDS_STARTED = "commands_started"
@@ -111,6 +113,13 @@ class IterationEndedData(TypedDict):
     result_text: str | None
 
 
+class IterationIdleData(TypedDict):
+    iteration: int
+    consecutive_idle: int
+    next_delay: float
+    cumulative_idle_time: float
+
+
 class CommandsStartedData(TypedDict):
     iteration: int
     count: int
@@ -142,6 +151,7 @@ EventData = (
     | RunStoppedData
     | IterationStartedData
     | IterationEndedData
+    | IterationIdleData
     | CommandsStartedData
     | CommandsCompletedData
     | PromptAssembledData
