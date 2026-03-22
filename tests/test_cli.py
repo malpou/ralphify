@@ -494,6 +494,21 @@ class TestParseUserArgs:
         result = _parse_user_args([], None)
         assert result == {}
 
+    def test_equals_syntax(self):
+        """--key=value is a common CLI convention and must be handled."""
+        result = _parse_user_args(["--topic=testing"], None)
+        assert result == {"topic": "testing"}
+
+    def test_equals_syntax_with_equals_in_value(self):
+        """Only the first = separates key from value."""
+        result = _parse_user_args(["--expr=a=b"], None)
+        assert result == {"expr": "a=b"}
+
+    def test_equals_syntax_empty_value(self):
+        """--key= should set value to empty string."""
+        result = _parse_user_args(["--key="], None)
+        assert result == {"key": ""}
+
 
 @patch(MOCK_WHICH, return_value="/usr/bin/claude")
 class TestRunWithUserArgs:
