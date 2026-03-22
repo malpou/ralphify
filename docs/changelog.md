@@ -12,7 +12,7 @@ All notable changes to ralphify are documented here.
 
 ### Added
 
-- **Idle detection with backoff** — when an agent emits `<!-- ralph:state idle -->` in its output, the engine applies configurable backoff delays between iterations and optionally stops the loop after a cumulative idle time limit. Configure via the `idle` frontmatter block with `delay`, `backoff`, `max_delay`, and `max` fields. Prevents wasting tokens on idle iterations.
+- **Idle detection with backoff** — configure via the `idle` frontmatter block (`delay`, `backoff`, `max_delay`, `max`). When an agent emits `<!-- ralph:state idle -->`, the engine applies backoff delays and optionally stops after a cumulative idle time limit.
 
 ---
 

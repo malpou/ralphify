@@ -216,11 +216,4 @@ idle:
 
 Duration values accept numbers (seconds) or human-readable strings: `30s`, `5m`, `6h`, `1d`.
 
-**How it works:**
-
-1. Agent output contains `<!-- ralph:state idle -->` → iteration is marked idle
-2. Next delay = `delay × backoff^(consecutive_idle - 1)`, capped at `max_delay`
-3. A non-idle iteration resets all idle tracking (consecutive count and cumulative time)
-4. If `max` is set, the loop stops when cumulative idle delay time exceeds the limit
-
-When no `idle` block is present, the loop runs exactly as before.
+A non-idle iteration resets all idle tracking. When no `idle` block is present, the loop runs exactly as before.

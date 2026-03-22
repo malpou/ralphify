@@ -356,9 +356,7 @@ If all tasks are complete and there is nothing left to do, output exactly:
 <!-- ralph:state idle -->
 ```
 
-When the agent emits `<!-- ralph:state idle -->`, the engine waits with increasing backoff delays (30s, 60s, 120s, ... up to 5m) before the next iteration. If you add new tasks to TODO.md, the next iteration will detect work and reset the backoff. If cumulative idle time reaches the `max` limit (30m here), the loop stops automatically.
-
-This is useful for loops that should keep running but may have periods of inactivity — the idle backoff reduces token usage while keeping the loop ready to resume when new work appears.
+When the agent emits `<!-- ralph:state idle -->`, the engine applies increasing backoff delays before the next iteration. A non-idle iteration resets the backoff. If cumulative idle time reaches the `max` limit, the loop stops automatically.
 
 ## Prompt size and context windows
 
