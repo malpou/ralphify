@@ -74,6 +74,18 @@ class TestIterationLifecycle:
         output = console.export_text()
         assert "/tmp/log.txt" in output
 
+    def test_log_file_with_brackets_not_corrupted(self):
+        """Log file paths containing bracket patterns must not be
+        swallowed by Rich markup interpretation."""
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.ITERATION_COMPLETED,
+            iteration=1, detail="completed (1s)",
+            log_file="/tmp/[2024-01-01]/001.log", result_text=None,
+        ))
+        output = console.export_text()
+        assert "[2024-01-01]" in output
+
     def test_iteration_ended_shows_result_text(self):
         emitter, console = _capture_emitter()
         emitter.emit(_make_event(

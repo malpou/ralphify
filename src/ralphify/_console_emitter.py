@@ -110,7 +110,7 @@ class ConsoleEmitter:
         status_msg = f"[{color}]{icon} Iteration {iteration} {detail}"
         log_file = data["log_file"]
         if log_file:
-            status_msg += f" {_ICON_ARROW}\n{log_file}"
+            status_msg += f" {_ICON_ARROW}\n{escape_markup(log_file)}"
         status_msg += f"[/{color}]"
         self._console.print(status_msg)
         result_text = data["result_text"]
