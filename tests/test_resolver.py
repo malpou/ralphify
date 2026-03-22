@@ -152,3 +152,52 @@ class TestResolveArgs:
     def test_hyphenated_arg_name(self):
         result = resolve_args("{{ args.my-dir }}", {"my-dir": "/tmp"})
         assert result == "/tmp"
+
+
+class TestResolveContext:
+    """Tests for context placeholders in resolve_all."""
+
+    def test_context_name(self):
+        result = resolve_all("Ralph: {{ context.name }}", {}, {}, {"name": "my-ralph"})
+        assert result == "Ralph: my-ralph"
+
+    def test_context_iteration(self):
+        result = resolve_all("Iteration {{ context.iteration }}", {}, {}, {"iteration": "3"})
+        assert result == "Iteration 3"
+
+    def test_context_max_iterations(self):
+        result = resolve_all(
+            "{{ context.iteration }}/{{ context.max_iterations }}",
+            {}, {}, {"iteration": "2", "max_iterations": "10"},
+        )
+        assert result == "2/10"
+
+    def test_context_max_iterations_empty_when_unlimited(self):
+        result = resolve_all(
+            "Max: {{ context.max_iterations }}",
+            {}, {}, {"max_iterations": ""},
+        )
+        assert result == "Max: "
+
+    def test_context_with_commands_and_args(self):
+        result = resolve_all(
+            "{{ context.name }} {{ commands.tests }} {{ args.dir }}",
+            {"tests": "ok"}, {"dir": "./src"}, {"name": "my-ralph"},
+        )
+        assert result == "my-ralph ok ./src"
+
+    def test_unknown_context_key_resolves_to_empty(self):
+        result = resolve_all("{{ context.unknown }}", {}, {}, {"name": "x"})
+        assert result == ""
+
+    def test_context_none_clears_placeholders(self):
+        result = resolve_all("{{ context.name }}", {}, {})
+        assert result == ""
+
+    def test_context_value_not_resolved_as_command_placeholder(self):
+        result = resolve_all(
+            "{{ context.name }}",
+            {"tests": "ok"}, {},
+            {"name": "{{ commands.tests }}"},
+        )
+        assert result == "{{ commands.tests }}"
