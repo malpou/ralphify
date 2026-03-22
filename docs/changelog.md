@@ -24,6 +24,10 @@ All notable changes to ralphify are documented here.
 - **Empty arg values breaking `./` working directory detection** — when an `{{ args.name }}` placeholder resolved to an empty string, the substitution could introduce leading whitespace that prevented the `./` prefix from being detected, causing the command to run from the project root instead of the ralph directory.
 - **Windows `.cmd`/`.exe` extension breaking streaming mode detection** — on Windows, `claude` is installed as `claude.cmd` or `claude.exe`. The streaming mode check compared the full filename (including extension) against `"claude"`, so it never matched. Ralphify now compares the stem only, enabling real-time activity tracking on Windows.
 
+### Added
+
+- **`ralph dashboard` command (POC)** — launches a local web server serving a real-time dashboard UI. Connects to running ralphs via SSE for live event streaming. Uses stdlib `http.server` — no new dependencies. Start with `ralph dashboard` (default port 8420).
+
 ### Improved
 
 - **`BoundEmitter` convenience methods** — `log_info(message)` and `log_error(message, traceback=...)` let Python API users emit log events without constructing `Event` objects manually.
