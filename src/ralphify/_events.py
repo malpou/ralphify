@@ -76,6 +76,10 @@ class EventType(Enum):
     # ── Agent activity (live streaming) ─────────────────────────
     AGENT_ACTIVITY = "agent_activity"
 
+    # ── Delay ─────────────────────────────────────────────────────
+    DELAY_STARTED = "delay_started"
+    DELAY_ENDED = "delay_ended"
+
     # ── Other ───────────────────────────────────────────────────
     LOG_MESSAGE = "log_message"
 
@@ -133,6 +137,14 @@ class AgentActivityData(TypedDict):
     iteration: int
 
 
+class DelayStartedData(TypedDict):
+    delay: float
+
+
+class DelayEndedData(TypedDict):
+    pass
+
+
 class LogMessageData(TypedDict):
     message: str
     level: LogLevel
@@ -148,6 +160,8 @@ EventData = (
     | CommandsCompletedData
     | PromptAssembledData
     | AgentActivityData
+    | DelayStartedData
+    | DelayEndedData
     | LogMessageData
 )
 """Union of all typed event data payloads."""
