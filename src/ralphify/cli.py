@@ -12,6 +12,7 @@ import os
 import shlex
 import shutil
 import sys
+import threading
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -431,6 +432,29 @@ def _build_run_config(
         project_root=Path.cwd(),
         credit=credit,
     )
+
+
+@app.command()
+def dashboard(
+    port: int = typer.Option(8420, "--port", "-p", help="Port to serve the dashboard on."),
+    no_open: bool = typer.Option(False, "--no-open", help="Don't open a browser automatically."),
+) -> None:
+    """Launch a live dashboard for monitoring running ralphs."""
+    from ralphify._dashboard import start_dashboard
+    from ralphify.manager import RunManager
+
+    manager = RunManager()
+    server = start_dashboard(manager, port=port, open_browser=not no_open)
+
+    url = f"http://127.0.0.1:{port}"
+    _console.print(f"[bold #8B6CF0]Dashboard running at[/bold #8B6CF0] [underline]{url}[/underline]")
+    _console.print("[dim]Press Ctrl+C to stop[/dim]")
+
+    try:
+        threading.Event().wait()
+    except KeyboardInterrupt:
+        _console.print("\n[dim]Shutting down dashboard…[/dim]")
+        server.shutdown()
 
 
 @app.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True})
