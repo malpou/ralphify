@@ -384,7 +384,36 @@
 - `guardrails.md` (what NOT to do) is fundamentally different from `progress.md` (what was done) — both are needed
 - All 6 practitioner patterns lack operational safeguards (revert, fingerprinting, budget) — the gap ralphify should fill
 
+## Iteration 16 — 2026-03-22
+
+**Decision: REFINE** (4th refine cycle, after 3 research iterations)
+
+**Focus areas:**
+1. REPORT.md: trim 25 → ~22 insights by merging related pairs
+2. Update Ch06 (implications) with findings from Ch16 (self-repair) and Ch17 (cookbook patterns)
+3. Tighten chapter coherence — ensure Ch17's cookbook patterns reference operational safeguards from Ch16
+
+**What was done:**
+- Trimmed REPORT.md from 25 to 22 insights by merging 3 pairs:
+  - #5 (probabilistic/deterministic) → folded into #2 (verification) as design principle
+  - #7 ("on the loop" flywheel) → folded into intro paragraph
+  - #22 (loop fingerprinting) + #24 (debugging taxonomy) → merged into #20 (structured loop debugging)
+- Renumbered all insights cleanly (1-22)
+- Updated Ch06 with three new sections:
+  - Self-Repair & Resilience Patterns (git checkpoints, circuit breaker config, signal-based health)
+  - Bridging the Practitioner-Production Gap (the central opportunity from Ch17)
+  - Cost Reality Check (Adam Tuttle's $100/hour data point)
+- Enhanced competitive positioning with 8th differentiator: "practitioner-to-production bridge"
+- Cleaned up Open Questions: removed 6 answered/redundant questions, added 2 new ones from Ch17
+- Open Questions now at 12 (was 18) — tighter and more actionable
+
+**Key improvements:**
+- REPORT.md is now exactly 22 insights — each distinct and load-bearing
+- Ch06 now comprehensively covers all research findings (Ch1-17) with actionable framework recommendations
+- The "practitioner-to-production bridge" framing crystallizes ralphify's unique positioning
+- Removed struck-through answered questions — cleaner reading experience
+
 **Next iteration should focus on:**
-- Refine cycle (iteration 16): 25 insights, 17 chapters — trim to ~22 insights, consider merging overlapping chapters
-- Update Ch06 (implications) with cookbook pattern findings: 6 new recipes, the practitioner/production gap, cost reality
-- Or: research the eval-driven thread more aggressively — the agents couldn't access web, but the topic remains under-explored
+- Research: eval-driven loop optimization (agents couldn't access web in iterations 14-15)
+- Or: deep dive into production deployment patterns — CI/CD for ralph loops, scheduled ralphs, team workflows
+- Or: explore the "intent-failure" problem more deeply — the hardest unsolved gap (agents pass all tests but build the wrong thing)

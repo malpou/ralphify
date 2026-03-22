@@ -315,6 +315,70 @@ Google's BATS framework surfaces real-time resource availability inside the agen
 
 Ralphify's `manager.py` already supports concurrent runs. The missing piece is git worktree isolation — each parallel ralph gets its own worktree, preventing file conflicts. Boris Cherny and Augment Code converge on 3-5 parallel worktrees as the practical ceiling. Sequential merge with rebase is the validated integration strategy.
 
+## Self-Repair & Resilience Patterns
+
+Ch16's research reveals three patterns ralphify can adopt to make loops more resilient:
+
+### Git Checkpoint Commands (High Value, Low Effort)
+
+James Phoenix's 4-pattern hierarchy maps directly to ralphify's command system:
+
+1. **Validation Gate** — commit on verification pass, revert on fail. The minimal viable checkpoint.
+2. **Incremental Checkpoint** — commit per completed sub-task. Good for multi-step features.
+3. **Safety Bracket** — commit before risky operations (destructive commands, large refactors).
+4. **End-of-Session** — commit state for the next iteration's context.
+
+Ralphify can document these as command patterns in cookbook examples. Pattern 1 is achievable today with a `post_iteration` hook.
+
+### Circuit Breaker Configuration
+
+Production systems have converged on concrete thresholds (Ch16):
+- No file changes for 3 loops → no progress → STOP
+- Same error 5 times → stuck → STOP
+- Output decline >70% → non-productive → STOP
+
+A `circuit_breaker` field in RALPH.md frontmatter could expose these:
+
+```yaml
+circuit_breaker:
+  max_no_change: 3
+  max_same_error: 5
+  output_decline_threshold: 0.7
+```
+
+### Signal-Based Health Monitoring
+
+The key finding from Boucle's 220-loop study: agent self-reporting drifts, but mechanical signal counting doesn't. Ralphify should track per-iteration signals mechanically:
+- Files changed (0 = no progress)
+- Error count (rising = stuck)
+- Output volume (declining = degrading)
+- Command pass/fail ratio (primary health indicator)
+
+These signals are already available from ralphify's command execution — they just need surfacing.
+
+## Bridging the Practitioner-Production Gap
+
+Ch17 reveals the central opportunity: six practitioner cookbook patterns have converged independently, but **none include production-grade safeguards**. Every pattern shares five properties (one task per iteration, binary completion, deterministic verification, append-only progress, git checkpoint) but lacks revert-on-failure, loop fingerprinting, and budget awareness.
+
+Ralphify is uniquely positioned to bridge this gap. The practitioner patterns work at the individual level; ralphify can add the operational layer that makes them production-ready:
+
+| Practitioner Pattern | What's Missing | Ralphify Can Add |
+|---|---|---|
+| PRD-driven feature loops | Revert on test failure, cost tracking | `verify` field + `max_iterations` |
+| Plan-then-build | Loop fingerprinting, stale detection | Built-in fingerprint check |
+| TDD loops | Circuit breakers | `circuit_breaker` config |
+| Guardrails accumulation | Automated guardrails validation | Commands that verify guardrails |
+| Permission-gated | Budget awareness | Iteration count + cost signals |
+| Stale recovery | Self-repair | Checkpoint commands + revert |
+
+### Cost Reality Check
+
+Adam Tuttle exhausted $100/month in ~1 hour of looping. Each iteration loads full PRD + progress + test output. Cost optimization is not optional:
+- **Prompt caching** — ralphify's stable RALPH.md template is naturally cacheable (~90% input cost reduction)
+- **Output redirection** — `> run.log 2>&1` then `grep` for metrics prevents context flooding
+- **Model tiering** — cheaper models for routine iterations, premium for complex logic
+- **Surfacing iteration cost** — "Iteration 7 of 20 (~$2.30 spent)" enables informed decisions
+
 ## Competitive Positioning
 
 Ralphify sits at a validated sweet spot: simpler than full orchestration frameworks (LangGraph, CrewAI) but more structured than raw bash loops. The Karpathy autoresearch moment — 630 lines running 700 experiments — proves that "simple harness, powerful results" wins.
@@ -325,5 +389,6 @@ The key differentiators to develop:
 3. **Cost-aware loops.** `max_iterations`, iteration metrics, and prompt caching guidance would address the #1 operational pain point practitioners report.
 4. **Skills ecosystem integration.** With 500+ skills in a compatible format, ralphify can offer a rich library of pre-built ralphs out of the box.
 5. **Iteration observability.** Per-iteration metrics (duration, command pass/fail, iteration count, estimated cost) surfaced in CLI output. Ralph TUI shows the market wants this — completion rate, stuck detection, cost per feature are the three metrics practitioners track. Ralphify can provide this natively without requiring a separate dashboard.
-6. **Loop fingerprinting.** Zero-cost stuck detection built into the loop — no other tool in this weight class offers deterministic doom loop prevention.
+6. **Loop fingerprinting & circuit breakers.** Zero-cost stuck detection built into the loop — no other tool in this weight class offers deterministic doom loop prevention. Concrete thresholds (3 no-change, 5 same-error, 70% output decline) are validated by production data.
 7. **Rippable-by-design architecture.** As models improve, ralphify should get simpler. Design features to be removable (e.g., loop detection can be a plugin, not core). This positions ralphify as a framework that evolves with models rather than fighting them.
+8. **Practitioner-to-production bridge.** The 6 converged cookbook patterns are individual-use today. Ralphify can be the framework that adds operational safeguards (revert, fingerprinting, budget, circuit breakers) to make them production-ready. This is the most differentiated positioning: not a new pattern, but the production wrapper around patterns people already use.
