@@ -20,6 +20,9 @@ ralph run my-ralph --delay 10      # Wait 10s between iterations
 ralph run my-ralph --timeout 300   # Kill agent after 5 min per iteration
 ralph run my-ralph --dir ./src     # Pass user args to the ralph
 
+ralph watch my-ralph                  # TUI dashboard (q to quit, p to pause)
+ralph watch my-ralph -n 10            # Watch with max iterations
+
 ralph init my-task                  # Scaffold a ralph from template (no AI)
 ralph init                         # Scaffold in current directory
 

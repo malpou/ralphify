@@ -29,6 +29,7 @@ src/ralphify/           # All source code
 ├── _frontmatter.py     # Parse YAML frontmatter from RALPH.md, marker constants
 ├── _skills.py          # Skill installation and agent detection for `ralph new`
 ├── _console_emitter.py # Rich console renderer for run-loop events (ConsoleEmitter)
+├── _tui.py             # Textual TUI dashboard for `ralph watch` (WatchApp, TuiEmitter)
 ├── _events.py          # Event types, emitter protocol, and BoundEmitter convenience wrapper
 ├── _output.py          # ProcessResult base class, combine stdout+stderr, format durations
 └── skills/             # Bundled skill definitions (installed into agent skill dirs)

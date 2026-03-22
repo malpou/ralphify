@@ -18,7 +18,7 @@ uv run mkdocs serve        # Preview docs at http://127.0.0.1:8000
 All source code is in `src/ralphify/`. The main file is `cli.py` — it contains the CLI commands and delegates to the engine for the core loop.
 
 Key modules:
-- `cli.py` — CLI commands (`run`, `new`, `init`); delegates to `_console_emitter.py` for terminal event rendering
+- `cli.py` — CLI commands (`run`, `watch`, `new`, `init`); delegates to `_console_emitter.py` and `_tui.py` for terminal rendering
 - `engine.py` — Core run loop orchestration with structured event emission
 - `manager.py` — Multi-run orchestration (concurrent runs via threads)
 - `_frontmatter.py` — YAML frontmatter parsing (uses PyYAML) and the `RALPH_MARKER` constant
@@ -28,6 +28,7 @@ Key modules:
 - `_runner.py` — Generic command execution with timeout
 - `_events.py` — Event types, emitter protocol (NullEmitter, QueueEmitter, FanoutEmitter), and BoundEmitter convenience wrapper
 - `_console_emitter.py` — Rich terminal rendering of events
+- `_tui.py` — Textual TUI dashboard for `ralph watch` (WatchApp, TuiEmitter)
 - `_output.py` — `ProcessResult` base class, combine stdout+stderr, format durations
 - `_skills.py` — Skill installation, agent detection, and command building for `ralph new`
 - `skills/new-ralph/SKILL.md` — AI-guided ralph creation skill (bundled, installed into agent skill dir)
@@ -48,7 +49,7 @@ A **ralph** is a directory containing a `RALPH.md` file. That's it. No project-l
 ## Conventions
 
 - **Commit messages**: `docs: explain X for users who want to Y`, `feat: add X so users can Y`, `fix: resolve X that caused Y`
-- **Dependencies**: Minimal by design. Runtime deps are `typer`, `rich`, and `pyyaml`. Prefer stdlib over new deps.
+- **Dependencies**: Minimal by design. Runtime deps are `typer`, `rich`, `pyyaml`, and `textual`. Prefer stdlib over new deps.
 - **Tests**: No external services, no API keys. All tests use temporary directories.
 - **Docs**: Every user-facing feature needs a docs page. Run `mkdocs build --strict` before committing doc changes.
 - **Keeping docs surfaces in sync**: When making user-facing changes (new features, changed behavior, new CLI flags), update all relevant surfaces:

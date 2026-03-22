@@ -97,6 +97,36 @@ Missing args resolve to an empty string.
 
 ---
 
+## `ralph watch`
+
+Run the autonomous loop with a full-screen TUI dashboard. Same options as `ralph run`, but renders a live terminal interface showing iteration progress, streak counter, success rate, and a scrollable event log.
+
+```bash
+ralph watch my-ralph                      # Watch forever (q to quit)
+ralph watch my-ralph -n 10                # Watch 10 iterations
+ralph watch my-ralph --timeout 300        # 5 min timeout per iteration
+```
+
+| Argument / Option | Short | Default | Description |
+|---|---|---|---|
+| `PATH` | | (required) | Path to a ralph directory containing `RALPH.md`, or a direct path to a `RALPH.md` file |
+| `-n` | | unlimited | Max number of iterations |
+| `--stop-on-error` | `-s` | off | Stop loop if agent exits non-zero or times out |
+| `--delay` | `-d` | `0` | Seconds to wait between iterations |
+| `--timeout` | `-t` | none | Max seconds per iteration |
+| `--log-dir` | `-l` | none | Directory for iteration log files |
+
+### Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| `q` | Quit the dashboard and stop the run |
+| `p` | Pause / resume the run |
+
+User arguments work the same as `ralph run` — see [User arguments](#user-arguments) above.
+
+---
+
 ## `ralph init`
 
 Scaffold a new ralph with a ready-to-customize template. No AI agent required.
