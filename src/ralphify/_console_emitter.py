@@ -76,12 +76,21 @@ class ConsoleEmitter:
             handler(event.data)
 
     def _on_run_started(self, data: RunStartedData) -> None:
+        ralph_name = data["ralph_name"]
+        self._console.print(f"\n[bold #A78BF5]▶ Running:[/bold #A78BF5] [bold]{escape_markup(ralph_name)}[/bold]")
+
+        info_parts: list[str] = []
         timeout = data["timeout"]
         if timeout is not None and timeout > 0:
-            self._console.print(f"[dim]Timeout: {format_duration(timeout)} per iteration[/dim]")
+            info_parts.append(f"timeout {format_duration(timeout)}")
         command_count = data["commands"]
         if command_count > 0:
-            self._console.print(f"[dim]Commands: {command_count} configured[/dim]")
+            info_parts.append(f"{command_count} command{'s' if command_count != 1 else ''}")
+        max_iter = data.get("max_iterations")
+        if max_iter is not None:
+            info_parts.append(f"max {max_iter} iteration{'s' if max_iter != 1 else ''}")
+        if info_parts:
+            self._console.print(f"  [dim]{' · '.join(info_parts)}[/dim]")
 
     def _start_live(self) -> None:
         spinner = _IterationSpinner()
@@ -107,12 +116,10 @@ class ConsoleEmitter:
         self._stop_live()
         iteration = data["iteration"]
         detail = data["detail"]
-        status_msg = f"[{color}]{icon} Iteration {iteration} {detail}"
+        self._console.print(f"[{color}]{icon} Iteration {iteration} {detail}[/{color}]")
         log_file = data["log_file"]
         if log_file:
-            status_msg += f" {_ICON_ARROW}\n{escape_markup(log_file)}"
-        status_msg += f"[/{color}]"
-        self._console.print(status_msg)
+            self._console.print(f"  [dim]{_ICON_ARROW} {escape_markup(log_file)}[/dim]")
         result_text = data["result_text"]
         if result_text:
             self._console.print(f"  [dim]{escape_markup(result_text)}[/dim]")
@@ -152,4 +159,5 @@ class ConsoleEmitter:
         if timed_out_count:
             parts.append(f"{timed_out_count} timed out")
         detail = ", ".join(parts)
-        self._console.print(f"\n[green]Done: {total} iteration(s) {_ICON_DASH} {detail}[/green]")
+        self._console.print(f"\n[bold blue]──────────────────────[/bold blue]")
+        self._console.print(f"[bold green]Done:[/bold green] {total} iteration(s) {_ICON_DASH} {detail}")

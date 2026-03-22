@@ -24,23 +24,56 @@ class TestEmitDispatch:
         # AGENT_ACTIVITY has no handler registered — should be silently ignored
         emitter.emit(_make_event(EventType.AGENT_ACTIVITY, raw="data"))
 
+    def test_run_started_shows_ralph_name(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.RUN_STARTED, ralph_name="my-ralph", timeout=0, commands=0))
+        output = console.export_text()
+        assert "my-ralph" in output
+        assert "Running:" in output
+
     def test_run_started_shows_timeout(self):
         emitter, console = _capture_emitter()
-        emitter.emit(_make_event(EventType.RUN_STARTED, timeout=120, commands=0))
+        emitter.emit(_make_event(EventType.RUN_STARTED, ralph_name="test", timeout=120, commands=0))
         output = console.export_text()
         assert "2m 0s" in output
 
     def test_run_started_shows_command_count(self):
         emitter, console = _capture_emitter()
-        emitter.emit(_make_event(EventType.RUN_STARTED, timeout=0, commands=3))
+        emitter.emit(_make_event(EventType.RUN_STARTED, ralph_name="test", timeout=0, commands=3))
         output = console.export_text()
-        assert "3 configured" in output
+        assert "3 commands" in output
 
-    def test_run_started_no_output_when_no_timeout_or_commands(self):
+    def test_run_started_singular_command(self):
         emitter, console = _capture_emitter()
-        emitter.emit(_make_event(EventType.RUN_STARTED, timeout=0, commands=0))
+        emitter.emit(_make_event(EventType.RUN_STARTED, ralph_name="test", timeout=0, commands=1))
         output = console.export_text()
-        assert output.strip() == ""
+        assert "1 command" in output
+        # Should not say "1 commands"
+        assert "1 commands" not in output
+
+    def test_run_started_shows_max_iterations(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.RUN_STARTED, ralph_name="test", timeout=0, commands=0, max_iterations=5))
+        output = console.export_text()
+        assert "max 5 iterations" in output
+
+    def test_run_started_no_info_line_when_no_config(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.RUN_STARTED, ralph_name="test", timeout=0, commands=0))
+        output = console.export_text()
+        # Should still show the ralph name header
+        assert "Running:" in output
+        # But no info line with dots separator
+        assert "·" not in output
+
+    def test_run_started_combines_info(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.RUN_STARTED, ralph_name="test", timeout=60, commands=2, max_iterations=3))
+        output = console.export_text()
+        assert "timeout 1m 0s" in output
+        assert "2 commands" in output
+        assert "max 3 iterations" in output
+        assert "·" in output
 
 
 class TestIterationLifecycle:
@@ -194,6 +227,15 @@ class TestRunStopped:
         assert "5 iteration(s)" in output
         assert "4 succeeded" in output
         assert "1 failed" in output
+
+    def test_completed_shows_separator(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STOPPED,
+            reason="completed", total=3, completed=3, failed=0, timed_out=0,
+        ))
+        output = console.export_text()
+        assert "──" in output
 
     def test_completed_with_timeouts(self):
         emitter, console = _capture_emitter()

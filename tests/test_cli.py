@@ -401,7 +401,7 @@ class TestRunTimeout:
         ralph_dir = make_ralph(tmp_path)
         result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1", "--timeout", "300"])
         assert result.exit_code == 0
-        assert "5m 0s per iteration" in result.output
+        assert "timeout 5m 0s" in result.output
 
 
 class TestNew:
