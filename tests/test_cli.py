@@ -109,6 +109,20 @@ class TestRun:
         assert result.exit_code == 1
         assert expected_error in result.output.lower()
 
+    @pytest.mark.parametrize("yaml_value", ["commands:", "commands: null"],
+                             ids=["empty-value", "explicit-null"])
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_null_commands_treated_as_empty(self, mock_run, mock_which, tmp_path, monkeypatch, yaml_value):
+        """YAML `commands:` (no value) and `commands: null` should be treated as no commands."""
+        monkeypatch.chdir(tmp_path)
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir()
+        (ralph_dir / "RALPH.md").write_text(
+            f"---\nagent: claude -p --dangerously-skip-permissions\n{yaml_value}\n---\ngo"
+        )
+        result = runner.invoke(app, ["run", str(ralph_dir), "-n", "1"])
+        assert result.exit_code == 0
+
     @pytest.mark.parametrize("args_value", ["true", "42", "not-a-list"],
                              ids=["bool", "int", "string"])
     def test_errors_with_invalid_args_type(self, mock_which, tmp_path, monkeypatch, args_value):

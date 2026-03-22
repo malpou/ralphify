@@ -337,7 +337,9 @@ def _build_run_config(
         _exit_error(f"Agent command '{agent_binary}' not found on PATH.")
 
     # Parse commands from frontmatter
-    raw_commands = fm.get(FIELD_COMMANDS, [])
+    raw_commands = fm.get(FIELD_COMMANDS)
+    if raw_commands is None:
+        raw_commands = []
     if not isinstance(raw_commands, list):
         _exit_error(f"'{FIELD_COMMANDS}' must be a list of {{name, run}} mappings.")
     commands = _parse_commands(raw_commands)
