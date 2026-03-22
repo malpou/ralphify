@@ -331,6 +331,35 @@ HTML comments in your RALPH.md are automatically stripped before the prompt is a
 
 You can freely add and edit comments while the loop runs — they're stripped every iteration, so they never waste the agent's context window.
 
+## Idle detection
+
+If your agent signals when it has no work to do, you can avoid wasting tokens on idle iterations. Add an `idle` block to your frontmatter and have your prompt instruct the agent to emit the idle marker:
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+idle:
+  delay: 30s
+  backoff: 2
+  max_delay: 5m
+  max: 30m
+commands:
+  - name: tasks
+    run: cat TODO.md
+---
+
+{{ commands.tasks }}
+
+Read TODO.md and implement the next uncompleted task. Commit when done.
+
+If all tasks are complete and there is nothing left to do, output exactly:
+<!-- ralph:state idle -->
+```
+
+When the agent emits `<!-- ralph:state idle -->`, the engine waits with increasing backoff delays (30s, 60s, 120s, ... up to 5m) before the next iteration. If you add new tasks to TODO.md, the next iteration will detect work and reset the backoff. If cumulative idle time reaches the `max` limit (30m here), the loop stops automatically.
+
+This is useful for loops that should keep running but may have periods of inactivity — the idle backoff reduces token usage while keeping the loop ready to resume when new work appears.
+
 ## Prompt size and context windows
 
 Keep your prompt focused. A long prompt with every possible instruction eats into the agent's context window, leaving less room for the actual codebase.

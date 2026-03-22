@@ -72,6 +72,7 @@ Your instructions here. Use {{ args.dir }} for user arguments.
 | `commands` | list | no | Commands to run each iteration |
 | `args` | list | no | User argument names. Letters, digits, hyphens, and underscores only. |
 | `credit` | bool | no | Append co-author trailer instruction to prompt (default: `true`) |
+| `idle` | mapping | no | Idle detection: backoff delays when agent signals idle (see below) |
 
 ### Command fields
 
@@ -106,6 +107,18 @@ Your instructions here. Use {{ args.dir }} for user arguments.
 - Mixed: `ralph run my-ralph --focus "perf" ./src` — positional args skip names already provided via flags
 - `--` ends flag parsing: `ralph run my-ralph -- --verbose ./src` treats `--verbose` as a positional value
 - Missing args resolve to empty string
+
+### Idle detection
+
+```yaml
+idle:
+  delay: 30s       # Initial delay after first idle iteration (default: 30s)
+  backoff: 2       # Multiplier per consecutive idle iteration (default: 2)
+  max_delay: 5m    # Delay cap (default: 5m)
+  max: 30m         # Stop loop after this cumulative idle time (optional)
+```
+
+Agent emits `<!-- ralph:state idle -->` → backoff delays kick in. Non-idle iteration resets tracking. Durations: `30s`, `5m`, `6h`, `1d`.
 
 ## The loop
 

@@ -83,6 +83,11 @@ If any tests are failing above, fix them before continuing.
 | `commands[].timeout` | No | Max seconds before the command is killed (default: 60) |
 | `args` | No | Declared argument names for positional CLI args. Letters, digits, hyphens, and underscores only. Must be unique. |
 | `credit` | No | Append co-author trailer instruction (default: `true`). Set to `false` to disable. |
+| `idle` | No | Idle detection config. Mapping with `delay`, `backoff`, `max_delay`, `max` fields. When the agent emits `<!-- ralph:state idle -->`, the engine applies backoff delays between iterations. |
+| `idle.delay` | No | Initial delay after first idle iteration (default: `30s`). Accepts numbers (seconds) or duration strings (`30s`, `5m`). |
+| `idle.backoff` | No | Multiplier per consecutive idle iteration (default: `2`). |
+| `idle.max_delay` | No | Maximum delay cap (default: `5m`). |
+| `idle.max` | No | Stop the loop after this cumulative idle time. |
 
 #### Body
 

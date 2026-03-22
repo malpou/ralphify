@@ -8,6 +8,14 @@ keywords: ralphify changelog, release history, new features, version updates, br
 
 All notable changes to ralphify are documented here.
 
+## 0.2.5 — 2026-03-22
+
+### Added
+
+- **Idle detection with backoff** — when an agent emits `<!-- ralph:state idle -->` in its output, the engine applies configurable backoff delays between iterations and optionally stops the loop after a cumulative idle time limit. Configure via the `idle` frontmatter block with `delay`, `backoff`, `max_delay`, and `max` fields. Prevents wasting tokens on idle iterations.
+
+---
+
 ## 0.2.4 — 2026-03-22
 
 ### Fixed

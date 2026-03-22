@@ -81,11 +81,12 @@ The run loop communicates via structured events (`_events.py`). Each event has a
 
 Event data uses TypedDict classes — one per event type — rather than free-form dicts. The key types:
 
-- **`RunStartedData`** / **`RunStoppedData`** — run lifecycle (stop reason is a `StopReason` literal: `"completed"`, `"error"`, `"user_requested"`)
+- **`RunStartedData`** / **`RunStoppedData`** — run lifecycle (stop reason is a `StopReason` literal: `"completed"`, `"error"`, `"user_requested"`, `"max_idle"`)
 - **`IterationStartedData`** / **`IterationEndedData`** — per-iteration data (return code, duration, log path)
 - **`CommandsStartedData`** / **`CommandsCompletedData`** — command execution bookends
 - **`PromptAssembledData`** — prompt length after placeholder resolution
 - **`AgentActivityData`** — streaming agent output
+- **`IterationIdleData`** — idle detection data (consecutive idle count, next delay)
 - **`LogMessageData`** — info/error messages with optional traceback
 
 All payload types are unioned as `EventData`.
@@ -113,7 +114,7 @@ The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders 
 
 1. **`engine.py`** — The core run loop. Uses `RunConfig` and `RunState` (from `_run_types.py`) and `EventEmitter`. This is where iteration logic lives.
 2. **`_run_types.py`** — `RunConfig`, `RunState`, `RunStatus`, and `Command`. These are the shared data types used by the engine, CLI, and manager.
-3. **`cli.py`** — All CLI commands. Validates frontmatter fields via extracted helpers (`_validate_agent`, `_validate_commands`, `_validate_credit`, `_validate_run_options`, `_validate_declared_args`), builds a `RunConfig`, and delegates to `engine.run_loop()` for the actual loop. Terminal event rendering lives in `_console_emitter.py`.
+3. **`cli.py`** — All CLI commands. Validates frontmatter fields via extracted helpers (`_validate_agent`, `_validate_commands`, `_validate_credit`, `_validate_idle`, `_validate_run_options`, `_validate_declared_args`), builds a `RunConfig`, and delegates to `engine.run_loop()` for the actual loop. Terminal event rendering lives in `_console_emitter.py`.
 4. **`_frontmatter.py`** — YAML frontmatter parsing. Extracts `agent`, `commands`, `args` from the RALPH.md file.
 5. **`_resolver.py`** — Template placeholder logic. Small file but critical.
 6. **`_skills.py`** + **`skills/`** — The skill system behind `ralph new`. `_skills.py` handles agent detection, reads bundled skill definitions from `skills/`, installs them into the agent's skill directory, and builds the command to launch the agent.
@@ -124,7 +125,7 @@ The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders 
 
 Frontmatter parsing is in `_frontmatter.py:parse_frontmatter()`, which returns a raw dict. Each field is then validated and coerced by a dedicated helper in `cli.py` — e.g. `_validate_agent()`, `_validate_commands()`, `_validate_credit()`. Adding a new frontmatter field means adding a new validator in `cli.py` and wiring it into `_build_run_config()`.
 
-**Field name constants** (`FIELD_AGENT`, `FIELD_COMMANDS`, `FIELD_ARGS`, `FIELD_CREDIT`, `CMD_FIELD_NAME`, `CMD_FIELD_RUN`, `CMD_FIELD_TIMEOUT`) are centralized in `_frontmatter.py`. Always import these constants instead of hardcoding strings like `"agent"` or `"commands"` — this keeps error messages, validation, and placeholder resolution in sync when fields are renamed.
+**Field name constants** (`FIELD_AGENT`, `FIELD_COMMANDS`, `FIELD_ARGS`, `FIELD_CREDIT`, `FIELD_IDLE`, `CMD_FIELD_NAME`, `CMD_FIELD_RUN`, `CMD_FIELD_TIMEOUT`, `IDLE_FIELD_DELAY`, `IDLE_FIELD_BACKOFF`, `IDLE_FIELD_MAX_DELAY`, `IDLE_FIELD_MAX`) are centralized in `_frontmatter.py`. Always import these constants instead of hardcoding strings like `"agent"` or `"commands"` — this keeps error messages, validation, and placeholder resolution in sync when fields are renamed.
 
 ### If you add a new CLI command...
 
@@ -133,6 +134,14 @@ Add it in `cli.py`. The CLI uses Typer. Update `docs/cli.md` to document the new
 ### If you change the event system...
 
 Events are defined in `_events.py:EventType`, with a corresponding TypedDict payload class for each type. Adding a new event type requires a new `EventType` member, a new TypedDict payload class, adding it to the `EventData` union, and handling it in `ConsoleEmitter` (`_console_emitter.py`).
+
+### Idle detection
+
+When an agent emits `<!-- ralph:state idle -->` (the `IDLE_STATE_MARKER` constant in `_frontmatter.py`) in its output, the engine marks the iteration as idle instead of completed. Idle behavior is configured via the `idle` frontmatter block, parsed by `_validate_idle()` in `cli.py` into an `IdleConfig` dataclass (`_run_types.py`).
+
+The engine (`engine.py`) tracks idle state on `RunState` (`consecutive_idle`, `cumulative_idle_time`). Backoff delay is computed by `_compute_idle_delay()`: `delay × backoff^(consecutive_idle - 1)`, capped at `max_delay`. A non-idle iteration calls `state.reset_idle()` to clear all idle tracking. When `idle.max` is set and cumulative idle time exceeds it, the loop stops with `RunStatus.IDLE_EXCEEDED`.
+
+The `ITERATION_IDLE` event type and `STOP_MAX_IDLE` stop reason are defined in `_events.py`. The console emitter renders idle iterations with a dimmed style.
 
 ### Credit trailer
 

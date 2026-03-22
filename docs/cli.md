@@ -165,6 +165,7 @@ Your instructions here. Reference args with {{ args.dir }}.
 | `commands` | list | no | Commands to run each iteration (each has `name` and `run`) |
 | `args` | list of strings | no | Declared argument names for user arguments. Letters, digits, hyphens, and underscores only. |
 | `credit` | bool | no | Append co-author trailer instruction to prompt (default: `true`) |
+| `idle` | mapping | no | Idle detection config — backoff delays when agent signals idle state (see [Idle detection](#idle-detection)) |
 
 ### Commands
 
@@ -188,3 +189,38 @@ If a command exceeds its timeout, the process is killed and the captured output 
 | `{{ args.<name> }}` | Value of the named user argument |
 
 Unmatched placeholders resolve to an empty string.
+
+### Idle detection
+
+When an agent emits `<!-- ralph:state idle -->` in its output, the engine applies backoff delays between iterations and optionally stops the loop after a cumulative idle time limit.
+
+Add an `idle` block to your frontmatter:
+
+```markdown
+---
+agent: claude -p --dangerously-skip-permissions
+idle:
+  delay: 30s
+  backoff: 2
+  max_delay: 5m
+  max: 30m
+---
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `delay` | duration or number | `30` (seconds) | Initial delay after the first idle iteration |
+| `backoff` | number | `2.0` | Multiplier applied each consecutive idle iteration |
+| `max_delay` | duration or number | `300` (5 minutes) | Maximum delay cap |
+| `max` | duration or number | none | Stop the loop after this cumulative idle time |
+
+Duration values accept numbers (seconds) or human-readable strings: `30s`, `5m`, `6h`, `1d`.
+
+**How it works:**
+
+1. Agent output contains `<!-- ralph:state idle -->` → iteration is marked idle
+2. Next delay = `delay × backoff^(consecutive_idle - 1)`, capped at `max_delay`
+3. A non-idle iteration resets all idle tracking (consecutive count and cumulative time)
+4. If `max` is set, the loop stops when cumulative idle delay time exceeds the limit
+
+When no `idle` block is present, the loop runs exactly as before.
