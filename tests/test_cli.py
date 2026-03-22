@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 from helpers import MOCK_ENGINE_SLEEP, MOCK_SKILLS_WHICH, MOCK_SUBPROCESS, MOCK_WHICH, ok_result, fail_result, make_ralph
 from ralphify import __version__
 from ralphify._frontmatter import RALPH_MARKER
-from ralphify.cli import app, _parse_commands, _parse_user_args
+from ralphify.cli import app, _parse_command_items, _parse_user_args
 
 runner = CliRunner()
 
@@ -632,99 +632,99 @@ class TestParseCommands:
             {"name": "tests", "run": "uv run pytest"},
             {"name": "lint", "run": "ruff check"},
         ]
-        commands = _parse_commands(raw)
+        commands = _parse_command_items(raw)
         assert len(commands) == 2
         assert commands[0].name == "tests"
         assert commands[0].run == "uv run pytest"
         assert commands[1].name == "lint"
 
     def test_empty_list(self):
-        assert _parse_commands([]) == []
+        assert _parse_command_items([]) == []
 
     def test_custom_timeout(self):
         raw = [{"name": "slow", "run": "sleep 10", "timeout": 300}]
-        commands = _parse_commands(raw)
+        commands = _parse_command_items(raw)
         assert commands[0].timeout == 300
 
     def test_default_timeout(self):
         from ralphify._run_types import DEFAULT_COMMAND_TIMEOUT
         raw = [{"name": "fast", "run": "echo hi"}]
-        commands = _parse_commands(raw)
+        commands = _parse_command_items(raw)
         assert commands[0].timeout == DEFAULT_COMMAND_TIMEOUT
 
     def test_missing_name_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"run": "echo hi"}])
+            _parse_command_items([{"run": "echo hi"}])
 
     def test_missing_run_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test"}])
+            _parse_command_items([{"name": "test"}])
 
     def test_empty_name_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "", "run": "echo hi"}])
+            _parse_command_items([{"name": "", "run": "echo hi"}])
 
     def test_empty_run_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": ""}])
+            _parse_command_items([{"name": "test", "run": ""}])
 
     def test_duplicate_names_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([
+            _parse_command_items([
                 {"name": "test", "run": "echo 1"},
                 {"name": "test", "run": "echo 2"},
             ])
 
     def test_whitespace_only_name_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "  ", "run": "echo hi"}])
+            _parse_command_items([{"name": "  ", "run": "echo hi"}])
 
     def test_whitespace_only_run_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": "  "}])
+            _parse_command_items([{"name": "test", "run": "  "}])
 
     def test_non_string_name_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": 123, "run": "echo hi"}])
+            _parse_command_items([{"name": 123, "run": "echo hi"}])
 
     def test_non_string_run_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": 123}])
+            _parse_command_items([{"name": "test", "run": 123}])
 
     def test_non_dict_entry_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands(["not-a-dict"])
+            _parse_command_items(["not-a-dict"])
 
     def test_non_numeric_timeout_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": "echo hi", "timeout": "fast"}])
+            _parse_command_items([{"name": "test", "run": "echo hi", "timeout": "fast"}])
 
     def test_negative_timeout_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": "echo hi", "timeout": -10}])
+            _parse_command_items([{"name": "test", "run": "echo hi", "timeout": -10}])
 
     def test_zero_timeout_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": "echo hi", "timeout": 0}])
+            _parse_command_items([{"name": "test", "run": "echo hi", "timeout": 0}])
 
     def test_boolean_timeout_errors(self):
         """timeout: true in YAML is parsed as Python True (== 1); must be rejected."""
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": "echo hi", "timeout": True}])
+            _parse_command_items([{"name": "test", "run": "echo hi", "timeout": True}])
 
     def test_boolean_false_timeout_errors(self):
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": "echo hi", "timeout": False}])
+            _parse_command_items([{"name": "test", "run": "echo hi", "timeout": False}])
 
     def test_nan_timeout_errors(self):
         """timeout: .nan in YAML produces float('nan'); must be rejected."""
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": "echo hi", "timeout": float("nan")}])
+            _parse_command_items([{"name": "test", "run": "echo hi", "timeout": float("nan")}])
 
     def test_inf_timeout_errors(self):
         """timeout: .inf in YAML produces float('inf'); must be rejected."""
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": "test", "run": "echo hi", "timeout": float("inf")}])
+            _parse_command_items([{"name": "test", "run": "echo hi", "timeout": float("inf")}])
 
     @pytest.mark.parametrize("name", [
         "git.status",
@@ -737,7 +737,7 @@ class TestParseCommands:
         """Command names with chars outside [a-zA-Z0-9_-] can never be
         referenced by placeholders and must be rejected early."""
         with pytest.raises(typer.Exit):
-            _parse_commands([{"name": name, "run": "echo hi"}])
+            _parse_command_items([{"name": name, "run": "echo hi"}])
 
 
 @patch(MOCK_WHICH, return_value="/usr/bin/claude")

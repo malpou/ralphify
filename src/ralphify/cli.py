@@ -277,7 +277,7 @@ def _validate_declared_args(raw_args: Any) -> list[str] | None:
     return raw_args
 
 
-def _parse_commands(raw_commands: list[dict[str, Any]]) -> list[Command]:
+def _parse_command_items(raw_commands: list[dict[str, Any]]) -> list[Command]:
     """Validate and parse raw command dicts from frontmatter into Command objects."""
     commands: list[Command] = []
     seen_names: set[str] = set()
@@ -305,6 +305,19 @@ def _parse_commands(raw_commands: list[dict[str, Any]]) -> list[Command]:
             timeout=timeout,
         ))
     return commands
+
+
+def _validate_commands(raw_commands: Any) -> list[Command]:
+    """Validate the ``commands`` field from frontmatter and return parsed Commands.
+
+    Returns an empty list when *raw_commands* is ``None`` (field absent).
+    Exits with an error when the value is malformed.
+    """
+    if raw_commands is None:
+        return []
+    if not isinstance(raw_commands, list):
+        _exit_error(f"'{FIELD_COMMANDS}' must be a list of {{name, run}} mappings.")
+    return _parse_command_items(raw_commands)
 
 
 def _resolve_ralph_paths(ralph_path: str) -> tuple[Path, Path]:
@@ -363,16 +376,7 @@ def _build_run_config(
     fm, _ = parse_frontmatter(ralph_text)
 
     agent = _validate_agent(fm.get(FIELD_AGENT))
-
-    # Parse commands from frontmatter
-    raw_commands = fm.get(FIELD_COMMANDS)
-    if raw_commands is None:
-        raw_commands = []
-    if not isinstance(raw_commands, list):
-        _exit_error(f"'{FIELD_COMMANDS}' must be a list of {{name, run}} mappings.")
-    commands = _parse_commands(raw_commands)
-
-    # Parse user args
+    commands = _validate_commands(fm.get(FIELD_COMMANDS))
     declared_names = _validate_declared_args(fm.get(FIELD_ARGS))
     ralph_args: dict[str, str] = {}
     if extra_args:
