@@ -762,6 +762,18 @@ class TestRunCommands:
         tokens = shlex.split(resolved_cmd)
         assert tokens == ["grep", "hello world", "src/"]
 
+    @patch(MOCK_RUN_COMMAND)
+    def test_dotslash_detected_after_leading_whitespace_from_empty_arg(self, mock_run_cmd, tmp_path):
+        """When an optional arg placeholder before ./ resolves to empty,
+        the leading whitespace must not prevent ./  detection for cwd."""
+        mock_run_cmd.return_value = ok_run_result(output="ok")
+        ralph_dir = tmp_path / "my-ralph"
+        commands = [Command(name="check", run="{{ args.flag }} ./check.sh")]
+
+        _run_commands(commands, ralph_dir=ralph_dir, project_root=tmp_path, user_args={})
+
+        assert mock_run_cmd.call_args.kwargs["cwd"] == ralph_dir
+
     @patch(MOCK_RUN_COMMAND, side_effect=FileNotFoundError("no-such-binary"))
     def test_command_not_found_raises_with_context(self, mock_run_cmd, tmp_path):
         commands = [Command(name="missing", run="no-such-binary --flag")]

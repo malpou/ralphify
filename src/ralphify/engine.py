@@ -96,7 +96,7 @@ def _run_commands(
         run_str = resolve_args(cmd.run, quoted_args)
         # Determine working directory: if the command starts with ./ it's
         # relative to the ralph directory, otherwise use project root.
-        if run_str.startswith(_RELATIVE_CMD_PREFIX):
+        if run_str.lstrip().startswith(_RELATIVE_CMD_PREFIX):
             cwd = ralph_dir
         else:
             cwd = project_root
