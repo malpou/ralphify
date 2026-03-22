@@ -7,6 +7,7 @@ which ralphs to run, their branches, and orchestration settings.
 
 from __future__ import annotations
 
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -156,3 +157,137 @@ def parse_fleet_config(path: Path) -> FleetConfig:
         ralphs=ralph_entries,
         settings=settings,
     )
+
+
+# ---------------------------------------------------------------------------
+# Worktree lifecycle
+# ---------------------------------------------------------------------------
+
+_SUBPROCESS_KWARGS = {"capture_output": True, "text": True, "encoding": "utf-8"}
+
+
+class WorktreeError(Exception):
+    """Raised when a git worktree operation fails."""
+
+
+def _run_git(args: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+    """Run a git command, raising :class:`WorktreeError` on failure."""
+    cmd = ["git", *args]
+    result = subprocess.run(cmd, cwd=cwd, **_SUBPROCESS_KWARGS)
+    if result.returncode != 0:
+        raise WorktreeError(
+            f"git {' '.join(args)} failed (rc={result.returncode}): "
+            f"{result.stderr.strip()}"
+        )
+    return result
+
+
+def create_worktree(
+    *,
+    repo_root: Path,
+    worktree_path: Path,
+    branch: str,
+) -> Path:
+    """Create a git worktree for a ralph at *worktree_path* on *branch*.
+
+    If the branch does not exist, it is created from HEAD.  Returns the
+    resolved worktree path.
+
+    Raises :class:`WorktreeError` if the worktree already exists or the
+    git command fails.
+    """
+    if worktree_path.exists():
+        raise WorktreeError(f"Worktree path already exists: {worktree_path}")
+
+    # Check if the branch exists
+    check = subprocess.run(
+        ["git", "rev-parse", "--verify", branch],
+        cwd=repo_root,
+        **_SUBPROCESS_KWARGS,
+    )
+    if check.returncode == 0:
+        # Branch exists — check it out in the new worktree
+        _run_git(["worktree", "add", str(worktree_path), branch], cwd=repo_root)
+    else:
+        # Branch doesn't exist — create it with -b
+        _run_git(
+            ["worktree", "add", "-b", branch, str(worktree_path)],
+            cwd=repo_root,
+        )
+
+    return worktree_path.resolve()
+
+
+def remove_worktree(*, repo_root: Path, worktree_path: Path) -> None:
+    """Remove a git worktree at *worktree_path*.
+
+    Uses ``git worktree remove --force`` to handle dirty worktrees.
+    Raises :class:`WorktreeError` if the removal fails.
+    """
+    _run_git(
+        ["worktree", "remove", "--force", str(worktree_path)],
+        cwd=repo_root,
+    )
+
+
+def prune_worktrees(*, repo_root: Path) -> None:
+    """Prune stale worktree metadata from the repository.
+
+    This cleans up administrative data for worktrees whose directories
+    have been deleted externally (e.g. ``rm -rf``).
+    """
+    _run_git(["worktree", "prune"], cwd=repo_root)
+
+
+def setup_fleet_worktrees(
+    *, config: FleetConfig, repo_root: Path
+) -> dict[str, Path]:
+    """Create worktrees for all ralphs in a fleet that have ``worktree=True``.
+
+    Returns a mapping of ralph name → resolved worktree path.  Ralphs
+    with ``worktree=False`` are skipped (they run in the main working
+    tree) and their path is set to *repo_root*.
+
+    State directory is created if it doesn't exist.
+    """
+    base = repo_root / config.worktree_dir
+    state = repo_root / config.state_dir
+    state.mkdir(parents=True, exist_ok=True)
+
+    paths: dict[str, Path] = {}
+    for entry in config.ralphs:
+        if not entry.worktree:
+            paths[entry.name] = repo_root
+            continue
+
+        wt_path = base / entry.name
+        paths[entry.name] = create_worktree(
+            repo_root=repo_root,
+            worktree_path=wt_path,
+            branch=entry.branch,
+        )
+
+    return paths
+
+
+def teardown_fleet_worktrees(
+    *, config: FleetConfig, repo_root: Path
+) -> None:
+    """Remove all worktrees created for a fleet and prune stale metadata."""
+    base = repo_root / config.worktree_dir
+
+    for entry in config.ralphs:
+        if not entry.worktree:
+            continue
+        wt_path = base / entry.name
+        if wt_path.exists():
+            try:
+                remove_worktree(repo_root=repo_root, worktree_path=wt_path)
+            except WorktreeError:
+                pass  # Best-effort cleanup
+
+    prune_worktrees(repo_root=repo_root)
+
+    # Remove the worktree base directory if empty
+    if base.exists() and not any(base.iterdir()):
+        base.rmdir()
