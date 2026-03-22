@@ -101,6 +101,8 @@ Your instructions here. Use {{ args.dir }} for user arguments.
 
 - Pass via `ralph run my-ralph --dir ./src --focus "perf"` or `--dir=./src` (named flags)
 - Or positionally: `ralph run my-ralph ./src "perf"` (requires `args:` in frontmatter)
+- Mixed: `ralph run my-ralph --focus "perf" ./src` — positional args skip names already provided via flags
+- `--` ends flag parsing: `ralph run my-ralph -- --verbose ./src` treats `--verbose` as a positional value
 - Missing args resolve to empty string
 
 ## The loop
