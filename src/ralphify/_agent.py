@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import IO, Any
 
-from ralphify._output import SUBPROCESS_TEXT_KWARGS, collect_output
+from ralphify._output import SUBPROCESS_TEXT_KWARGS, ProcessResult, collect_output
 
 # Agent binary name that supports --output-format stream-json.
 _CLAUDE_BINARY = "claude"
@@ -45,7 +45,7 @@ _LOG_ITERATION_PAD_WIDTH = 3
 
 
 @dataclass
-class AgentResult:
+class AgentResult(ProcessResult):
     """Result of running the agent subprocess.
 
     *returncode* is the process exit code, or ``None`` when the process
@@ -53,16 +53,9 @@ class AgentResult:
     checking ``timed_out`` over ``returncode is None``.
     """
 
-    returncode: int | None
-    elapsed: float
-    log_file: Path | None
+    elapsed: float = 0.0
+    log_file: Path | None = None
     result_text: str | None = None
-    timed_out: bool = False
-
-    @property
-    def success(self) -> bool:
-        """Whether the agent exited successfully (code 0, no timeout)."""
-        return self.returncode == 0 and not self.timed_out
 
 
 @dataclass(frozen=True)

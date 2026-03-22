@@ -13,11 +13,11 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from ralphify._output import SUBPROCESS_TEXT_KWARGS, collect_output
+from ralphify._output import SUBPROCESS_TEXT_KWARGS, ProcessResult, collect_output
 
 
 @dataclass
-class RunResult:
+class RunResult(ProcessResult):
     """Result of running a command or script.
 
     *returncode* is the process exit code, or ``None`` when the process
@@ -25,14 +25,7 @@ class RunResult:
     checking ``timed_out`` over ``returncode is None``.
     """
 
-    returncode: int | None
-    output: str
-    timed_out: bool = False
-
-    @property
-    def success(self) -> bool:
-        """Whether the command exited successfully (code 0, no timeout)."""
-        return self.returncode == 0 and not self.timed_out
+    output: str = ""
 
 
 def run_command(

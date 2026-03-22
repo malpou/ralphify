@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 # Shared subprocess kwargs for text-mode execution with UTF-8 decoding.
@@ -12,6 +13,24 @@ SUBPROCESS_TEXT_KWARGS: dict[str, Any] = {
     "encoding": "utf-8",
     "errors": "replace",
 }
+
+
+@dataclass
+class ProcessResult:
+    """Base result for any subprocess execution.
+
+    Shared by :class:`~ralphify._runner.RunResult` and
+    :class:`~ralphify._agent.AgentResult` so the common *success*
+    logic lives in one place.
+    """
+
+    returncode: int | None
+    timed_out: bool = False
+
+    @property
+    def success(self) -> bool:
+        """Whether the process exited successfully (code 0, no timeout)."""
+        return self.returncode == 0 and not self.timed_out
 
 
 def collect_output(
