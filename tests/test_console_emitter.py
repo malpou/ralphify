@@ -3,7 +3,7 @@
 import pytest
 from rich.console import Console
 
-from ralphify._console_emitter import ConsoleEmitter, _IterationSpinner
+from ralphify._console_emitter import ConsoleEmitter, _DelayCountdown, _IterationSpinner
 from ralphify._events import Event, EventType
 
 
@@ -328,6 +328,43 @@ class TestRunStopped:
         assert "3 succeeded" in output
         assert "failed" not in output
         assert "timed out" not in output
+
+
+class TestDelayCountdown:
+    def test_renders_remaining_time(self):
+        countdown = _DelayCountdown(10.0)
+        console = Console(record=True, width=80)
+        console.print(countdown)
+        output = console.export_text()
+        assert "Waiting" in output
+        # Should contain a duration string
+        assert "s" in output
+
+    def test_delay_started_creates_live(self):
+        emitter, console = _capture_emitter()
+        assert emitter._live is None
+        emitter.emit(_make_event(EventType.DELAY_STARTED, delay=5.0))
+        assert emitter._live is not None
+        emitter._stop_live()  # clean up
+
+    def test_delay_ended_stops_live(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.DELAY_STARTED, delay=5.0))
+        assert emitter._live is not None
+        emitter.emit(_make_event(EventType.DELAY_ENDED))
+        assert emitter._live is None
+
+    def test_delay_lifecycle_full(self):
+        """DELAY_STARTED followed by DELAY_ENDED cleans up properly."""
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.DELAY_STARTED, delay=1.0))
+        assert emitter._live is not None
+        emitter.emit(_make_event(EventType.DELAY_ENDED))
+        assert emitter._live is None
+        # Should be safe to start another delay
+        emitter.emit(_make_event(EventType.DELAY_STARTED, delay=2.0))
+        assert emitter._live is not None
+        emitter._stop_live()
 
 
 class TestIterationSpinner:
