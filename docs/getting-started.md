@@ -207,6 +207,26 @@ If the agent breaks a test, the next iteration sees the failure output via `{{ c
 
 Once you're confident the loop works, drop the `-n 3` to let it run indefinitely. Press `Ctrl+C` to stop.
 
+## Step 7: Steer while it runs
+
+The prompt body is re-read from disk every iteration. You can edit `RALPH.md` while the loop is running and the agent follows your changes on the next cycle.
+
+When the agent does something you don't want, add a rule:
+
+```markdown
+## Rules
+
+- Do NOT delete failing tests — fix the underlying code instead
+```
+
+When you want to shift focus, change the task:
+
+```markdown
+Read TODO.md and focus only on the API module.
+```
+
+This is the most powerful part of ralph loops — you're steering a running agent with a text file. See [Tuning a running loop](writing-prompts.md#tuning-a-running-loop) for more patterns.
+
 ## Next steps
 
 - [Writing Prompts](writing-prompts.md) — patterns for writing effective autonomous loop prompts
