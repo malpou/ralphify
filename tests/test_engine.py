@@ -516,9 +516,10 @@ class TestDelayIfNeeded:
 
         assert elapsed >= 0.1
         events = drain_events(q)
-        assert len(events) == 1
-        assert events[0].type == EventType.LOG_MESSAGE
-        assert "Waiting" in events[0].data["message"]
+        assert len(events) == 2
+        assert events[0].type == EventType.DELAY_STARTED
+        assert events[0].data["delay"] == 0.15
+        assert events[1].type == EventType.DELAY_ENDED
 
     def test_no_delay_on_last_iteration(self, tmp_path):
         config = make_config(tmp_path, delay=0.5, max_iterations=3)

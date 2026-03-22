@@ -21,6 +21,8 @@ from ralphify._events import (
     BoundEmitter,
     CommandsCompletedData,
     CommandsStartedData,
+    DelayEndedData,
+    DelayStartedData,
     EventEmitter,
     EventType,
     IterationEndedData,
@@ -253,12 +255,13 @@ def _delay_if_needed(config: RunConfig, state: RunState, emit: BoundEmitter) -> 
     if config.delay > 0 and (
         config.max_iterations is None or state.iteration < config.max_iterations
     ):
-        emit.log_info(f"Waiting {config.delay}s...")
+        emit(EventType.DELAY_STARTED, DelayStartedData(delay=config.delay))
         remaining = config.delay
         while remaining > 0 and not state.stop_requested:
             chunk = min(remaining, _PAUSE_POLL_INTERVAL)
             time.sleep(chunk)
             remaining -= chunk
+        emit(EventType.DELAY_ENDED, DelayEndedData())
 
 
 def run_loop(
