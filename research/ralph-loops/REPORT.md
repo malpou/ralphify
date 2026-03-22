@@ -70,6 +70,7 @@
 | 16 | [Self-Repair, Resilience & Agent Debugging](chapters/16-self-repair-resilience-debugging.md) | Git checkpoint hierarchy, circuit breaker thresholds, 220-loop empirical data, AgentRx 9-category taxonomy, trace-driven development |
 | 17 | [Practitioner Cookbook Patterns](chapters/17-practitioner-cookbook-patterns.md) | 6 concrete loop configurations from the wild: PRD-driven, plan-then-build, TDD, guardrails accumulation, permission-gated, stale recovery |
 | 18 | [Eval-Driven Optimization & Production Deployment](chapters/18-eval-driven-optimization-production-deployment.md) | Meta-loop pattern (5 implementations), EDD methodology, pass@k vs pass^k, 3 deployment tiers, scheduled execution, team workflows, observability |
+| 19 | [Long-Running Agent State & Memory](chapters/19-long-running-state-memory.md) | Duration-failure curve, 4 memory architectures, 5 compression failure modes, restorable compression, state file patterns at scale |
 
 ## Open Questions
 
@@ -81,8 +82,9 @@
 - At what point does architectural drift from agent-generated code become unrepairable — is there a measurable "point of no return"?
 - Does the two-phase plan-then-build pattern measurably reduce "built the wrong thing" failures?
 - How does guardrails.md scale — at what point do accumulated guardrails become contradictory or context-consuming?
-- What does long-running agent operation (30+ days) teach about state design that shorter loops miss?
 - How do teams handle the reliability math problem (99%^20 = 82%) — shorter loops, better per-step accuracy, or acceptance of failure rates?
+- Which memory architecture (observational, graph, self-editing, RAG) best fits ralph loops — and can a "memory ralph" replace vector DB infrastructure?
+- How does Stripe's "Blueprints" architecture compare to RALPH.md for defining deterministic+agent hybrid workflows?
 
 ## Key Sources
 
@@ -148,3 +150,11 @@
 - [Building AI Coding Agents for the Terminal](https://arxiv.org/abs/2603.05344) — Nghi D. Q. Bui (OpenDev, 6-phase ReAct loop, first academic systematization of harness engineering)
 - [35-Agent AI Coding Swarm](https://earezki.com/ai-news/2026-03-20-i-built-a-35-agent-ai-coding-swarm-that-runs-overnight/) — earezki (6,500+ runs, 124 duplicate PRs, $65/day, 5-layer memory)
 - [Context Engineering Lessons from Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) — Peak Ji (KV-cache as #1 metric, 100:1 input-to-output, rebuilt 4x)
+- [Stripe Minions at Scale](https://www.infoq.com/news/2026/03/stripe-autonomous-coding-agents/) — InfoQ (1,300+ PRs/week, "Blueprints" architecture)
+- [ETH Zurich: AGENTS.md Value Review](https://www.infoq.com/news/2026/03/agents-context-file-value-review/) — InfoQ (context files reduced success by ~3%, increased costs 19-20%)
+- [QCon: AI for Developers in a Dangerous State](https://www.theregister.com/2026/03/18/ai_for_software_developers_qcon/) — The Register (expertise erosion paradox)
+- [Memory Compression Failure Modes](https://www.indium.tech/blog/agent-memory-compression-failure-modes/) — Indium Tech (5 failure modes for long-running agents)
+- [4 Memory Architectures for AI Agents](https://dev.to/ai_agent_digest/your-ai-agents-memory-is-broken-here-are-4-architectures-racing-to-fix-it-55j1) — DEV Community (Observational, Graph, Self-Editing, RAG)
+- [Google Always On Memory Agent](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent) — Google (no vector DB, SQLite + LLM consolidation)
+- [State of Agent Engineering](https://www.langchain.com/state-of-agent-engineering) — LangChain (89% observability, 52.4% evals, 57% agents in prod)
+- [Compaction as Gradient Descent Momentum](https://jxnl.co/writing/2025/08/30/context-engineering-compaction/) — Jason Liu (lossy compaction, experiential texture loss)

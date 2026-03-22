@@ -495,3 +495,33 @@
 - Research: deep dive into the earezki 35-agent swarm architecture — scaling patterns, failure modes, and the 5-layer memory design
 - Or: explore the OpenDev paper's 6-phase loop in detail — what does self-critique-before-action look like in practice?
 - Or: refine cycle — tighten chapters, ensure all new findings are reflected in Ch06 implications
+
+## Iteration 19 — 2026-03-22
+
+**Decision: RESEARCH**
+
+**Focus area:** Two under-explored threads with high practitioner relevance:
+1. **Long-running agent state design & operational lessons** — What does 30+ day agent operation teach about state management? The Meridian experiment (3,190 cycles) is the only data point. Are there new case studies, failure modes, or design patterns for agents running autonomously over weeks?
+2. **Latest March 2026 cutting-edge techniques** — What's been published in the last 2-3 days? New tools, new patterns, new practitioner reports. Focus on HN, Reddit, personal blogs, YouTube. The research is strong on architecture but needs the freshest practitioner voices.
+
+**What was done:**
+- Launched 3 parallel research agents: long-running state design (excellent), latest March 2026 content (excellent), reliability & testing (excellent)
+- Deep-read 25+ new sources across all three threads
+- Created chapter 19 (Long-Running Agent State & Memory) covering: duration-failure curve, 4 memory architectures, 5 compression failure modes, restorable compression, state file patterns, production failure modes, experiential texture problem
+- Found major new data points: Stripe Minions (1,300+ PRs/week), ETH Zurich (AGENTS.md files hurt performance), Fortune database destruction incident, QCon expertise erosion warning, LangChain survey data (89% observability, 52.4% evals)
+- Added 19 new sources, 8 new insights, answered 1 question (long-running state design), added 2 new questions
+- Updated REPORT.md with new chapter and key sources
+
+**Key surprises:**
+- ETH Zurich found AGENTS.md files REDUCED success by ~3% — counter-intuitive, validates minimal RALPH.md over verbose instruction dumps
+- Stripe Minions: 1,300+ PRs/week on $1T+ payment infrastructure — largest public autonomous coding deployment, uses "Blueprints" (deterministic + agent hybrid)
+- Doubling task duration quadruples failure rate — non-linear degradation, not linear. The compound math (85%^10 = 20%) is the fundamental argument for short iterations
+- Google's Always On Memory Agent uses NO vector DB — just SQLite + periodic LLM consolidation. Validates that a "memory ralph" could work without infrastructure
+- Five distinct memory compression failure modes (catastrophic forgetting, hallucination amplification, context drift, over-compression bottlenecks, bias creep) — first taxonomy for long-running agent memory degradation
+- Manus's "restorable compression" (keep pointers not content) directly validates ralphify's command-driven approach — commands RE-DERIVE state each iteration instead of summarizing
+- LangChain survey: only 52.4% of teams with production agents run offline evals — the gap between having agents and having reliable agents is still wide
+
+**Next iteration should focus on:**
+- Refine cycle (iteration 20): 22 insights, 19 chapters — the chapter count is high. Consider merging some chapters.
+- Or: update Ch06 (implications) with memory ralph pattern, restorable compression guideline, ETH Zurich validation, Stripe competitive context
+- Or: research the "built the wrong thing" / intent-failure problem more deeply — it was flagged as the defining failure mode of 2026 but lacks concrete solutions

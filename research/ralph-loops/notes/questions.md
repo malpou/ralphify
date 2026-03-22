@@ -32,8 +32,9 @@
 - [ ] What's the optimal eval dataset size for meta-loop prompt optimization? Arize used 150 train/150 test — is that enough for ralph loops?
 - [ ] How do teams handle the reliability math problem (99%^20 = 82%) in practice — shorter loops, better per-step accuracy, or acceptance of failure rates?
 - [ ] Does GitHub's "Continuous AI" (agentic workflows) change team dynamics vs. traditional CI/CD? Early adoption data?
-- [ ] What does long-running agent operation (30+ days) teach about state design that shorter loops miss? Meridian's 3,190 cycles are the only data point.
 - [ ] At what point does architectural drift from agent-generated code become unrepairable — is there a measurable "point of no return"?
+- [ ] Which memory architecture (observational, graph, self-editing, RAG) best fits ralph loops — and can a "memory ralph" replace vector DB infrastructure?
+- [ ] How does Stripe's "Blueprints" architecture compare to RALPH.md for defining deterministic+agent hybrid workflows?
 
 ## Answered
 - [x] How do practitioners handle non-deterministic verification (e.g., subjective quality in writing/design tasks)? — Block's 4-layer testing pyramid: deterministic foundation + record/playback + probabilistic benchmarks + LLM-as-judge with rubrics (3 rounds, majority vote). See chapter 11.
@@ -63,3 +64,4 @@
 - [x] How does the "agent skill" packaging ecosystem evolve? — 500+ skills in SKILL.md format, cross-platform (18+ agents), marketplace launched (SkillsMP.com). See chapter 10.
 - [x] What emerging tools/frameworks are challenging the "simple harness" philosophy? — BMAD+Ralph adds structured planning; ralph-claude-code adds circuit breakers; Aura Guard adds deterministic safety middleware. But "simple harness" still wins for most use cases. See chapter 10.
 - [x] What's the optimal CLAUDE.md/RALPH.md length? — Validated at <300 lines broadly. Boris Cherny uses CLAUDE.md as living documentation (adding mistakes). Mario Giancini uses per-project configs for monorepos. See chapter 10.
+- [x] What does long-running agent operation (30+ days) teach about state design that shorter loops miss? — Four competing memory architectures (observational, graph, self-editing, RAG), five compression failure modes, and the compound failure math (85% per step → 20% for 10 steps). Restorable compression (keep pointers, not content) is the emerging best practice. Periodic fresh starts beat accumulated memory. See Ch19.

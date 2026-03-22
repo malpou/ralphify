@@ -242,3 +242,25 @@
 - https://earezki.com/ai-news/2026-03-20-i-built-a-35-agent-ai-coding-swarm-that-runs-overnight/ — earezki/Mathew Dostal — 35 concurrent agents, 6,500+ runs, 124 duplicate PRs, $65/day cost spikes, 5-layer memory (CLAUDE.md + local files + Qdrant vector DB), zombie process detection — **high**
 - https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus — Peak Ji / Manus — KV-cache hit rate as #1 production metric; 100:1 input-to-output ratio; prompt prefix stability for 10x cost reduction; rebuilt framework 4x ("Stochastic Graduate Descent") — **high**
 - https://addyosmani.com/blog/self-improving-agents/ — Addy Osmani — Detailed technical breakdown of continuous coding loops: atomic task design, validation gates, context management, scaling patterns — **medium**
+
+## New Sources — Iteration 19
+
+- https://fortune.com/2026/03/18/ai-coding-risks-amazon-agents-enterprise/ — Fortune — Production database destruction by Claude Code, Amazon outages from AI-assisted changes, only 48% of devs review AI code — **high**
+- https://www.infoq.com/news/2026/03/stripe-autonomous-coding-agents/ — InfoQ — Stripe Minions: 1,300+ PRs/week, $1T+ payment volume, "Blueprints" mixing deterministic code and agent loops — **high**
+- https://www.theregister.com/2026/03/18/ai_for_software_developers_qcon/ — The Register — QCon London: Bockeler warns AI tools erode expertise needed to supervise them, "lethal trifecta" — **high**
+- https://www.infoq.com/news/2026/03/agents-context-file-value-review/ — InfoQ/ETH Zurich — LLM-generated context files REDUCED success rates by ~3%, human-written only +4%, both increased costs 19-20% — **high**
+- https://qconlondon.com/presentation/mar2026/context-engineering-building-knowledge-engine-ai-agents-need — QCon London — "Context Engineering: Building the Knowledge Engine", context should undergo version control and CI/CD — **high**
+- https://jxnl.co/writing/2025/08/30/context-engineering-compaction/ — Jason Liu — Compaction as "momentum in gradient descent", doesn't always pass clear instructions to next agent — **high**
+- https://www.indium.tech/blog/agent-memory-compression-failure-modes/ — Indium Tech — 5 memory compression failure modes: catastrophic forgetting, hallucination amplification, context drift, over-compression bottlenecks, bias creep — **high**
+- https://dev.to/ai_agent_digest/your-ai-agents-memory-is-broken-here-are-4-architectures-racing-to-fix-it-55j1 — DEV Community — 4 memory architectures: Observational (94.87%), Graph (Zep), Self-Editing (MemGPT), RAG+Hybrid — **high**
+- https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent — Google — Always On Memory Agent: no vector DB, SQLite, 30-min consolidation loop, open-sourced March 2026 — **high**
+- https://arxiv.org/abs/2502.12110 — NeurIPS 2025 — A-MEM: Zettelkasten method for interconnected agent knowledge networks — **medium**
+- https://arxiv.org/abs/2504.19413 — Mem0 — 91% lower p95 latency, 90%+ token cost savings vs full-context — **medium**
+- https://arxiv.org/abs/2501.13956 — Zep/Graphiti — Temporal knowledge graph for agent memory, 18.5% accuracy improvement — **medium**
+- https://news.ycombinator.com/item?id=46988596 — HN — Improving 15 LLMs via harness changes: 5-14% improvement, ~20% token reduction — **high**
+- https://georgetaskos.medium.com/the-real-ai-failure-mode-flawless-execution-of-wrong-specs-9c20b8416bda — George Taskos — "The real AI failure mode: flawless execution of wrong specs" — **high**
+- https://www.langchain.com/state-of-agent-engineering — LangChain — State of Agent Engineering survey: 89% observability, 52.4% offline evals, 57% agents in prod — **high**
+- https://guardrails.md/ — GUARDRAILS.md community standard — Four universal patterns, anti-patterns, context rotation at 80% capacity — **medium**
+- https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/ — METR — RCT: experienced devs 19% slower with AI, believe they're 20% faster, N=246 — **high**
+- https://www.coderabbit.ai/blog/2025-was-the-year-of-ai-speed-2026-will-be-the-year-of-ai-quality — CodeRabbit — 1.7x defect rate in AI-generated code vs human — **medium**
+- https://harness-engineering.ai/blog/daily-ai-agent-news-roundup-march-20-2026-3/ — harness-engineering.ai — GPT-5.4 with 1M context + Pro Mode, Skylos security tool, framework comparison — **medium**
