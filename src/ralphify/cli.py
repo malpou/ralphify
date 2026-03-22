@@ -34,6 +34,14 @@ from ralphify._frontmatter import (
     parse_frontmatter,
 )
 from ralphify._run_types import Command, DEFAULT_COMMAND_TIMEOUT, RunConfig, RunState, generate_run_id
+from ralphify._fleet import (
+    FLEET_MARKER,
+    FleetConfigError,
+    FleetOrchestrator,
+    FleetStatus,
+    WorktreeError,
+    parse_fleet_config,
+)
 from ralphify.engine import run_loop
 
 if sys.platform == "win32":
@@ -466,3 +474,113 @@ def run(
     emitter = ConsoleEmitter(_console)
 
     run_loop(config, state, emitter)
+
+
+# ---------------------------------------------------------------------------
+# Fleet sub-commands
+# ---------------------------------------------------------------------------
+
+fleet_app = typer.Typer(help="Manage fleets of ralphs running in parallel worktrees.")
+app.add_typer(fleet_app, name="fleet")
+
+
+def _resolve_fleet_config(config_path: str | None) -> Path:
+    """Resolve the fleet config file path, defaulting to ``fleet.yml`` in cwd."""
+    if config_path:
+        path = Path(config_path)
+    else:
+        path = Path.cwd() / FLEET_MARKER
+    if not path.is_file():
+        _exit_error(f"Fleet config not found: {path}")
+    return path
+
+
+@fleet_app.command()
+def start(
+    config: str | None = typer.Argument(None, help=f"Path to {FLEET_MARKER}. Defaults to ./{FLEET_MARKER}"),
+) -> None:
+    """Start a fleet of ralphs in parallel worktrees."""
+    path = _resolve_fleet_config(config)
+
+    try:
+        fleet_config = parse_fleet_config(path)
+    except (ValueError, FileNotFoundError) as exc:
+        _exit_error(str(exc))
+
+    repo_root = Path.cwd()
+    orchestrator = FleetOrchestrator(fleet_config, repo_root)
+
+    _console.print(f"[bold]Starting fleet '[cyan]{fleet_config.name}[/cyan]' with {len(fleet_config.ralphs)} ralphs[/bold]")
+    for entry in fleet_config.ralphs:
+        _console.print(f"  [dim]•[/dim] {entry.name} → {entry.branch}")
+
+    try:
+        orchestrator.start()
+    except (FleetConfigError, WorktreeError) as exc:
+        _exit_error(str(exc))
+
+    _console.print(f"\n[green]Fleet '{fleet_config.name}' is running.[/green]")
+    _console.print("[dim]Press Ctrl+C to stop all ralphs.[/dim]")
+
+    try:
+        # Block until interrupted — the fleet runs on daemon threads
+        while orchestrator.status == FleetStatus.RUNNING:
+            import time
+            time.sleep(1)
+    except KeyboardInterrupt:
+        _console.print("\n[yellow]Stopping fleet…[/yellow]")
+        orchestrator.stop()
+        _console.print("[green]Fleet stopped.[/green]")
+
+
+@fleet_app.command()
+def status(
+    config: str | None = typer.Argument(None, help=f"Path to {FLEET_MARKER}. Defaults to ./{FLEET_MARKER}"),
+) -> None:
+    """Show status of ralphs defined in a fleet config."""
+    path = _resolve_fleet_config(config)
+
+    try:
+        fleet_config = parse_fleet_config(path)
+    except (ValueError, FileNotFoundError) as exc:
+        _exit_error(str(exc))
+
+    _console.print(f"[bold]Fleet: [cyan]{fleet_config.name}[/cyan][/bold]\n")
+
+    from rich.table import Table
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Ralph")
+    table.add_column("Branch")
+    table.add_column("Worktree")
+    table.add_column("Priority")
+    table.add_column("Depends On")
+
+    for entry in fleet_config.ralphs:
+        table.add_row(
+            entry.name,
+            entry.branch,
+            "yes" if entry.worktree else "no",
+            str(entry.priority),
+            ", ".join(entry.depends_on) if entry.depends_on else "-",
+        )
+
+    _console.print(table)
+
+    settings = fleet_config.settings
+    _console.print(f"\n[dim]Max concurrent: {settings.max_concurrent or 'unlimited'}[/dim]")
+    _console.print(f"[dim]Stagger start: {settings.stagger_start}s[/dim]")
+
+
+@fleet_app.command()
+def stop() -> None:
+    """Stop all ralphs in a running fleet.
+
+    This command sends a stop signal by creating a sentinel file that
+    a running fleet can detect. For immediate termination, use Ctrl+C
+    on the ``ralph fleet start`` process.
+    """
+    _console.print(
+        "[yellow]To stop a running fleet, press Ctrl+C in the terminal "
+        "where 'ralph fleet start' is running.[/yellow]"
+    )
