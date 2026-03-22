@@ -67,7 +67,7 @@ class RunManager:
         except KeyError:
             raise KeyError(f"No run with ID '{run_id}'") from None
 
-    def _get_run(self, run_id: str) -> ManagedRun:
+    def _require_run(self, run_id: str) -> ManagedRun:
         """Look up a run by ID under the lock. Raises ``KeyError`` if missing."""
         with self._lock:
             return self._lookup(run_id)
@@ -114,15 +114,15 @@ class RunManager:
 
     def stop_run(self, run_id: str) -> None:
         """Signal the run to stop after the current iteration finishes."""
-        self._get_run(run_id).state.request_stop()
+        self._require_run(run_id).state.request_stop()
 
     def pause_run(self, run_id: str) -> None:
         """Pause the run between iterations until :meth:`resume_run` is called."""
-        self._get_run(run_id).state.request_pause()
+        self._require_run(run_id).state.request_pause()
 
     def resume_run(self, run_id: str) -> None:
         """Resume a paused run."""
-        self._get_run(run_id).state.request_resume()
+        self._require_run(run_id).state.request_resume()
 
     def list_runs(self) -> list[ManagedRun]:
         """Return a snapshot of all registered runs."""

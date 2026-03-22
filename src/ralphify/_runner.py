@@ -18,12 +18,7 @@ from ralphify._output import SUBPROCESS_TEXT_KWARGS, ProcessResult, collect_outp
 
 @dataclass
 class RunResult(ProcessResult):
-    """Result of running a command or script.
-
-    *returncode* is the process exit code, or ``None`` when the process
-    timed out.  *timed_out* makes the timeout condition explicit — prefer
-    checking ``timed_out`` over ``returncode is None``.
-    """
+    """Result of running a command or script."""
 
     output: str = ""
 

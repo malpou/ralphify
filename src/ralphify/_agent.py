@@ -46,12 +46,7 @@ _LOG_ITERATION_PAD_WIDTH = 3
 
 @dataclass
 class AgentResult(ProcessResult):
-    """Result of running the agent subprocess.
-
-    *returncode* is the process exit code, or ``None`` when the process
-    timed out.  *timed_out* makes the timeout condition explicit — prefer
-    checking ``timed_out`` over ``returncode is None``.
-    """
+    """Result of running the agent subprocess."""
 
     elapsed: float = 0.0
     log_file: Path | None = None

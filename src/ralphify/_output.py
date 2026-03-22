@@ -22,6 +22,10 @@ class ProcessResult:
     Shared by :class:`~ralphify._runner.RunResult` and
     :class:`~ralphify._agent.AgentResult` so the common *success*
     logic lives in one place.
+
+    *returncode* is the process exit code, or ``None`` when the process
+    timed out.  *timed_out* makes the timeout condition explicit — prefer
+    checking ``timed_out`` over ``returncode is None``.
     """
 
     returncode: int | None
