@@ -57,7 +57,7 @@ def _extract_frontmatter_block(text: str) -> tuple[str, str]:
         return "", text
 
     for i, line in enumerate(lines[1:], start=1):
-        if line.strip() == _FRONTMATTER_DELIMITER:
+        if line.rstrip() == _FRONTMATTER_DELIMITER:
             fm_raw = "\n".join(lines[1:i])
             body = "\n".join(lines[i + 1 :]).strip()
             return fm_raw, body

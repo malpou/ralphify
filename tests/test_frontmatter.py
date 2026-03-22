@@ -57,6 +57,16 @@ class TestExtractFrontmatterBlock:
         _, body = _extract_frontmatter_block(text)
         assert body == "Hello"
 
+    def test_indented_triple_dash_not_treated_as_closing_delimiter(self):
+        """An indented '---' inside a YAML block scalar must not be mistaken
+        for the closing frontmatter delimiter.  Only unindented '---' at
+        column 0 should close the frontmatter block."""
+        text = "---\nagent: claude\nnotes: |\n  first\n  ---\n  third\n---\nBody"
+        fm, body = _extract_frontmatter_block(text)
+        assert "notes:" in fm
+        assert "---" in fm  # the indented --- is part of frontmatter
+        assert body == "Body"
+
 
 class TestParseFrontmatter:
     def test_basic_parsing(self):
@@ -106,6 +116,14 @@ class TestParseFrontmatter:
         text = "---\n# just a YAML comment\n---\nBody"
         fm, body = parse_frontmatter(text)
         assert fm == {}
+        assert body == "Body"
+
+    def test_block_scalar_with_triple_dash_parsed_correctly(self):
+        """A YAML block scalar containing '---' must not break frontmatter parsing."""
+        text = "---\nagent: claude\nnotes: |\n  first\n  ---\n  third\n---\nBody"
+        fm, body = parse_frontmatter(text)
+        assert fm["agent"] == "claude"
+        assert "---" in fm["notes"]
         assert body == "Body"
 
     def test_non_dict_frontmatter_raises_value_error(self):
