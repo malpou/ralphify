@@ -217,6 +217,37 @@ class TestLogMessage:
         assert "[red]missing[/red]" in output
 
 
+class TestIterationIdle:
+    def test_idle_shows_dimmed_output(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.ITERATION_IDLE,
+            iteration=3, detail="idle (2s)", log_file=None, result_text=None,
+        ))
+        output = console.export_text()
+        assert "Iteration 3" in output
+        assert "idle (2s)" in output
+
+    def test_idle_shows_log_file(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.ITERATION_IDLE,
+            iteration=1, detail="idle (1s)", log_file="/tmp/idle.log", result_text=None,
+        ))
+        output = console.export_text()
+        assert "/tmp/idle.log" in output
+
+    def test_idle_stops_live_display(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(EventType.ITERATION_STARTED, iteration=1))
+        assert emitter._live is not None
+        emitter.emit(_make_event(
+            EventType.ITERATION_IDLE,
+            iteration=1, detail="idle (1s)", log_file=None, result_text=None,
+        ))
+        assert emitter._live is None
+
+
 class TestRunStopped:
     def test_completed_shows_summary(self):
         emitter, console = _capture_emitter()
@@ -280,6 +311,17 @@ class TestRunStopped:
             reason="user_requested", total=1, completed=0, failed=0, timed_out=0,
         ))
         assert emitter._live is None
+
+    def test_max_idle_shows_summary(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STOPPED,
+            reason="max_idle", total=4, completed=2, failed=0, timed_out=0,
+        ))
+        output = console.export_text()
+        assert "Stopped (idle):" in output
+        assert "4 iteration(s)" in output
+        assert "2 succeeded" in output
 
     def test_completed_all_succeeded(self):
         emitter, console = _capture_emitter()

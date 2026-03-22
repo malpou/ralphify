@@ -20,6 +20,7 @@ from rich.text import Text
 from ralphify._events import (
     LOG_ERROR,
     STOP_COMPLETED,
+    STOP_MAX_IDLE,
     CommandsCompletedData,
     Event,
     EventType,
@@ -34,6 +35,7 @@ from ralphify._output import format_duration
 _ICON_SUCCESS = "✓"
 _ICON_FAILURE = "✗"
 _ICON_TIMEOUT = "⏱"
+_ICON_IDLE = "◇"
 _ICON_ARROW = "→"
 _ICON_DASH = "—"
 
@@ -66,6 +68,7 @@ class ConsoleEmitter:
             EventType.ITERATION_COMPLETED: partial(self._on_iteration_ended, color="green", icon=_ICON_SUCCESS),
             EventType.ITERATION_FAILED: partial(self._on_iteration_ended, color="red", icon=_ICON_FAILURE),
             EventType.ITERATION_TIMED_OUT: partial(self._on_iteration_ended, color="yellow", icon=_ICON_TIMEOUT),
+            EventType.ITERATION_IDLE: partial(self._on_iteration_ended, color="dim", icon=_ICON_IDLE),
             EventType.COMMANDS_COMPLETED: self._on_commands_completed,
             EventType.LOG_MESSAGE: self._on_log_message,
             EventType.RUN_STOPPED: self._on_run_stopped,
@@ -143,7 +146,8 @@ class ConsoleEmitter:
 
     def _on_run_stopped(self, data: RunStoppedData) -> None:
         self._stop_live()
-        if data["reason"] != STOP_COMPLETED:
+        reason = data["reason"]
+        if reason not in (STOP_COMPLETED, STOP_MAX_IDLE):
             return
 
         total = data["total"]
@@ -161,4 +165,7 @@ class ConsoleEmitter:
             parts.append(f"{timed_out_count} timed out")
         detail = ", ".join(parts)
         self._console.print(f"\n[bold blue]──────────────────────[/bold blue]")
-        self._console.print(f"[bold green]Done:[/bold green] {total} iteration(s) {_ICON_DASH} {detail}")
+        if reason == STOP_MAX_IDLE:
+            self._console.print(f"[bold yellow]Stopped (idle):[/bold yellow] {total} iteration(s) {_ICON_DASH} {detail}")
+        else:
+            self._console.print(f"[bold green]Done:[/bold green] {total} iteration(s) {_ICON_DASH} {detail}")
