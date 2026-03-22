@@ -434,6 +434,56 @@ def _build_run_config(
 
 
 @app.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True})
+def watch(
+    ctx: typer.Context,
+    path: str = typer.Argument(..., help="Path to a ralph directory or RALPH.md file."),
+    n: int | None = typer.Option(None, "-n", help="Max number of iterations. Infinite if not set."),
+    stop_on_error: bool = typer.Option(False, "--stop-on-error", "-s", help="Stop if the agent exits non-zero or times out."),
+    delay: float = typer.Option(0, "--delay", "-d", help="Seconds to wait between iterations."),
+    log_dir: str | None = typer.Option(None, "--log-dir", "-l", help="Save iteration output to log files in this directory."),
+    timeout: float | None = typer.Option(None, "--timeout", "-t", help="Max seconds per iteration. Kill agent if exceeded."),
+) -> None:
+    """Run the autonomous loop with a live TUI dashboard.
+
+    Same as 'ralph run' but renders a full-screen terminal dashboard
+    showing iteration progress, streak counter, success rate, and a
+    scrollable event log.  Press q to quit, p to pause/resume.
+
+    Extra flags (--name value) and positional args after the path are
+    passed as user arguments.  Use {{ args.name }} placeholders in
+    RALPH.md to reference them.
+    """
+    import threading
+
+    from ralphify._tui import TuiEmitter, WatchApp
+
+    extra = list(ctx.args)
+    config = _build_run_config(
+        path, n, stop_on_error, delay, log_dir, timeout,
+        extra_args=extra or None,
+    )
+
+    state = RunState(run_id=generate_run_id())
+    ralph_name = config.ralph_dir.name
+
+    tui_app = WatchApp(
+        ralph_name=ralph_name,
+        max_iterations=config.max_iterations,
+        on_pause=state.request_pause,
+        on_resume=state.request_resume,
+    )
+    emitter = TuiEmitter(tui_app)
+
+    def engine_thread() -> None:
+        run_loop(config, state, emitter)
+
+    thread = threading.Thread(target=engine_thread, daemon=True)
+    thread.start()
+    tui_app.run()
+    state.request_stop()
+
+
+@app.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": True, "ignore_unknown_options": True})
 def run(
     ctx: typer.Context,
     path: str = typer.Argument(..., help="Path to a ralph directory or RALPH.md file."),
