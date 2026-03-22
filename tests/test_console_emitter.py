@@ -24,23 +24,74 @@ class TestEmitDispatch:
         # AGENT_ACTIVITY has no handler registered — should be silently ignored
         emitter.emit(_make_event(EventType.AGENT_ACTIVITY, raw="data"))
 
+    def test_run_started_shows_ralph_name(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STARTED,
+            ralph_name="my-ralph", timeout=0, commands=0, max_iterations=None,
+        ))
+        output = console.export_text()
+        assert "my-ralph" in output
+
+    def test_run_started_shows_iteration_count(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STARTED,
+            ralph_name="my-ralph", timeout=0, commands=0, max_iterations=5,
+        ))
+        output = console.export_text()
+        assert "5 iterations" in output
+
+    def test_run_started_shows_infinite_when_no_max(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STARTED,
+            ralph_name="my-ralph", timeout=0, commands=0, max_iterations=None,
+        ))
+        output = console.export_text()
+        assert "∞ iterations" in output
+
+    def test_run_started_shows_singular_iteration(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STARTED,
+            ralph_name="my-ralph", timeout=0, commands=0, max_iterations=1,
+        ))
+        output = console.export_text()
+        assert "1 iteration" in output
+        # Should not say "1 iterations"
+        assert "1 iterations" not in output
+
     def test_run_started_shows_timeout(self):
         emitter, console = _capture_emitter()
-        emitter.emit(_make_event(EventType.RUN_STARTED, timeout=120, commands=0))
+        emitter.emit(_make_event(
+            EventType.RUN_STARTED,
+            ralph_name="my-ralph", timeout=120, commands=0, max_iterations=None,
+        ))
         output = console.export_text()
         assert "2m 0s" in output
 
     def test_run_started_shows_command_count(self):
         emitter, console = _capture_emitter()
-        emitter.emit(_make_event(EventType.RUN_STARTED, timeout=0, commands=3))
+        emitter.emit(_make_event(
+            EventType.RUN_STARTED,
+            ralph_name="my-ralph", timeout=0, commands=3, max_iterations=None,
+        ))
         output = console.export_text()
-        assert "3 configured" in output
+        assert "3 commands" in output
 
-    def test_run_started_no_output_when_no_timeout_or_commands(self):
+    def test_run_started_no_details_when_no_timeout_or_commands(self):
         emitter, console = _capture_emitter()
-        emitter.emit(_make_event(EventType.RUN_STARTED, timeout=0, commands=0))
+        emitter.emit(_make_event(
+            EventType.RUN_STARTED,
+            ralph_name="my-ralph", timeout=0, commands=0, max_iterations=None,
+        ))
         output = console.export_text()
-        assert output.strip() == ""
+        # Should still show the header line with name
+        assert "my-ralph" in output
+        # But no details line
+        assert "timeout" not in output
+        assert "command" not in output
 
 
 class TestIterationLifecycle:

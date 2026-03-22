@@ -76,12 +76,23 @@ class ConsoleEmitter:
             handler(event.data)
 
     def _on_run_started(self, data: RunStartedData) -> None:
+        name = data["ralph_name"]
+        max_iter = data["max_iterations"]
+        if max_iter is not None:
+            iter_label = f"{max_iter} iteration{'s' if max_iter != 1 else ''}"
+        else:
+            iter_label = "∞ iterations"
+        self._console.print(f"\n[bold]▶ {name}[/bold]  [dim]{iter_label}[/dim]")
+
+        details: list[str] = []
         timeout = data["timeout"]
         if timeout is not None and timeout > 0:
-            self._console.print(f"[dim]Timeout: {format_duration(timeout)} per iteration[/dim]")
+            details.append(f"timeout {format_duration(timeout)}")
         command_count = data["commands"]
         if command_count > 0:
-            self._console.print(f"[dim]Commands: {command_count} configured[/dim]")
+            details.append(f"{command_count} command{'s' if command_count != 1 else ''}")
+        if details:
+            self._console.print(f"  [dim]{' · '.join(details)}[/dim]")
 
     def _start_live(self) -> None:
         spinner = _IterationSpinner()
