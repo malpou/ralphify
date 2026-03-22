@@ -277,6 +277,42 @@ class TestAgentResult:
         assert result.success is False
 
 
+class TestStdoutTextPopulation:
+    """Tests for stdout_text field population in AgentResult."""
+
+    @patch(MOCK_POPEN)
+    def test_streaming_populates_stdout_text(self, mock_popen):
+        mock_popen.return_value = make_mock_popen(
+            stdout_lines='{"type": "status", "msg": "working"}\nplain line\n',
+            returncode=0,
+        )
+        result = _run_agent_streaming(
+            ["claude", "-p"], "prompt", timeout=None, log_path_dir=None, iteration=1,
+        )
+
+        assert result.stdout_text is not None
+        assert "working" in result.stdout_text
+        assert "plain line" in result.stdout_text
+
+    @patch(MOCK_SUBPROCESS)
+    def test_blocking_populates_stdout_text_when_logging(self, mock_run, tmp_path):
+        mock_run.return_value = ok_result(stdout="agent output\n")
+        result = execute_agent(
+            ["echo"], "prompt", timeout=None, log_path_dir=tmp_path, iteration=1,
+        )
+
+        assert result.stdout_text == "agent output\n"
+
+    @patch(MOCK_SUBPROCESS)
+    def test_blocking_stdout_text_none_without_logging(self, mock_run):
+        mock_run.return_value = ok_result()
+        result = execute_agent(
+            ["echo"], "prompt", timeout=None, log_path_dir=None, iteration=1,
+        )
+
+        assert result.stdout_text is None
+
+
 class TestExecuteAgentDispatch:
     """Tests for execute_agent routing to streaming vs blocking mode."""
 

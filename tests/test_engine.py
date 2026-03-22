@@ -1006,6 +1006,23 @@ class TestIdleDetection:
         stop = events_of_type(events, EventType.RUN_STOPPED)[0]
         assert stop.data["reason"] == "max_idle"
 
+    @patch(MOCK_EXECUTE_AGENT, return_value=_idle_agent_result(
+        result_text="no marker here", stdout_text=IDLE_STATE_MARKER,
+    ))
+    def test_idle_detected_via_stdout_fallback(self, mock_agent, tmp_path):
+        """When result_text lacks the marker but stdout_text contains it,
+        idle is still detected."""
+        config = make_config(tmp_path, max_iterations=1, idle=IdleConfig())
+        state = make_state()
+        q = QueueEmitter()
+
+        run_loop(config, state, q)
+
+        events = drain_events(q)
+        types = event_types(events)
+        assert EventType.ITERATION_IDLE in types
+        assert EventType.ITERATION_COMPLETED not in types
+
     @pytest.mark.parametrize("agent_result, expected_type", [
         (AgentResult(returncode=0, elapsed=1.0, result_text=None), EventType.ITERATION_COMPLETED),
         (AgentResult(returncode=1, elapsed=1.0, result_text=IDLE_STATE_MARKER), EventType.ITERATION_FAILED),
