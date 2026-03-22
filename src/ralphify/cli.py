@@ -30,10 +30,6 @@ from ralphify._frontmatter import (
     FIELD_COMMANDS,
     FIELD_CREDIT,
     FIELD_IDLE,
-    IDLE_FIELD_BACKOFF,
-    IDLE_FIELD_DELAY,
-    IDLE_FIELD_MAX,
-    IDLE_FIELD_MAX_DELAY,
     RALPH_MARKER,
     VALID_NAME_CHARS_MSG,
     parse_duration,
@@ -409,26 +405,20 @@ def _validate_idle(raw_idle: Any) -> IdleConfig | None:
         _exit_error(f"{label} must be a number or duration string, got {type(value).__name__}.")
 
     kwargs: dict[str, Any] = {}
-    duration_fields = {
-        IDLE_FIELD_DELAY: "delay",
-        IDLE_FIELD_MAX_DELAY: "max_delay",
-        IDLE_FIELD_MAX: "max",
-    }
-    for field, kwarg in duration_fields.items():
+    for field in ("delay", "max_delay", "max"):
         if field in raw_idle:
-            kwargs[kwarg] = _parse_duration_field(raw_idle[field], field)
+            kwargs[field] = _parse_duration_field(raw_idle[field], field)
 
-    if IDLE_FIELD_BACKOFF in raw_idle:
-        backoff = raw_idle[IDLE_FIELD_BACKOFF]
-        label = f"'{FIELD_IDLE}.{IDLE_FIELD_BACKOFF}'"
+    if "backoff" in raw_idle:
+        backoff = raw_idle["backoff"]
+        label = f"'{FIELD_IDLE}.backoff'"
         if isinstance(backoff, bool) or not isinstance(backoff, (int, float)):
             _exit_error(f"{label} must be a positive number, got {backoff!r}.")
         if not math.isfinite(backoff) or backoff <= 0:
             _exit_error(f"{label} must be positive, got {backoff!r}.")
         kwargs["backoff"] = float(backoff)
 
-    known_fields = {IDLE_FIELD_DELAY, IDLE_FIELD_BACKOFF, IDLE_FIELD_MAX_DELAY, IDLE_FIELD_MAX}
-    unknown = set(raw_idle.keys()) - known_fields
+    unknown = set(raw_idle.keys()) - {"delay", "backoff", "max_delay", "max"}
     if unknown:
         _exit_error(f"Unknown field(s) in '{FIELD_IDLE}': {', '.join(sorted(unknown))}.")
 

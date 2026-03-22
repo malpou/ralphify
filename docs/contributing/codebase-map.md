@@ -124,7 +124,7 @@ The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders 
 
 Frontmatter parsing is in `_frontmatter.py:parse_frontmatter()`, which returns a raw dict. Each field is then validated and coerced by a dedicated helper in `cli.py` — e.g. `_validate_agent()`, `_validate_commands()`, `_validate_credit()`. Adding a new frontmatter field means adding a new validator in `cli.py` and wiring it into `_build_run_config()`.
 
-**Field name constants** (`FIELD_AGENT`, `FIELD_COMMANDS`, `FIELD_ARGS`, `FIELD_CREDIT`, `FIELD_IDLE`, `CMD_FIELD_NAME`, `CMD_FIELD_RUN`, `CMD_FIELD_TIMEOUT`, `IDLE_FIELD_DELAY`, `IDLE_FIELD_BACKOFF`, `IDLE_FIELD_MAX_DELAY`, `IDLE_FIELD_MAX`) are centralized in `_frontmatter.py`. Always import these constants instead of hardcoding strings like `"agent"` or `"commands"` — this keeps error messages, validation, and placeholder resolution in sync when fields are renamed.
+**Field name constants** (`FIELD_AGENT`, `FIELD_COMMANDS`, `FIELD_ARGS`, `FIELD_CREDIT`, `FIELD_IDLE`, `CMD_FIELD_NAME`, `CMD_FIELD_RUN`, `CMD_FIELD_TIMEOUT`) are centralized in `_frontmatter.py`. Always import these constants instead of hardcoding strings like `"agent"` or `"commands"` — this keeps error messages, validation, and placeholder resolution in sync when fields are renamed.
 
 ### If you add a new CLI command...
 

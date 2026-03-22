@@ -27,12 +27,6 @@ FIELD_ARGS = "args"
 FIELD_CREDIT = "credit"
 FIELD_IDLE = "idle"
 
-# Sub-field names within the idle configuration mapping.
-IDLE_FIELD_DELAY = "delay"
-IDLE_FIELD_BACKOFF = "backoff"
-IDLE_FIELD_MAX_DELAY = "max_delay"
-IDLE_FIELD_MAX = "max"
-
 # Sub-field names within each command mapping.
 CMD_FIELD_NAME = "name"
 CMD_FIELD_RUN = "run"
