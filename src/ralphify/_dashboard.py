@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import queue
 import threading
-from functools import partial
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from importlib import resources
 from typing import TYPE_CHECKING
@@ -156,11 +155,16 @@ def start_dashboard(
 
     manager.create_run = _patched_create  # type: ignore[method-assign]
 
-    handler = partial(_DashboardHandler)
-    handler.manager = manager  # type: ignore[attr-defined]
-    handler.emitter = emitter  # type: ignore[attr-defined]
+    # Create a handler subclass that closes over the manager and emitter.
+    # Setting attributes on a functools.partial does not propagate to
+    # handler instances, so a dynamic subclass is the simplest approach.
+    handler_cls = type(
+        "_BoundHandler",
+        (_DashboardHandler,),
+        {"manager": manager, "emitter": emitter},
+    )
 
-    server = HTTPServer(("127.0.0.1", port), handler)  # type: ignore[arg-type]
+    server = HTTPServer(("127.0.0.1", port), handler_cls)
     thread = threading.Thread(target=server.serve_forever, daemon=True, name="dashboard")
     thread.start()
 
