@@ -233,6 +233,8 @@ def _run_agent_blocking(
     start = time.monotonic()
     returncode: int | None = None
     timed_out = False
+    stdout: str | bytes | None = None
+    stderr: str | bytes | None = None
 
     try:
         result = subprocess.run(
