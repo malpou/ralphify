@@ -1,0 +1,35 @@
+# fleet.yml — Fleet of ralphs for a todo app project
+#
+# Three roles working together:
+#   PM     — breaks down features, writes specs, reviews completed work
+#   Dev    — implements tasks, writes tests, creates PRs
+#   QA     — runs tests, verifies acceptance criteria, approves or rejects
+
+fleet:
+  name: todo-app
+  worktree_dir: .trees
+  state_dir: .ralph/state
+
+ralphs:
+  pm:
+    file: ralphs/pm.md
+    branch: ralph/pm
+    worktree: true
+    priority: 1
+
+  dev:
+    file: ralphs/dev.md
+    branch: ralph/dev
+    worktree: true
+    depends_on: [pm]
+
+  qa:
+    file: ralphs/qa.md
+    branch: ralph/qa
+    worktree: true
+    depends_on: [dev]
+
+settings:
+  max_concurrent: 2
+  stagger_start: 30s
+  merge_strategy: fifo

@@ -18,7 +18,7 @@ This is research-driven: use web search to find good examples of multi-agent sof
 
 ## Steps
 
-- [ ] 1. Research multi-agent software lifecycle examples and kanban workflows via web search to inform the design
+- [x] 1. Research multi-agent software lifecycle examples and kanban workflows via web search to inform the design
 - [ ] 2. Create the example directory structure and fleet.yml configuration
 - [ ] 3. Write the PM, developer, and QA ralph definitions with realistic prompts and commands
 - [ ] 4. Create the seed INBOX.md and TODO.md with todo app feature tasks
