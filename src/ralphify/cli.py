@@ -400,6 +400,9 @@ def _build_run_config(
     extra_args: list[str] | None = None,
 ) -> RunConfig:
     """Read RALPH.md from the given path, validate, and build a RunConfig."""
+    # Validate CLI options first — cheap checks before file I/O.
+    _validate_run_options(max_iterations, delay, timeout)
+
     ralph_dir, ralph_file = _resolve_ralph_paths(ralph_path)
 
     ralph_text = ralph_file.read_text(encoding="utf-8")
@@ -413,7 +416,6 @@ def _build_run_config(
         ralph_args = _parse_user_args(extra_args, declared_names)
 
     credit = _validate_credit(fm.get(FIELD_CREDIT))
-    _validate_run_options(max_iterations, delay, timeout)
 
     return RunConfig(
         agent=agent,

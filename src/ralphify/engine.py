@@ -38,8 +38,8 @@ from ralphify._run_types import (
     RunState,
     RunStatus,
 )
-from ralphify._runner import run_command
 from ralphify._resolver import resolve_all, resolve_args
+from ralphify._runner import run_command
 
 
 _PAUSE_POLL_INTERVAL = 0.25  # seconds between pause/resume checks
