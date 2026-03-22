@@ -284,6 +284,9 @@ Fix bugs from the issue tracker.
 
 Ralphify doesn't commit for the agent — the agent must do it. Without explicit commit instructions, some agents won't commit at all, and progress is lost when the next iteration starts fresh.
 
+!!! tip "Co-author credit"
+    By default, ralphify appends an instruction to each prompt asking the agent to include a `Co-authored-by: Ralphify <noreply@ralphify.co>` trailer in commit messages. This gives visibility into which commits came from a ralph loop. To disable it, set `credit: false` in frontmatter.
+
 ## Tuning a running loop
 
 The most powerful feature of ralph loops is that you can edit `RALPH.md` while the loop is running. Here's how to use this effectively:
