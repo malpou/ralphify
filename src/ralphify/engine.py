@@ -123,15 +123,16 @@ def _run_commands(
 def _assemble_prompt(
     config: RunConfig,
     command_outputs: dict[str, str],
+    context: dict[str, str],
 ) -> str:
     """Build the full prompt for one iteration.
 
-    Reads the RALPH.md body, resolves user args and command output
-    placeholders.
+    Reads the RALPH.md body, resolves user args, command output, and
+    context placeholders.
     """
     raw = config.ralph_file.read_text(encoding="utf-8")
     _, prompt = parse_frontmatter(raw)
-    prompt = resolve_all(prompt, command_outputs, config.args)
+    prompt = resolve_all(prompt, command_outputs, config.args, context)
     if config.credit:
         prompt += _CREDIT_INSTRUCTION
     return prompt
@@ -226,8 +227,15 @@ def _run_iteration(
             count=len(command_outputs),
         ))
 
+    # Build context for {{ context.* }} placeholders
+    context: dict[str, str] = {
+        "name": config.ralph_dir.name,
+        "iteration": str(iteration),
+        "max_iterations": str(config.max_iterations) if config.max_iterations is not None else "",
+    }
+
     # Assemble prompt
-    prompt = _assemble_prompt(config, command_outputs)
+    prompt = _assemble_prompt(config, command_outputs, context)
     emit(
         EventType.PROMPT_ASSEMBLED,
         PromptAssembledData(iteration=iteration, prompt_length=len(prompt)),

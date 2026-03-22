@@ -797,7 +797,7 @@ class TestAssemblePrompt:
     def test_reads_prompt_from_ralph_file(self, tmp_path):
         config = make_config(tmp_path, "simple prompt", max_iterations=1, credit=False)
 
-        result = _assemble_prompt(config, {})
+        result = _assemble_prompt(config, {}, {})
 
         assert result == "simple prompt"
 
@@ -810,7 +810,7 @@ class TestAssemblePrompt:
             credit=False,
         )
 
-        result = _assemble_prompt(config, {"tests": "all passed"})
+        result = _assemble_prompt(config, {"tests": "all passed"}, {})
 
         assert result == "Results: all passed"
 
@@ -823,28 +823,28 @@ class TestAssemblePrompt:
             credit=False,
         )
 
-        result = _assemble_prompt(config, {})
+        result = _assemble_prompt(config, {}, {})
 
         assert result == "Search ./src"
 
     def test_clears_unresolved_placeholders(self, tmp_path):
         config = make_config(tmp_path, "Before {{ args.missing }} after", max_iterations=1, args={}, credit=False)
 
-        result = _assemble_prompt(config, {})
+        result = _assemble_prompt(config, {}, {})
 
         assert result == "Before  after"
 
     def test_strips_html_comments(self, tmp_path):
         config = make_config(tmp_path, "Before <!-- hidden --> after", max_iterations=1, credit=False)
 
-        result = _assemble_prompt(config, {})
+        result = _assemble_prompt(config, {}, {})
 
         assert result == "Before  after"
 
     def test_credit_instruction_appended_by_default(self, tmp_path):
         config = make_config(tmp_path, "simple prompt", max_iterations=1)
 
-        result = _assemble_prompt(config, {})
+        result = _assemble_prompt(config, {}, {})
 
         assert result.startswith("simple prompt")
         assert "Co-authored-by: Ralphify <noreply@ralphify.co>" in result
@@ -852,7 +852,7 @@ class TestAssemblePrompt:
     def test_credit_false_omits_instruction(self, tmp_path):
         config = make_config(tmp_path, "simple prompt", max_iterations=1, credit=False)
 
-        result = _assemble_prompt(config, {})
+        result = _assemble_prompt(config, {}, {})
 
         assert result == "simple prompt"
 
@@ -870,7 +870,7 @@ class TestAssemblePrompt:
             credit=False,
         )
 
-        result = _assemble_prompt(config, {"tests": "5 passed"})
+        result = _assemble_prompt(config, {"tests": "5 passed"}, {})
 
         assert "Filter: {{ commands.tests }}" in result
         assert "Tests: 5 passed" in result
