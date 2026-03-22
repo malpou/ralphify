@@ -27,7 +27,9 @@ Here's what happens at each step.
 
 ### 1. Re-read RALPH.md
 
-The ralph file is read from disk **every iteration**. This means you can edit the prompt, add or remove commands, change the agent — all while the loop is running. Changes take effect on the next cycle.
+The prompt body (everything below the frontmatter) is read from disk **every iteration**. This means you can edit the prompt text — add rules, change the task, adjust constraints — while the loop is running. Changes take effect on the next cycle.
+
+Frontmatter fields (`agent`, `commands`, `args`) are parsed once at startup. To change those, restart the loop.
 
 ### 2. Run commands
 
@@ -76,12 +78,11 @@ The loop starts the next iteration from step 1. The RALPH.md is re-read, command
 
 ## What gets re-read each iteration
 
-Everything is re-read from disk every iteration. There is no cached state between cycles.
-
 | What | When read | Why it matters |
 |---|---|---|
-| `RALPH.md` | Every iteration | Edit the prompt while the loop runs — the next iteration follows your new instructions |
+| Prompt body | Every iteration | Edit the prompt while the loop runs — the next iteration follows your new instructions |
 | Command output | Every iteration | The agent always sees fresh data (latest git log, current test status, etc.) |
+| Frontmatter (`agent`, `commands`, `args`) | Once at startup | Parsed when the loop starts. Restart to pick up changes. |
 | User arguments | Once at startup | Passed via CLI flags, constant for the run |
 
 ## How prompt assembly looks in practice

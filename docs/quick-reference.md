@@ -116,7 +116,7 @@ Each iteration:
 
 ## Live editing
 
-- Everything is re-read from disk every iteration — edit files while the loop runs
+- The prompt body is re-read from disk every iteration — edit the prompt while the loop runs (frontmatter is parsed once at startup)
 - HTML comments (`<!-- ... -->`) are stripped from the prompt — use them for notes to yourself
 
 ## Common patterns

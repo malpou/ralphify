@@ -231,7 +231,7 @@ git checkout -b feature-b && ralph run feature-b-ralph
 
 ### Can I edit RALPH.md while the loop runs?
 
-Yes. The file is re-read every iteration. Edit the prompt, add or remove commands, change the agent — changes take effect on the next cycle.
+Yes. The prompt body (everything below the frontmatter) is re-read every iteration — edit the prompt text and changes take effect on the next cycle. Frontmatter fields (`agent`, `commands`, `args`) are parsed once at startup, so changing those requires restarting the loop.
 
 ## Getting more help
 
