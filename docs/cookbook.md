@@ -8,6 +8,11 @@ keywords: ralphify cookbook, autonomous coding recipes, RALPH.md examples, docum
 
 Copy-pasteable setups for common autonomous workflows. Each recipe is a real, runnable ralph from the [`cookbooks/`](https://github.com/computerlovetech/ralphify/tree/main/cookbooks) directory.
 
+All recipes use **Claude Code** as the agent. To use a different agent, swap the `agent` field — see [Using with Different Agents](agents.md).
+
+!!! tip "User arguments in recipes"
+    Many recipes accept CLI arguments like `--focus` or `--target`. These aren't built-in flags — they're **user arguments** declared in each recipe's `args` field. When you pass `--focus "test coverage"`, the value replaces `{{ args.focus }}` in the prompt. See [User Arguments](cli.md#user-arguments) for details.
+
 ---
 
 ## Python project
