@@ -255,14 +255,8 @@ def _run_iteration(
     return True
 
 
-def _compute_idle_delay(config: RunConfig, state: RunState) -> float:
-    """Compute the backoff delay for the current idle streak.
-
-    Formula: ``delay * backoff^(consecutive_idle - 1)`` capped at ``max_delay``.
-    Returns 0 when no idle config is present or idle count is zero.
-    """
-    if config.idle is None or state.consecutive_idle <= 0:
-        return 0
+def _idle_delay(config: RunConfig, state: RunState) -> float:
+    """Return idle backoff delay: ``delay * backoff^(streak-1)`` capped at ``max_delay``."""
     raw = config.idle.delay * (config.idle.backoff ** (state.consecutive_idle - 1))
     return min(raw, config.idle.max_delay)
 
@@ -276,7 +270,7 @@ def _delay_if_needed(config: RunConfig, state: RunState, emit: BoundEmitter) -> 
     """
     # Determine effective delay: idle backoff overrides base delay
     if state.consecutive_idle > 0 and config.idle is not None:
-        delay = _compute_idle_delay(config, state)
+        delay = _idle_delay(config, state)
     else:
         delay = config.delay
 
@@ -343,7 +337,7 @@ def run_loop(
 
             # Track cumulative idle time and check max idle limit
             if iteration_was_idle and config.idle is not None:
-                idle_delay = _compute_idle_delay(config, state)
+                idle_delay = _idle_delay(config, state)
                 state.cumulative_idle_time += idle_delay
                 if config.idle.max is not None and state.cumulative_idle_time >= config.idle.max:
                     state.status = RunStatus.IDLE_EXCEEDED

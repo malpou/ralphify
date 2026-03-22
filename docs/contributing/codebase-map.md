@@ -138,7 +138,7 @@ Events are defined in `_events.py:EventType`, with a corresponding TypedDict pay
 
 When an agent emits `<!-- ralph:state idle -->` (the `IDLE_STATE_MARKER` constant in `_frontmatter.py`) in its output, the engine marks the iteration as idle instead of completed. Idle behavior is configured via the `idle` frontmatter block, parsed by `_validate_idle()` in `cli.py` into an `IdleConfig` dataclass (`_run_types.py`).
 
-The engine (`engine.py`) tracks idle state on `RunState` (`consecutive_idle`, `cumulative_idle_time`). Backoff delay is computed by `_compute_idle_delay()`: `delay × backoff^(consecutive_idle - 1)`, capped at `max_delay`. A non-idle iteration calls `state.reset_idle()` to clear all idle tracking. When `idle.max` is set and cumulative idle time exceeds it, the loop stops with `RunStatus.IDLE_EXCEEDED`.
+The engine (`engine.py`) tracks idle state on `RunState` (`consecutive_idle`, `cumulative_idle_time`). Backoff delay is computed by `_idle_delay()`: `delay × backoff^(consecutive_idle - 1)`, capped at `max_delay`. A non-idle iteration calls `state.reset_idle()` to clear all idle tracking. When `idle.max` is set and cumulative idle time exceeds it, the loop stops with `RunStatus.IDLE_EXCEEDED`.
 
 The `ITERATION_IDLE` event type and `STOP_MAX_IDLE` stop reason are defined in `_events.py`. The console emitter renders idle iterations with a dimmed style.
 

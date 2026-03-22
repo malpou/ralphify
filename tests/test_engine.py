@@ -14,7 +14,7 @@ from ralphify._frontmatter import IDLE_STATE_MARKER
 from ralphify._run_types import Command, IdleConfig, RunStatus
 from ralphify.engine import (
     _assemble_prompt,
-    _compute_idle_delay,
+    _idle_delay,
     _delay_if_needed,
     _handle_control_signals,
     _run_commands,
@@ -915,19 +915,8 @@ class TestCreditInLoop:
         assert "Co-authored-by" not in call_input
 
 
-class TestComputeIdleDelay:
-    """Unit tests for _compute_idle_delay — backoff math."""
-
-    @pytest.mark.parametrize("idle_cfg, consecutive, expected", [
-        (None, 3, 0),  # no idle config → zero
-        (IdleConfig(delay=30), 0, 0),  # not idle → zero
-    ])
-    def test_returns_zero_when_inactive(self, tmp_path, idle_cfg, consecutive, expected):
-        config = make_config(tmp_path, idle=idle_cfg)
-        state = make_state()
-        state.consecutive_idle = consecutive
-
-        assert _compute_idle_delay(config, state) == expected
+class TestIdleDelay:
+    """Unit tests for _idle_delay — backoff math."""
 
     @pytest.mark.parametrize("consecutive, max_delay, expected", [
         (1, 300, 30),    # base delay
@@ -940,7 +929,7 @@ class TestComputeIdleDelay:
         state = make_state()
         state.consecutive_idle = consecutive
 
-        assert _compute_idle_delay(config, state) == expected
+        assert _idle_delay(config, state) == expected
 
 
 class TestIdleDetection:
