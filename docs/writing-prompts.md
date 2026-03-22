@@ -333,26 +333,10 @@ You can freely add and edit comments while the loop runs — they're stripped ev
 
 ## Idle detection
 
-If your agent signals when it has no work to do, you can avoid wasting tokens on idle iterations. Add an `idle` block to your frontmatter and have your prompt instruct the agent to emit the idle marker:
+If your agent signals when it has no work to do, you can avoid wasting tokens on idle iterations. Add an [`idle` block](cli.md#idle-detection) to your frontmatter and instruct the agent to emit the idle marker when there's nothing left to do:
 
 ```markdown
----
-agent: claude -p --dangerously-skip-permissions
-idle:
-  delay: 30s
-  backoff: 2
-  max_delay: 5m
-  max: 30m
-commands:
-  - name: tasks
-    run: cat TODO.md
----
-
-{{ commands.tasks }}
-
-Read TODO.md and implement the next uncompleted task. Commit when done.
-
-If all tasks are complete and there is nothing left to do, output exactly:
+If all tasks are complete, output exactly:
 <!-- ralph:state idle -->
 ```
 
