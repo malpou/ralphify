@@ -1,0 +1,28 @@
+fleet:
+  name: todo-app
+  worktree_dir: .trees
+  state_dir: .ralph/state
+
+ralphs:
+  pm:
+    file: ralphs/pm.md
+    branch: ralph/pm
+    priority: 10
+  dev:
+    file: ralphs/dev.md
+    branch: ralph/dev
+    priority: 5
+    depends_on:
+      - pm
+  qa:
+    file: ralphs/qa.md
+    branch: ralph/qa
+    priority: 1
+    depends_on:
+      - dev
+
+settings:
+  max_concurrent: 3
+  stagger_start: 30s
+  merge_strategy: fifo
+  health_check_interval: 120
