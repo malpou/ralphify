@@ -24,6 +24,7 @@ RALPH_MARKER = "RALPH.md"
 FIELD_AGENT = "agent"
 FIELD_COMMANDS = "commands"
 FIELD_ARGS = "args"
+FIELD_CONTEXT = "context"
 FIELD_CREDIT = "credit"
 
 # Sub-field names within each command mapping.
