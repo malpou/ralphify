@@ -1,5 +1,601 @@
 <!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>ralphify dashboard</title></head>
-<body><p>placeholder — replaced in step 2</p></body>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ralphify dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=JetBrains+Mono:wght@200;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "tertiary-container": "#f88755",
+        "tertiary-fixed": "#ff9566",
+        "tertiary": "#ff996d",
+        "error-dim": "#d73357",
+        "surface-container-low": "#141123",
+        "secondary-container": "#61366d",
+        "secondary-fixed": "#f4c0ff",
+        "surface-variant": "#27233a",
+        "surface-tint": "#b5a0ff",
+        "tertiary-fixed-dim": "#f48553",
+        "secondary-fixed-dim": "#e7b1f3",
+        "primary-fixed": "#a98fff",
+        "outline": "#787387",
+        "outline-variant": "#494558",
+        "on-primary-container": "#270072",
+        "secondary": "#efb9fb",
+        "inverse-on-surface": "#575266",
+        "surface-bright": "#2d2942",
+        "inverse-surface": "#fdf8ff",
+        "primary-dim": "#a68cff",
+        "surface-container-high": "#211d32",
+        "primary-container": "#a98fff",
+        "on-background": "#ece5fc",
+        "on-tertiary-container": "#4a1700",
+        "error-container": "#a70138",
+        "surface-container-lowest": "#000000",
+        "on-secondary-container": "#f3beff",
+        "on-secondary": "#5d336a",
+        "on-secondary-fixed": "#4c2359",
+        "secondary-dim": "#e1aced",
+        "on-surface-variant": "#aea8be",
+        "background": "#0f0c1c",
+        "on-primary-fixed-variant": "#32008b",
+        "on-error-container": "#ffb2b9",
+        "primary": "#b5a0ff",
+        "tertiary-dim": "#ee804e",
+        "on-tertiary": "#5c1f00",
+        "inverse-primary": "#6646c9",
+        "surface-container": "#1a172b",
+        "surface-dim": "#0f0c1c",
+        "on-secondary-fixed-variant": "#6b4078",
+        "on-error": "#490013",
+        "on-tertiary-fixed": "#300c00",
+        "surface-container-highest": "#27233a",
+        "on-tertiary-fixed-variant": "#672300",
+        "primary-fixed-dim": "#9c7eff",
+        "on-primary": "#340091",
+        "on-surface": "#ece5fc",
+        "surface": "#0f0c1c",
+        "on-primary-fixed": "#000000",
+        "error": "#ff6e84"
+      },
+      fontFamily: {
+        "headline": ["Space Grotesk", "monospace"],
+        "body": ["JetBrains Mono", "monospace"],
+        "label": ["JetBrains Mono", "monospace"],
+        "mono": ["JetBrains Mono", "monospace"]
+      },
+      borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "0px"},
+    },
+  },
+}
+</script>
+<style>
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background-color: #0f0c1c;
+  background-image:
+    linear-gradient(rgba(139, 108, 240, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 108, 240, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.scanline {
+  width: 100%;
+  height: 100px;
+  z-index: 100;
+  background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(139,108,240,0.1) 50%, rgba(0,0,0,0) 100%);
+  opacity: 0.1;
+  position: fixed;
+  bottom: 100%;
+  pointer-events: none;
+  animation: scanline 8s linear infinite;
+}
+@keyframes scanline {
+  0% { bottom: 100%; }
+  100% { bottom: -100px; }
+}
+.text-glow { text-shadow: 0 0 8px rgba(181, 160, 255, 0.6); }
+.clip-path-side { clip-path: polygon(0 0, 100% 0, 100% 95%, 95% 100%, 0 100%); }
+.clip-path-panel { clip-path: polygon(0 0, 95% 0, 100% 5%, 100% 100%, 5% 100%, 0 95%); }
+.clip-path-angled { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%); }
+@keyframes blink { 50% { opacity: 0; } }
+.cursor-blink { animation: blink 1s step-start infinite; }
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #0f0c1c; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #494558; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #b5a0ff; }
+</style>
+</head>
+<body class="bg-background text-on-surface overflow-hidden h-screen flex flex-col">
+
+<div class="scanline"></div>
+
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex items-center py-2 px-6 bg-[#0f0c1c] border-b-2 border-[#27233a] shadow-[0_0_15px_rgba(139,108,240,0.3)]">
+  <div class="w-full flex justify-between items-center">
+    <div class="flex items-center gap-4">
+      <span class="text-2xl font-black bg-gradient-to-r from-[#8B6CF0] to-[#E06030] bg-clip-text text-transparent animate-pulse font-mono tracking-tighter">RALPHIFY</span>
+      <span class="text-xs text-outline-variant font-mono">DASHBOARD</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <span id="connection-status" class="text-[10px] font-mono text-outline-variant flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-outline"></span> CONNECTING
+      </span>
+    </div>
+  </div>
+</header>
+
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-12 h-[calc(100vh-48px)] z-40 flex flex-col bg-[#141123] border-r border-[#27233a] w-56 clip-path-side">
+  <div class="p-4 border-b border-[#27233a]">
+    <h3 class="text-[10px] font-mono font-bold tracking-widest text-outline-variant uppercase">ACTIVE RUNS</h3>
+  </div>
+  <div id="runs-list" class="flex-grow py-2 overflow-y-auto custom-scrollbar">
+    <div class="px-4 py-6 text-center text-[10px] text-outline-variant font-mono">NO_ACTIVE_RUNS</div>
+  </div>
+  <div class="p-3 border-t border-[#27233a]">
+    <div class="text-[9px] text-outline-variant font-mono text-center" id="run-count">0 RUNS</div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main class="ml-56 mt-12 flex-grow flex flex-col overflow-hidden">
+
+  <!-- Empty State -->
+  <div id="empty-state" class="flex-grow flex flex-col items-center justify-center p-8">
+    <div class="font-mono text-[10px] text-primary/30 leading-none select-none pointer-events-none text-center mb-8">
+<pre>    ____  ___    __    ____  __  __________________  __
+   / __ \/   |  / /   / __ \/ / / /  _/ ____/  _/ / / /
+  / /_/ / /| | / /   / /_/ / /_/ // // /_   / // /_/ /
+ / _, _/ ___ |/ /___/ ____/ __  // // __/ _/ // __  /
+/_/ |_/_/  |_/_____/_/   /_/ /_/___/_/   /___/_/ /_/</pre>
+    </div>
+    <h1 class="text-2xl font-headline font-bold text-on-surface text-glow tracking-tight mb-4">No ralph is running.</h1>
+    <div class="bg-surface-container-lowest p-4 border-l-4 border-primary">
+      <p class="font-mono text-sm text-primary-dim">
+        <span class="text-tertiary">ralph</span> run <span class="text-secondary">&lt;name&gt;</span>
+        <span class="w-2 h-4 bg-primary inline-block align-middle ml-1 cursor-blink"></span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Active State (hidden initially) -->
+  <div id="active-state" class="flex-grow flex flex-col overflow-hidden hidden">
+    <!-- Status Bar -->
+    <div id="status-bar" class="h-10 bg-surface-container-low border-b border-primary/20 flex items-center px-4 justify-between font-mono text-[10px] uppercase tracking-tighter shrink-0">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_#b5a0ff]"></span>
+          <span class="text-primary font-bold" id="status-text">RUNNING</span>
+        </div>
+        <div class="text-outline-variant">|</div>
+        <div class="flex items-center gap-2" id="iteration-display">
+          <span class="text-tertiary">ITER</span> <span id="current-iteration">#0</span>
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <div class="px-2 py-1 bg-surface-container-highest text-outline-variant border border-outline-variant/30" id="stats-display">
+          0 completed / 0 failed
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="flex-grow grid grid-cols-12 gap-4 p-4 overflow-hidden">
+
+      <!-- Event Log (center) -->
+      <section class="col-span-8 flex flex-col overflow-hidden">
+        <div class="flex-grow bg-surface-container-lowest border-t-2 border-primary/20 p-4 font-mono text-xs flex flex-col">
+          <div class="mb-3 flex justify-between items-center">
+            <span class="text-primary text-glow text-[10px] uppercase tracking-widest">EVENT_STREAM</span>
+            <button onclick="clearLog()" class="text-[9px] text-outline-variant hover:text-primary transition-colors">CLEAR</button>
+          </div>
+          <div id="event-log" class="flex-grow overflow-y-auto space-y-0.5 custom-scrollbar">
+          </div>
+          <div class="mt-3 pt-3 border-t border-outline-variant/10 flex justify-between items-center text-[10px]">
+            <span class="text-outline-variant">SSE_STREAM_ACTIVE</span>
+            <span class="text-primary" id="event-count">EVENTS: 0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Iteration History (right) -->
+      <section class="col-span-4 flex flex-col overflow-hidden">
+        <div class="flex-grow bg-surface-container border-r-2 border-tertiary/40 clip-path-panel p-4 flex flex-col">
+          <h2 class="text-xs font-bold text-tertiary tracking-widest uppercase mb-4 flex justify-between">
+            ITERATION_HISTORY
+            <span class="material-symbols-outlined text-sm">timeline</span>
+          </h2>
+          <!-- Sparkline -->
+          <div id="sparkline" class="h-12 w-full flex items-end gap-1 mb-4 border-b border-outline-variant/20 pb-2">
+          </div>
+          <div id="iteration-list" class="flex-grow overflow-y-auto space-y-4 custom-scrollbar pr-2">
+            <div class="text-[10px] text-outline-variant font-mono text-center py-4">AWAITING_ITERATIONS</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full z-50 flex justify-between items-center px-4 bg-[#000000] h-7 border-t border-[#494558] overflow-hidden">
+  <div class="flex items-center gap-6">
+    <span class="text-[#8B6CF0] font-bold font-mono text-[10px] uppercase">RALPHIFY</span>
+  </div>
+  <div id="footer-status" class="text-[#E06030] font-mono text-[10px] uppercase animate-pulse">SYSTEM_READY</div>
+</footer>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+const state = {
+  runs: {},          // run_id -> { status, iteration, completed, failed, timed_out, ralph_name }
+  iterations: [],    // [{ iteration, status, duration, detail, run_id }]
+  eventCount: 0,
+};
+
+// ── DOM refs ───────────────────────────────────────────────────────
+const $emptyState = document.getElementById('empty-state');
+const $activeState = document.getElementById('active-state');
+const $runsList = document.getElementById('runs-list');
+const $runCount = document.getElementById('run-count');
+const $statusText = document.getElementById('status-text');
+const $currentIteration = document.getElementById('current-iteration');
+const $statsDisplay = document.getElementById('stats-display');
+const $eventLog = document.getElementById('event-log');
+const $eventCount = document.getElementById('event-count');
+const $iterationList = document.getElementById('iteration-list');
+const $sparkline = document.getElementById('sparkline');
+const $connectionStatus = document.getElementById('connection-status');
+const $footerStatus = document.getElementById('footer-status');
+
+// ── Helpers ────────────────────────────────────────────────────────
+function formatTime(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleTimeString('en-US', { hour12: false });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ── Rendering ──────────────────────────────────────────────────────
+function updateView() {
+  const runIds = Object.keys(state.runs);
+  const hasRuns = runIds.length > 0;
+
+  $emptyState.classList.toggle('hidden', hasRuns);
+  $activeState.classList.toggle('hidden', !hasRuns);
+
+  // Runs list in sidebar
+  if (hasRuns) {
+    $runsList.innerHTML = runIds.map(id => {
+      const r = state.runs[id];
+      const statusColor = r.status === 'running' ? 'text-primary' :
+                          r.status === 'paused' ? 'text-secondary' :
+                          'text-outline-variant';
+      const dotColor = r.status === 'running' ? 'bg-primary animate-pulse' :
+                       r.status === 'paused' ? 'bg-secondary' :
+                       'bg-outline-variant';
+      return `
+        <div class="px-4 py-2 hover:bg-[#27233a] cursor-default transition-none">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
+            <span class="font-mono text-[11px] text-on-surface truncate">${escapeHtml(r.ralph_name || id.slice(0, 8))}</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1 ml-3.5">
+            <span class="text-[9px] ${statusColor} uppercase font-bold">${r.status}</span>
+            <span class="text-[9px] text-outline-variant">ITER #${r.iteration || 0}</span>
+          </div>
+        </div>`;
+    }).join('');
+  } else {
+    $runsList.innerHTML = '<div class="px-4 py-6 text-center text-[10px] text-outline-variant font-mono">NO_ACTIVE_RUNS</div>';
+  }
+  $runCount.textContent = `${runIds.length} RUN${runIds.length !== 1 ? 'S' : ''}`;
+
+  // Aggregate stats
+  let totalCompleted = 0, totalFailed = 0, totalTimedOut = 0, maxIter = 0;
+  for (const r of Object.values(state.runs)) {
+    totalCompleted += r.completed || 0;
+    totalFailed += r.failed || 0;
+    totalTimedOut += r.timed_out || 0;
+    maxIter = Math.max(maxIter, r.iteration || 0);
+  }
+  $currentIteration.textContent = `#${maxIter}`;
+  $statsDisplay.textContent = `${totalCompleted} ok / ${totalFailed} fail / ${totalTimedOut} timeout`;
+
+  // Status text
+  const anyRunning = Object.values(state.runs).some(r => r.status === 'running');
+  const anyPaused = Object.values(state.runs).some(r => r.status === 'paused');
+  if (anyRunning) {
+    $statusText.textContent = 'RUNNING';
+    $statusText.className = 'text-primary font-bold';
+  } else if (anyPaused) {
+    $statusText.textContent = 'PAUSED';
+    $statusText.className = 'text-secondary font-bold';
+  } else if (hasRuns) {
+    $statusText.textContent = 'STOPPED';
+    $statusText.className = 'text-outline-variant font-bold';
+  }
+
+  $eventCount.textContent = `EVENTS: ${state.eventCount}`;
+}
+
+function addLogEntry(timestamp, type, message, level) {
+  const time = timestamp ? formatTime(timestamp) : '--:--:--';
+  const colorMap = {
+    'run_started': 'text-primary',
+    'run_stopped': 'text-error',
+    'run_paused': 'text-secondary',
+    'run_resumed': 'text-primary',
+    'iteration_started': 'text-primary',
+    'iteration_completed': 'text-primary',
+    'iteration_failed': 'text-error',
+    'iteration_timed_out': 'text-tertiary',
+    'commands_started': 'text-secondary',
+    'commands_completed': 'text-secondary',
+    'prompt_assembled': 'text-outline',
+    'agent_activity': 'text-surface-tint',
+    'log_message': level === 'error' ? 'text-error' : 'text-outline',
+  };
+  const color = colorMap[type] || 'text-outline-variant';
+  const label = type.toUpperCase().replace(/_/g, '_');
+
+  const el = document.createElement('div');
+  el.className = 'text-outline-variant text-[11px] leading-relaxed';
+  el.innerHTML = `<span class="text-outline-variant/60">[${time}]</span> <span class="${color} font-bold">${label}:</span> ${escapeHtml(message)}`;
+  $eventLog.appendChild(el);
+  $eventLog.scrollTop = $eventLog.scrollHeight;
+}
+
+function addIteration(iter) {
+  state.iterations.unshift(iter);
+  renderIterations();
+}
+
+function renderIterations() {
+  if (state.iterations.length === 0) {
+    $iterationList.innerHTML = '<div class="text-[10px] text-outline-variant font-mono text-center py-4">AWAITING_ITERATIONS</div>';
+    return;
+  }
+  $iterationList.innerHTML = state.iterations.map(it => {
+    const dotColor = it.status === 'completed' ? 'bg-primary' :
+                     it.status === 'failed' ? 'bg-error' :
+                     it.status === 'timed_out' ? 'bg-tertiary' : 'bg-outline';
+    const badgeColor = it.status === 'completed' ? 'bg-primary/20 text-primary border-primary/30' :
+                       it.status === 'failed' ? 'bg-error-container text-error border-error/30' :
+                       'bg-tertiary/20 text-tertiary border-tertiary/30';
+    const badgeText = it.status === 'completed' ? '&#10003; OK' :
+                      it.status === 'failed' ? '&#10007; FAIL' :
+                      '&#9201; TIMEOUT';
+    return `
+      <div class="relative pl-5 border-l border-outline-variant/30 pb-2">
+        <div class="absolute -left-1.5 top-0 w-3 h-3 ${dotColor} border-2 border-background"></div>
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-[11px] font-bold text-on-surface">ITER #${it.iteration}</p>
+            <p class="text-[9px] text-outline-variant">${it.duration || ''}</p>
+          </div>
+          <span class="text-[8px] ${badgeColor} px-1 border uppercase">${badgeText}</span>
+        </div>
+        ${it.detail ? `<p class="text-[9px] text-on-surface-variant mt-1 truncate" title="${escapeHtml(it.detail)}">${escapeHtml(it.detail)}</p>` : ''}
+      </div>`;
+  }).join('');
+
+  // Sparkline
+  renderSparkline();
+}
+
+function renderSparkline() {
+  const recent = state.iterations.slice(0, 20).reverse();
+  if (recent.length === 0) { $sparkline.innerHTML = ''; return; }
+  const maxDur = Math.max(...recent.map(it => it.durationSec || 1));
+  $sparkline.innerHTML = recent.map(it => {
+    const h = Math.max(10, ((it.durationSec || 1) / maxDur) * 100);
+    const color = it.status === 'completed' ? 'bg-primary/40' :
+                  it.status === 'failed' ? 'bg-error/60' : 'bg-tertiary/60';
+    return `<div class="${color} w-full" style="height:${h}%"></div>`;
+  }).join('');
+}
+
+function clearLog() {
+  $eventLog.innerHTML = '';
+  state.eventCount = 0;
+  $eventCount.textContent = 'EVENTS: 0';
+}
+
+// ── SSE Connection ─────────────────────────────────────────────────
+function connectSSE() {
+  const evtSource = new EventSource('/events');
+
+  evtSource.onopen = () => {
+    $connectionStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span> CONNECTED';
+    $footerStatus.textContent = 'SSE_STREAM_ACTIVE';
+  };
+
+  evtSource.onerror = () => {
+    $connectionStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-error"></span> DISCONNECTED';
+    $footerStatus.textContent = 'SSE_RECONNECTING';
+  };
+
+  // Run lifecycle
+  evtSource.addEventListener('run_started', (e) => {
+    const d = JSON.parse(e.data);
+    state.runs[d.run_id] = {
+      status: 'running', iteration: 0, completed: 0, failed: 0, timed_out: 0,
+      ralph_name: d.data.ralph_name,
+    };
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'run_started', `${d.data.ralph_name} started (max_iter: ${d.data.max_iterations ?? '∞'})`);
+    updateView();
+  });
+
+  evtSource.addEventListener('run_stopped', (e) => {
+    const d = JSON.parse(e.data);
+    if (state.runs[d.run_id]) {
+      state.runs[d.run_id].status = 'stopped';
+      state.runs[d.run_id].completed = d.data.completed;
+      state.runs[d.run_id].failed = d.data.failed;
+      state.runs[d.run_id].timed_out = d.data.timed_out;
+    }
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'run_stopped', `Run stopped: ${d.data.reason} (${d.data.completed} ok, ${d.data.failed} fail)`);
+    updateView();
+  });
+
+  evtSource.addEventListener('run_paused', (e) => {
+    const d = JSON.parse(e.data);
+    if (state.runs[d.run_id]) state.runs[d.run_id].status = 'paused';
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'run_paused', 'Run paused');
+    updateView();
+  });
+
+  evtSource.addEventListener('run_resumed', (e) => {
+    const d = JSON.parse(e.data);
+    if (state.runs[d.run_id]) state.runs[d.run_id].status = 'running';
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'run_resumed', 'Run resumed');
+    updateView();
+  });
+
+  // Iteration lifecycle
+  evtSource.addEventListener('iteration_started', (e) => {
+    const d = JSON.parse(e.data);
+    if (state.runs[d.run_id]) state.runs[d.run_id].iteration = d.data.iteration;
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'iteration_started', `Iteration #${d.data.iteration} started`);
+    updateView();
+  });
+
+  evtSource.addEventListener('iteration_completed', (e) => {
+    const d = JSON.parse(e.data);
+    if (state.runs[d.run_id]) {
+      state.runs[d.run_id].completed = (state.runs[d.run_id].completed || 0) + 1;
+    }
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'iteration_completed', `Iteration #${d.data.iteration} completed (${d.data.duration_formatted})`);
+    addIteration({
+      iteration: d.data.iteration,
+      status: 'completed',
+      duration: d.data.duration_formatted,
+      durationSec: d.data.duration,
+      detail: d.data.detail,
+      run_id: d.run_id,
+    });
+    updateView();
+  });
+
+  evtSource.addEventListener('iteration_failed', (e) => {
+    const d = JSON.parse(e.data);
+    if (state.runs[d.run_id]) {
+      state.runs[d.run_id].failed = (state.runs[d.run_id].failed || 0) + 1;
+    }
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'iteration_failed', `Iteration #${d.data.iteration} FAILED (${d.data.duration_formatted})`);
+    addIteration({
+      iteration: d.data.iteration,
+      status: 'failed',
+      duration: d.data.duration_formatted,
+      durationSec: d.data.duration,
+      detail: d.data.detail,
+      run_id: d.run_id,
+    });
+    updateView();
+  });
+
+  evtSource.addEventListener('iteration_timed_out', (e) => {
+    const d = JSON.parse(e.data);
+    if (state.runs[d.run_id]) {
+      state.runs[d.run_id].timed_out = (state.runs[d.run_id].timed_out || 0) + 1;
+    }
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'iteration_timed_out', `Iteration #${d.data.iteration} timed out (${d.data.duration_formatted})`);
+    addIteration({
+      iteration: d.data.iteration,
+      status: 'timed_out',
+      duration: d.data.duration_formatted,
+      durationSec: d.data.duration,
+      detail: d.data.detail,
+      run_id: d.run_id,
+    });
+    updateView();
+  });
+
+  // Commands
+  evtSource.addEventListener('commands_started', (e) => {
+    const d = JSON.parse(e.data);
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'commands_started', `Running ${d.data.count} command(s) for iteration #${d.data.iteration}`);
+  });
+
+  evtSource.addEventListener('commands_completed', (e) => {
+    const d = JSON.parse(e.data);
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'commands_completed', `Commands completed for iteration #${d.data.iteration}`);
+  });
+
+  // Prompt
+  evtSource.addEventListener('prompt_assembled', (e) => {
+    const d = JSON.parse(e.data);
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'prompt_assembled', `Prompt assembled (${d.data.prompt_length} chars) for iteration #${d.data.iteration}`);
+  });
+
+  // Agent activity
+  evtSource.addEventListener('agent_activity', (e) => {
+    const d = JSON.parse(e.data);
+    state.eventCount++;
+    // Don't log every activity event to avoid spam — just update counter
+    $eventCount.textContent = `EVENTS: ${state.eventCount}`;
+  });
+
+  // Log messages
+  evtSource.addEventListener('log_message', (e) => {
+    const d = JSON.parse(e.data);
+    state.eventCount++;
+    addLogEntry(d.timestamp, 'log_message', d.data.message, d.data.level);
+  });
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+async function init() {
+  // Fetch initial run state
+  try {
+    const res = await fetch('/api/runs');
+    const runs = await res.json();
+    for (const r of runs) {
+      state.runs[r.run_id] = {
+        status: r.status,
+        iteration: r.iteration,
+        completed: r.completed,
+        failed: r.failed,
+        timed_out: r.timed_out,
+        ralph_name: r.ralph_name,
+      };
+    }
+    updateView();
+  } catch { /* server may not have runs yet */ }
+
+  connectSSE();
+}
+
+init();
+</script>
+</body>
 </html>
