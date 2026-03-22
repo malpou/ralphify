@@ -172,10 +172,9 @@ def _run_agent_phase(
 
     duration = format_duration(agent.elapsed)
 
-    is_idle = (
-        agent.success
-        and agent.result_text is not None
-        and IDLE_STATE_MARKER in agent.result_text
+    is_idle = agent.success and (
+        (agent.result_text is not None and IDLE_STATE_MARKER in agent.result_text)
+        or (agent.stdout_text is not None and IDLE_STATE_MARKER in agent.stdout_text)
     )
 
     if agent.timed_out:
