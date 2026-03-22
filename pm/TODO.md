@@ -1,9 +1,9 @@
 # Tasks
 
 ## Active
-- [ ] fleet-lifecycle-example — Sample fleet scenario for testing multi-ralph orchestration
 
 ## Done
+- [x] fleet-lifecycle-example — Sample fleet scenario for testing multi-ralph orchestration → PR #34
 - [x] dashboard-poc — Visual dashboard for ralphify (#15) → PR #33
 - [x] fleet-parallel-ralphs — Add `ralph fleet` command to run multiple ralphs in parallel (#1) → PR #32
 - [x] merge-countdown-to-idle — Move countdown timer from PR #31 into PR #29 (idle-detection), fix live ticking → PR #29

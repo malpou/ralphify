@@ -23,7 +23,7 @@ This is research-driven: use web search to find good examples of multi-agent sof
 - [x] 3. Write the PM, developer, and QA ralph definitions with realistic prompts and commands
 - [x] 4. Create the seed INBOX.md and TODO.md with todo app feature tasks
 - [x] 5. Write the README.md explaining the example and how to use it
-- [ ] 6. Commit and create draft PR
+- [x] 6. Commit and create draft PR
 
 ## Acceptance criteria
 
