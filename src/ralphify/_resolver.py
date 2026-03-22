@@ -15,31 +15,9 @@ import re
 from ralphify._frontmatter import CMD_NAME_RE, FIELD_ARGS, FIELD_COMMANDS
 
 
-def _placeholder_pattern(kind: str) -> re.Pattern[str]:
-    """Compile a regex matching ``{{ <kind>.<name> }}`` placeholders."""
-    return re.compile(rf"\{{\{{\s*{kind}\.({CMD_NAME_RE.pattern})\s*\}}\}}")
-
-
-_ARGS_PATTERN = _placeholder_pattern(FIELD_ARGS)
-
-
-def _resolve_kind(prompt: str, available: dict[str, str], pattern: re.Pattern[str]) -> str:
-    """Resolve placeholders matching *pattern*, clearing them when *available* is empty.
-
-    - ``{{ kind.name }}`` → replaced with the matching content
-    - Unknown names → replaced with empty string
-    - Unreferenced items are silently excluded
-    - When *available* is empty, all placeholders of this kind are cleared
-    """
-
-    if not available:
-        return pattern.sub("", prompt)
-
-    def _replace_named(match: re.Match) -> str:
-        name = match.group(1)
-        return available.get(name, "")
-
-    return pattern.sub(_replace_named, prompt)
+# Pattern matching ``{{ args.<name> }}`` placeholders — used by resolve_args
+# to resolve arg placeholders in command run strings independently of commands.
+_ARGS_PATTERN = re.compile(rf"\{{\{{\s*{FIELD_ARGS}\.({CMD_NAME_RE.pattern})\s*\}}\}}")
 
 
 def resolve_args(prompt: str, user_args: dict[str, str]) -> str:
@@ -48,7 +26,13 @@ def resolve_args(prompt: str, user_args: dict[str, str]) -> str:
     When *user_args* is empty, clears any remaining ``{{ args.* }}``
     placeholders so they don't leak into the assembled prompt.
     """
-    return _resolve_kind(prompt, user_args, _ARGS_PATTERN)
+    if not user_args:
+        return _ARGS_PATTERN.sub("", prompt)
+
+    def _replace(match: re.Match) -> str:
+        return user_args.get(match.group(1), "")
+
+    return _ARGS_PATTERN.sub(_replace, prompt)
 
 
 # Single pattern matching both placeholder kinds for single-pass resolution.
