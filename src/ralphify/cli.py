@@ -379,25 +379,6 @@ def _validate_credit(raw_credit: Any) -> bool:
     return raw_credit
 
 
-def _parse_idle_duration(value: Any, field_name: str) -> float:
-    """Parse a duration value from idle config — accepts numbers (seconds) or duration strings."""
-    if isinstance(value, bool):
-        _exit_error(f"'{FIELD_IDLE}.{field_name}' must be a number or duration string, got {value!r}.")
-    if isinstance(value, (int, float)):
-        if not math.isfinite(value) or value <= 0:
-            _exit_error(f"'{FIELD_IDLE}.{field_name}' must be positive, got {value!r}.")
-        return float(value)
-    if isinstance(value, str):
-        try:
-            result = parse_duration(value)
-        except ValueError as exc:
-            _exit_error(f"'{FIELD_IDLE}.{field_name}': {exc}")
-        if result <= 0:
-            _exit_error(f"'{FIELD_IDLE}.{field_name}' must be positive.")
-        return result
-    _exit_error(f"'{FIELD_IDLE}.{field_name}' must be a number or duration string, got {type(value).__name__}.")
-
-
 def _validate_idle(raw_idle: Any) -> IdleConfig | None:
     """Validate the ``idle`` frontmatter block and return an IdleConfig.
 
@@ -409,25 +390,41 @@ def _validate_idle(raw_idle: Any) -> IdleConfig | None:
     if not isinstance(raw_idle, dict):
         _exit_error(f"'{FIELD_IDLE}' must be a mapping, got {type(raw_idle).__name__}.")
 
+    def _parse_duration_field(value: Any, field_name: str) -> float:
+        label = f"'{FIELD_IDLE}.{field_name}'"
+        if isinstance(value, bool):
+            _exit_error(f"{label} must be a number or duration string, got {value!r}.")
+        if isinstance(value, (int, float)):
+            if not math.isfinite(value) or value <= 0:
+                _exit_error(f"{label} must be positive, got {value!r}.")
+            return float(value)
+        if isinstance(value, str):
+            try:
+                result = parse_duration(value)
+            except ValueError as exc:
+                _exit_error(f"{label}: {exc}")
+            if result <= 0:
+                _exit_error(f"{label} must be positive.")
+            return result
+        _exit_error(f"{label} must be a number or duration string, got {type(value).__name__}.")
+
     kwargs: dict[str, Any] = {}
-
-    if IDLE_FIELD_DELAY in raw_idle:
-        kwargs["delay"] = _parse_idle_duration(raw_idle[IDLE_FIELD_DELAY], IDLE_FIELD_DELAY)
-
-    if IDLE_FIELD_MAX_DELAY in raw_idle:
-        kwargs["max_delay"] = _parse_idle_duration(raw_idle[IDLE_FIELD_MAX_DELAY], IDLE_FIELD_MAX_DELAY)
-
-    if IDLE_FIELD_MAX in raw_idle:
-        kwargs["max"] = _parse_idle_duration(raw_idle[IDLE_FIELD_MAX], IDLE_FIELD_MAX)
+    duration_fields = {
+        IDLE_FIELD_DELAY: "delay",
+        IDLE_FIELD_MAX_DELAY: "max_delay",
+        IDLE_FIELD_MAX: "max",
+    }
+    for field, kwarg in duration_fields.items():
+        if field in raw_idle:
+            kwargs[kwarg] = _parse_duration_field(raw_idle[field], field)
 
     if IDLE_FIELD_BACKOFF in raw_idle:
         backoff = raw_idle[IDLE_FIELD_BACKOFF]
-        if isinstance(backoff, bool):
-            _exit_error(f"'{FIELD_IDLE}.{IDLE_FIELD_BACKOFF}' must be a positive number, got {backoff!r}.")
-        if not isinstance(backoff, (int, float)):
-            _exit_error(f"'{FIELD_IDLE}.{IDLE_FIELD_BACKOFF}' must be a positive number, got {type(backoff).__name__}.")
+        label = f"'{FIELD_IDLE}.{IDLE_FIELD_BACKOFF}'"
+        if isinstance(backoff, bool) or not isinstance(backoff, (int, float)):
+            _exit_error(f"{label} must be a positive number, got {backoff!r}.")
         if not math.isfinite(backoff) or backoff <= 0:
-            _exit_error(f"'{FIELD_IDLE}.{IDLE_FIELD_BACKOFF}' must be positive, got {backoff!r}.")
+            _exit_error(f"{label} must be positive, got {backoff!r}.")
         kwargs["backoff"] = float(backoff)
 
     known_fields = {IDLE_FIELD_DELAY, IDLE_FIELD_BACKOFF, IDLE_FIELD_MAX_DELAY, IDLE_FIELD_MAX}
