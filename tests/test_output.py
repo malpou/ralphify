@@ -1,8 +1,32 @@
-"""Tests for ralphify._output — combine subprocess output and format durations."""
+"""Tests for ralphify._output — ProcessResult, output collection, and duration formatting."""
 
 import pytest
 
-from ralphify._output import collect_output, format_duration
+from ralphify._output import ProcessResult, collect_output, format_duration
+
+
+class TestProcessResult:
+    def test_success_when_returncode_zero(self):
+        assert ProcessResult(returncode=0).success is True
+
+    def test_not_success_when_returncode_nonzero(self):
+        assert ProcessResult(returncode=1).success is False
+        assert ProcessResult(returncode=127).success is False
+        assert ProcessResult(returncode=-1).success is False
+
+    def test_not_success_when_timed_out(self):
+        assert ProcessResult(returncode=None, timed_out=True).success is False
+
+    def test_not_success_when_returncode_zero_but_timed_out(self):
+        # Both conditions must hold: exit code 0 AND not timed out
+        assert ProcessResult(returncode=0, timed_out=True).success is False
+
+    def test_not_success_when_returncode_none(self):
+        assert ProcessResult(returncode=None).success is False
+
+    def test_timed_out_defaults_to_false(self):
+        result = ProcessResult(returncode=0)
+        assert result.timed_out is False
 
 
 class TestCollectOutput:
