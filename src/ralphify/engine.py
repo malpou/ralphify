@@ -4,7 +4,7 @@ The core ``run_loop`` function is the autonomous agent loop.  It accepts
 a ``RunConfig``, ``RunState``, and ``EventEmitter``, making it reusable
 from both CLI and UI contexts.
 
-The v2 loop is simplified: run commands → assemble prompt → pipe to agent → repeat.
+The loop: run commands → assemble prompt → pipe to agent → repeat.
 """
 
 from __future__ import annotations

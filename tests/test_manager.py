@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from helpers import MOCK_SUBPROCESS, drain_events, make_config, ok_result
+from helpers import MOCK_SUBPROCESS, drain_events, event_types, make_config, ok_result
 
 from ralphify._events import EventType, FanoutEmitter, QueueEmitter
 from ralphify._run_types import RUN_ID_LENGTH, RunStatus
@@ -82,7 +82,7 @@ class TestRunManagerStartRun:
         managed.thread.join(timeout=5)
 
         events = drain_events(managed.emitter)
-        types = [e.type for e in events]
+        types = event_types(events)
         assert EventType.RUN_STARTED in types
         assert EventType.RUN_STOPPED in types
 

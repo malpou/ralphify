@@ -1,11 +1,11 @@
-"""Tests for the v2 run engine."""
+"""Tests for the run engine."""
 
 import subprocess
 import threading
 import time
 from unittest.mock import patch
 
-from helpers import MOCK_RUN_COMMAND, MOCK_SUBPROCESS, drain_events, fail_result, make_config, make_state, ok_result, ok_run_result
+from helpers import MOCK_RUN_COMMAND, MOCK_SUBPROCESS, drain_events, event_types, events_of_type, fail_result, make_config, make_state, ok_result, ok_run_result
 
 from ralphify._events import BoundEmitter, EventType, NullEmitter, QueueEmitter
 from ralphify._run_types import Command, RunStatus
@@ -73,7 +73,7 @@ class TestRunLoop:
 
         assert state.status == RunStatus.FAILED
         events = drain_events(q)
-        stop_event = [e for e in events if e.type == EventType.RUN_STOPPED][0]
+        stop_event = events_of_type(events, EventType.RUN_STOPPED)[0]
         assert stop_event.data["reason"] == "error"
 
     @patch(MOCK_SUBPROCESS)
@@ -134,7 +134,7 @@ class TestRunLoopEvents:
         run_loop(config, state, q)
 
         events = drain_events(q)
-        types = [e.type for e in events]
+        types = event_types(events)
         assert types[0] == EventType.RUN_STARTED
         assert types[-1] == EventType.RUN_STOPPED
         # Verify lifecycle ordering within the iteration
@@ -151,8 +151,7 @@ class TestRunLoopEvents:
         run_loop(config, state, q)
 
         events = drain_events(q)
-        types = [e.type for e in events]
-        assert EventType.ITERATION_FAILED in types
+        assert EventType.ITERATION_FAILED in event_types(events)
 
     @patch(MOCK_SUBPROCESS)
     def test_timeout_event_emitted(self, mock_run, tmp_path):
@@ -164,8 +163,7 @@ class TestRunLoopEvents:
         run_loop(config, state, q)
 
         events = drain_events(q)
-        types = [e.type for e in events]
-        assert EventType.ITERATION_TIMED_OUT in types
+        assert EventType.ITERATION_TIMED_OUT in event_types(events)
 
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
     def test_all_events_have_run_id(self, mock_run, tmp_path):
@@ -207,7 +205,7 @@ class TestRunStateControls:
 
         assert state.status == RunStatus.STOPPED
         events = drain_events(q)
-        stop_event = [e for e in events if e.type == EventType.RUN_STOPPED][0]
+        stop_event = events_of_type(events, EventType.RUN_STOPPED)[0]
         assert stop_event.data["reason"] == "user_requested"
 
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
@@ -408,7 +406,7 @@ class TestAgentCommandParsing:
 
         assert state.status == RunStatus.FAILED
         events = drain_events(q)
-        log_events = [e for e in events if e.type == EventType.LOG_MESSAGE]
+        log_events = events_of_type(events, EventType.LOG_MESSAGE)
         assert any("Invalid agent command syntax" in e.data["message"] for e in log_events)
 
     @patch(MOCK_SUBPROCESS)
@@ -423,7 +421,7 @@ class TestAgentCommandParsing:
 
         assert state.status == RunStatus.FAILED
         events = drain_events(q)
-        log_events = [e for e in events if e.type == EventType.LOG_MESSAGE]
+        log_events = events_of_type(events, EventType.LOG_MESSAGE)
         assert any("Agent command not found" in e.data["message"] for e in log_events)
 
 
@@ -450,16 +448,16 @@ class TestRunLoopCrashHandling:
         run_loop(config, state, q)
 
         events = drain_events(q)
-        types = [e.type for e in events]
+        types = event_types(events)
         assert EventType.LOG_MESSAGE in types
         assert EventType.RUN_STOPPED in types
 
-        log_event = next(e for e in events if e.type == EventType.LOG_MESSAGE)
+        log_event = events_of_type(events, EventType.LOG_MESSAGE)[0]
         assert log_event.data["level"] == "error"
         assert "disk full" in log_event.data["message"]
         assert "traceback" in log_event.data
 
-        stop_event = next(e for e in events if e.type == EventType.RUN_STOPPED)
+        stop_event = events_of_type(events, EventType.RUN_STOPPED)[0]
         assert stop_event.data["reason"] == "error"
 
     @patch(MOCK_SUBPROCESS)
@@ -485,7 +483,7 @@ class TestRunLoopCrashHandling:
 
         assert state.status == RunStatus.FAILED
         events = drain_events(q)
-        log_events = [e for e in events if e.type == EventType.LOG_MESSAGE]
+        log_events = events_of_type(events, EventType.LOG_MESSAGE)
         assert any("corrupt YAML" in e.data["message"] for e in log_events)
 
 
@@ -611,7 +609,7 @@ class TestHandleControlSignals:
 
         assert result is True
         events = drain_events(q)
-        types = [e.type for e in events]
+        types = event_types(events)
         assert EventType.RUN_PAUSED in types
         assert EventType.RUN_RESUMED in types
 
@@ -632,7 +630,7 @@ class TestHandleControlSignals:
         assert result is False
         assert state.status == RunStatus.STOPPED
         events = drain_events(q)
-        types = [e.type for e in events]
+        types = event_types(events)
         assert EventType.RUN_PAUSED in types
         assert EventType.RUN_RESUMED not in types
 

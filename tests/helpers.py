@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
-from ralphify._events import Event, QueueEmitter
+from ralphify._events import Event, EventType, QueueEmitter
 from ralphify._frontmatter import RALPH_MARKER, serialize_frontmatter
 from ralphify._run_types import RunConfig, RunState
 from ralphify._runner import RunResult
@@ -156,3 +156,13 @@ def drain_events(emitter: QueueEmitter) -> list[Event]:
     while not emitter.queue.empty():
         events.append(emitter.queue.get())
     return events
+
+
+def events_of_type(events: list[Event], event_type: EventType) -> list[Event]:
+    """Filter a list of events to only those matching *event_type*."""
+    return [e for e in events if e.type == event_type]
+
+
+def event_types(events: list[Event]) -> list[EventType]:
+    """Extract the ordered list of event types from a list of events."""
+    return [e.type for e in events]
