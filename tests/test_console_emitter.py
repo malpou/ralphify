@@ -242,7 +242,7 @@ class TestRunStopped:
             reason="completed", total=5, completed=4, failed=1, timed_out=0,
         ))
         output = console.export_text()
-        assert "5 iteration(s)" in output
+        assert "5 iterations" in output
         assert "4 succeeded" in output
         assert "1 failed" in output
 
@@ -276,7 +276,7 @@ class TestRunStopped:
         ))
         output = console.export_text()
         # Non-completed runs don't print the summary line
-        assert "iteration(s)" not in output
+        assert "Done" not in output
 
     def test_run_stopped_stops_active_live_display(self):
         emitter, console = _capture_emitter()

@@ -152,6 +152,8 @@ class ConsoleEmitter:
         failed = data["failed"]
         timed_out_count = data["timed_out"]
 
+        iter_word = "iteration" if total == 1 else "iterations"
+
         # timed_out is a subset of failed — show non-timeout failures
         # and timeouts as separate categories for clarity.
         non_timeout_failures = failed - timed_out_count
@@ -161,4 +163,7 @@ class ConsoleEmitter:
         if timed_out_count:
             parts.append(f"{timed_out_count} timed out")
         detail = ", ".join(parts)
-        self._console.print(f"\n[green]Done: {total} iteration(s) {_ICON_DASH} {detail}[/green]")
+        self._console.print(
+            f"\n[green]{_ICON_SUCCESS} Done[/green]  "
+            f"[dim]{total} {iter_word} · {detail}[/dim]",
+        )
