@@ -165,7 +165,7 @@ class TestCommandsCompleted:
         emitter, console = _capture_emitter()
         emitter.emit(_make_event(EventType.COMMANDS_COMPLETED, count=3))
         output = console.export_text()
-        assert "3 ran" in output
+        assert "3 commands ran" in output
 
     def test_no_output_when_zero_count(self):
         emitter, console = _capture_emitter()

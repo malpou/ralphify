@@ -118,20 +118,18 @@ class ConsoleEmitter:
         self._stop_live()
         iteration = data["iteration"]
         detail = data["detail"]
-        status_msg = f"[{color}]{icon} Iteration {iteration} {detail}"
+        self._console.print(f"[{color}]{icon} Iteration {iteration} {detail}[/{color}]")
         log_file = data["log_file"]
         if log_file:
-            status_msg += f" {_ICON_ARROW}\n{escape_markup(log_file)}"
-        status_msg += f"[/{color}]"
-        self._console.print(status_msg)
+            self._console.print(f"  [dim]{_ICON_ARROW} {escape_markup(log_file)}[/dim]")
         result_text = data["result_text"]
         if result_text:
-            self._console.print(f"  [dim]{escape_markup(result_text)}[/dim]")
+            self._console.print(f"  [dim]{_ICON_DASH} {escape_markup(result_text)}[/dim]")
 
     def _on_commands_completed(self, data: CommandsCompletedData) -> None:
         count = data["count"]
         if count:
-            self._console.print(f"  [bold]Commands:[/bold] {count} ran")
+            self._console.print(f"  [dim]{_ICON_DASH} {count} command{'s' if count != 1 else ''} ran[/dim]")
 
     def _on_log_message(self, data: LogMessageData) -> None:
         msg = escape_markup(data["message"])
