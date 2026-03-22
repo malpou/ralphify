@@ -15,7 +15,7 @@ Address GitHub issue #12 — improve the visual coherence of the CLI output. The
 
 - [x] 1. Fix ASCII art banner alignment — shortened tagline, added version, removed redundant help/star lines
 - [x] 2. Improve run output header — add a compact run header line when `ralph run` starts (e.g. ralph name + iteration count if set) so the output has a clear starting point
-- [ ] 3. Unify console emitter formatting — make iteration blocks visually consistent: standardize indentation of sub-items (commands, result text), use the same icon style for all status lines
+- [x] 3. Unify console emitter formatting — make iteration blocks visually consistent: standardize indentation of sub-items (commands, result text), use the same icon style for all status lines
 - [ ] 4. Polish run summary line — improve the `Done:` line formatting to match the iteration style (icons, alignment)
 - [ ] 5. Run full test suite and fix any broken assertions
 
