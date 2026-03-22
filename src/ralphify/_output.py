@@ -53,7 +53,10 @@ def collect_output(
     parts: list[str] = []
     for stream in (stdout, stderr):
         if stream:
-            parts.append(ensure_str(stream))
+            text = ensure_str(stream)
+            if parts and not parts[-1].endswith("\n"):
+                parts.append("\n")
+            parts.append(text)
     return "".join(parts)
 
 
