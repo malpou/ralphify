@@ -146,7 +146,9 @@
       "@type": "SoftwareApplication",
       "name": "Ralphify"
     }{% if page.meta and page.meta.keywords %},
-    "keywords": "{{ page.meta.keywords }}"{% endif %}
+    "keywords": "{{ page.meta.keywords }}"{% endif %}{% if page.meta and page.meta.git_creation_date_localized_raw_iso_date %},
+    "datePublished": "{{ page.meta.git_creation_date_localized_raw_iso_date }}"{% endif %}{% if page.meta and page.meta.git_revision_date_localized_raw_iso_date %},
+    "dateModified": "{{ page.meta.git_revision_date_localized_raw_iso_date }}"{% endif %}
   }
   </script>
   {% endif %}
