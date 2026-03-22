@@ -820,6 +820,25 @@ class TestAssemblePrompt:
 
         assert result == "simple prompt"
 
+    def test_arg_values_not_resolved_as_command_placeholders(self, tmp_path):
+        """Arg values containing {{ commands.X }} must appear literally,
+        not be re-processed as command placeholders."""
+        config = make_config(
+            tmp_path,
+            "---\nagent: echo\ncommands:\n  - name: tests\n    run: pytest\n"
+            "args:\n  - filter\n---\n"
+            "Filter: {{ args.filter }}\nTests: {{ commands.tests }}",
+            max_iterations=1,
+            args={"filter": "{{ commands.tests }}"},
+            commands=[Command(name="tests", run="pytest")],
+            credit=False,
+        )
+
+        result = _assemble_prompt(config, {"tests": "5 passed"})
+
+        assert "Filter: {{ commands.tests }}" in result
+        assert "Tests: 5 passed" in result
+
 
 class TestCreditInLoop:
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)

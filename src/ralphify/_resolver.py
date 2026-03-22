@@ -60,3 +60,33 @@ def resolve_args(prompt: str, user_args: dict[str, str]) -> str:
     placeholders so they don't leak into the assembled prompt.
     """
     return _resolve_kind(prompt, user_args, _ARGS_PATTERN)
+
+
+# Single pattern matching both placeholder kinds for single-pass resolution.
+_ALL_PATTERN = re.compile(
+    rf"\{{\{{\s*({FIELD_COMMANDS}|{FIELD_ARGS})\.({CMD_NAME_RE.pattern})\s*\}}\}}"
+)
+
+
+def resolve_all(
+    prompt: str,
+    command_outputs: dict[str, str],
+    user_args: dict[str, str],
+) -> str:
+    """Resolve all placeholders in a single pass to prevent cross-contamination.
+
+    Unlike sequential ``resolve_args`` + ``resolve_commands``, this ensures
+    that values inserted by one kind of placeholder are not re-processed
+    as the other kind.
+    """
+    lookups: dict[str, dict[str, str]] = {
+        FIELD_COMMANDS: command_outputs,
+        FIELD_ARGS: user_args,
+    }
+
+    def _replace(match: re.Match) -> str:
+        kind = match.group(1)
+        name = match.group(2)
+        return lookups[kind].get(name, "")
+
+    return _ALL_PATTERN.sub(_replace, prompt)

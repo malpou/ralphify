@@ -1,6 +1,6 @@
 """Tests for ralphify._resolver — the template placeholder resolution engine."""
 
-from ralphify._resolver import resolve_args, resolve_commands
+from ralphify._resolver import resolve_all, resolve_args, resolve_commands
 
 
 class TestResolveCommands:
@@ -117,3 +117,46 @@ class TestResolveArgs:
     def test_hyphenated_arg_name(self):
         result = resolve_args("{{ args.my-dir }}", {"my-dir": "/tmp"})
         assert result == "/tmp"
+
+
+class TestResolveAll:
+    def test_resolves_both_kinds(self):
+        result = resolve_all(
+            "{{ commands.tests }} and {{ args.dir }}",
+            {"tests": "ok"}, {"dir": "./src"},
+        )
+        assert result == "ok and ./src"
+
+    def test_arg_value_not_resolved_as_command_placeholder(self):
+        """Values inserted from args must not be re-processed as command placeholders."""
+        result = resolve_all(
+            "Filter: {{ args.filter }}\nTests: {{ commands.tests }}",
+            {"tests": "5 passed"},
+            {"filter": "{{ commands.tests }}"},
+        )
+        assert "Filter: {{ commands.tests }}" in result
+        assert "Tests: 5 passed" in result
+
+    def test_command_output_not_resolved_as_arg_placeholder(self):
+        """Values inserted from commands must not be re-processed as arg placeholders."""
+        result = resolve_all(
+            "Output: {{ commands.echo }}\nDir: {{ args.dir }}",
+            {"echo": "{{ args.dir }}"},
+            {"dir": "./src"},
+        )
+        assert "Output: {{ args.dir }}" in result
+        assert "Dir: ./src" in result
+
+    def test_clears_unknown_placeholders(self):
+        result = resolve_all(
+            "{{ commands.missing }} {{ args.missing }}",
+            {"other": "val"}, {"other": "val"},
+        )
+        assert result == " "
+
+    def test_empty_dicts_clear_all(self):
+        result = resolve_all(
+            "{{ commands.a }} {{ args.b }}",
+            {}, {},
+        )
+        assert result == " "
