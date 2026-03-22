@@ -84,7 +84,13 @@ ralph run research ./my-project "performance"
 # Mixed — positional args skip names already provided via flags
 ralph run research --focus "performance" ./my-project
 # dir="./my-project", focus="performance"
+
+# -- ends flag parsing — everything after is positional
+ralph run research -- --verbose ./src
+# dir="--verbose", focus="./src"
 ```
+
+Use `--` when a positional value starts with `--` and would otherwise be parsed as a flag.
 
 Missing args resolve to an empty string.
 
