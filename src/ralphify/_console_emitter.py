@@ -65,7 +65,7 @@ class _DelayCountdown:
     def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
         elapsed = time.monotonic() - self._start
         remaining = max(0, self._total - elapsed)
-        yield Text(f"Waiting {remaining:.0f}s...", style="dim")
+        yield Text(f"Waiting {format_duration(remaining)}...", style="dim")
 
 
 class ConsoleEmitter:
