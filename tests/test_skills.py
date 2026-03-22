@@ -21,6 +21,14 @@ class TestReadBundledSkill:
         assert "name: new-ralph" in content
         assert "RALPH.md" in content
 
+    def test_reads_ralphify_skill(self):
+        content = read_bundled_skill("ralphify")
+        assert "name: ralphify" in content
+        assert "ralph run" in content
+        assert "RALPH.md" in content
+        assert "{{ commands." in content
+        assert "{{ args." in content
+
     def test_raises_for_nonexistent_skill(self):
         with pytest.raises(FileNotFoundError):
             read_bundled_skill("does-not-exist")
