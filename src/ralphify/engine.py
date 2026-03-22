@@ -281,6 +281,7 @@ def run_loop(
         config.log_dir.mkdir(parents=True, exist_ok=True)
 
     emit(EventType.RUN_STARTED, RunStartedData(
+        ralph_name=config.ralph_dir.name,
         commands=len(config.commands),
         max_iterations=config.max_iterations,
         timeout=config.timeout,
