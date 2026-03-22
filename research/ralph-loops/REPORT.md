@@ -1,6 +1,6 @@
 # Autonomous Agent Loops & Harness Engineering: State of the Art (March 2026)
 
-> The field has converged on a core architecture: iterative loops with fresh context per iteration, state persisted in files and git, and verification gates between cycles. The "ralph loop" pattern — named after the bash-loop technique popularized in mid-2025 — is now mainstream, with Karpathy's autoresearch, Meta's REA, Spotify's Honk, and OpenAI's Codex all implementing variants. The ecosystem is large (30+ implementations, 500+ skills, 12K+ stars on skill directories) but operationally immature — cost blowups, undetected doom loops, and missing observability remain common. The key differentiator between amateur and expert harness engineering is the quality of the verification layer and the state management strategy. Agent throughput now exceeds human review capacity — 78% of sessions involve multi-file edits with 47 tool calls — making the harness the primary quality gate. The fundamental insight: fix the harness, not the output — every prompt improvement benefits all future iterations, creating a flywheel.
+> The field has converged on a core architecture: iterative loops with fresh context per iteration, state persisted in files and git, and verification gates between cycles. The "ralph loop" pattern — named after the bash-loop technique popularized in mid-2025 — is now mainstream, with Karpathy's autoresearch, Meta's REA, Spotify's Honk, and OpenAI's Codex all implementing variants. The pattern is proving domain-agnostic: Databricks doubled data engineering success rates (32%→77%), pentest loops automate security audits, and DevOps loops migrate infrastructure — wherever the three primitives exist (editable asset, measurable metric, time-boxed cycle), the loop works. The ecosystem is large (30+ implementations, 500+ skills, 12K+ stars on skill directories) but operationally immature — only 47% of deployed agents are actively monitored, cost blowups and doom loops remain common. The key differentiator between amateur and expert harness engineering is the quality of the verification layer and the state management strategy. Agent throughput now exceeds human review capacity — 78% of sessions involve multi-file edits with 47 tool calls — making the harness the primary quality gate. The fundamental insight: fix the harness, not the output — every prompt improvement benefits all future iterations, creating a flywheel.
 
 ## Key Insights
 
@@ -93,119 +93,39 @@
 - How quickly will A2A adoption close the gap with MCP (97M downloads)? Will multi-ralph coordination benefit from A2A, or is file-based handoff sufficient for most use cases?
 - What's the optimal credential architecture for ralph loops — env vars (simple), vault integration (better), or injection proxy (strongest)? At what scale does the complexity of injection proxies pay off?
 - How does Keycard's runtime governance model interact with ralph loops that run in CI/CD vs. local development? Is the audit trail useful for debugging loop failures?
-- What domain-specific verification patterns emerge for non-code ralph loops (DevOps: terraform validate, data: dbt test, security: scanner baselines)? Is there a generalizable "verification adapter" pattern?
-- How do teams handle the agent observability gap — build custom dashboards, adopt enterprise platforms (Splunk/Arize), or use lightweight MCP-native tools (Iris)? What's the minimum viable monitoring for production ralph loops?
+- What domain-specific verification patterns emerge for non-code ralph loops? **[Partially answered in Ch25]** — verification adapter pattern (domain-specific command producing pass/fail) generalizes: `terraform validate`, `dbt test`, security scanner baselines. Databricks doubled success with this approach. But no formal "adapter interface" exists yet.
+- How do teams handle the agent observability gap? **[Partially answered in Ch25]** — three tiers: MCP-native (Iris, lightweight), enterprise platforms (Splunk AI Agent Monitoring GA Q1 2026), and iteration-level telemetry (files changed, command pass/fail, cost). Microsoft positions observability as a release requirement. But minimum viable monitoring for ralph loops specifically is undefined.
 - Will the AgenticOS concept (ASPLOS 2026) produce practical primitives that benefit ralph loop execution, or will containers/VMs remain the dominant runtime?
 
-## Key Sources
+## Key Sources (Top 30 — full list in [notes/sources.md](notes/sources.md))
 
 - [Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Anthropic
 - [Background Coding Agents (Honk Part 3)](https://engineering.atspotify.com/2025/12/feedback-loops-background-coding-agents-part-3) — Spotify Engineering
-- [Karpathy's Autoresearch](https://github.com/karpathy/autoresearch) — GitHub
-- [Meta's REA](https://engineering.fb.com/2026/03/17/developer-tools/ranking-engineer-agent-rea-autonomous-ai-system-accelerating-meta-ads-ranking-innovation/) — Engineering at Meta
-- [Codex Long Horizon Tasks](https://developers.openai.com/cookbook/examples/codex/long_horizon_tasks/) — OpenAI
-- [Skill Issue: Harness Engineering](https://www.humanlayer.dev/blog/skill-issue-harness-engineering-for-coding-agents) — HumanLayer
-- [The 80% Problem in Agentic Coding](https://addyo.substack.com/p/the-80-problem-in-agentic-coding) — Addy Osmani
-- [Agentic Engineering Anti-Patterns](https://simonwillison.net/guides/agentic-engineering-patterns/anti-patterns/) — Simon Willison
-- [Lessons from 2,500+ AGENTS.md Files](https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/) — GitHub Blog
-- [Harness Engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) — Martin Fowler / Thoughtworks
-- [The Double-Loop Model](https://testdouble.com/insights/youre-holding-it-wrong-the-double-loop-model-for-agentic-coding) — Test Double
-- [Advanced Context Engineering](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/ace-fca.md) — HumanLayer
-- [Relocating Rigor](https://aicoding.leaflet.pub/3mbrvhyye4k2e) — Chad Fowler
-- [ralph-claude-code](https://github.com/frankbria/ralph-claude-code) — frankbria (8K+ stars, circuit breakers, exit detection)
-- [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) — VoltAgent (12K+ stars, 500+ skills)
-- [Boris Cherny's Workflow](https://www.infoq.com/news/2026/01/claude-code-creator-workflow/) — InfoQ
-- [Agent Budget Guard MCP](https://earezki.com/ai-news/2026-03-02-i-built-an-mcp-server-so-my-ai-agent-can-track-its-own-spending/) — earezki
-- [BMAD + Ralph Framework](https://www.vibesparking.com/en/blog/ai/2026-02-14-bmad-ralph-execution-loop-claude-code/) — Vibe Sparking AI
-- [Measuring AI Agent Autonomy in Practice](https://www.anthropic.com/research/measuring-agent-autonomy) — Anthropic
-- [Testing Pyramid for AI Agents](https://engineering.block.xyz/blog/testing-pyramid-for-ai-agents) — Block Engineering (Angie Jones)
-- [The Anatomy of an Agent Harness](https://blog.langchain.com/the-anatomy-of-an-agent-harness/) — LangChain
-- [Guided Autonomy: Progressive Trust](https://www.llmwatch.com/p/guided-autonomy-progressive-trust) — Pascal Biese / LLM Watch
-- [Harness-First Agents](https://www.datadoghq.com/blog/ai/harness-first-agents/) — Datadog
-- [LLM Evaluators](https://eugeneyan.com/writing/llm-evaluators/) — Eugene Yan
-- [Eval-Driven Development](https://evaldriven.org/) — Grey Newell (10-principle manifesto)
-- [Optimizing CLAUDE.md with Prompt Learning](https://arize.com/blog/claude-md-best-practices-learned-from-optimizing-claude-code-with-prompt-learning/) — Arize AI (+5-10% from system prompt optimization alone)
-- [Skill Eval](https://blog.mgechev.com/2026/02/26/skill-eval/) — Minko Gechev (unit-testing AI agent skills)
-- [The Importance of Agent Harness in 2026](https://www.philschmid.de/agent-harness-2026) — Phil Schmid (build-to-delete, rippable harness framework)
-- [Harness Engineering (OpenAI)](https://openai.com/index/harness-engineering/) — OpenAI (entropy management, garbage collection agents, 1M+ lines with zero hand-written code)
-- [Everything is a Ralph Loop](https://ghuntley.com/loop/) — Geoffrey Huntley (evolutionary software, Loom, Level 9)
-- [Advanced Tool Use](https://www.anthropic.com/engineering/advanced-tool-use) — Anthropic (Tool Search, 85% token reduction, dynamic loading)
-- [Tool Calling Without MCP Server Composition](https://hackteam.io/blog/tool-calling-is-broken-without-mcp-server-composition/) — Hackteam (RAG-MCP, 4 composition patterns)
-- [Deep Dive into MCP](https://a16z.com/a-deep-dive-into-mcp-and-the-future-of-ai-tooling/) — a16z (MCP architecture, agent-centric execution model)
-- [Effective Context Engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic (context as finite resource, JIT retrieval, sub-agent architectures)
-- [Context Engineering Part 2](https://www.philschmid.de/context-engineering-part-2) — Phil Schmid (compaction hierarchy, agent-as-tool MapReduce, Manus lessons)
-- [Harness Engineering: Infrastructure Moat](https://earezki.com/ai-news/2026-03-15-harness-engineering-why-the-model-is-a-commodity-and-the-infrastructure-is-your-moat/) — earezki (Evolve 5-layer control plane, closed knowledge loops)
-- [Guardrails for Agentic Coding](https://jvaneyck.wordpress.com/2026/02/22/guardrails-for-agentic-coding-how-to-move-up-the-ladder-without-lowering-your-bar/) — Van Eyck (6 guardrails, hooks as superpower, XP rediscovered)
-- [Anthropic Agentic Coding Trends 2026](https://getbeam.dev/blog/anthropic-agentic-coding-trends-2026.html) — Beam (78% multi-file, 23-min sessions, 47 tool calls, 40% fewer errors with docs)
-- [Scaling Long-Running Autonomous Coding](https://cursor.com/blog/scaling-agents) — Cursor (planner-worker-judge, 1M+ lines, role-based pipeline)
-- [AI Coding Agents: Coherence Through Orchestration](https://mikemason.ca/writing/ai-coding-agents-jan-2026/) — Mike Mason (8-13% real productivity, code quality data, production anti-patterns)
-- [How to Run a Multi-Agent Coding Workspace](https://www.augmentcode.com/guides/how-to-run-a-multi-agent-coding-workspace) — Augment Code (6 coordination patterns, worktree isolation, failure taxonomy)
-- [The Loop as Laboratory: 3,190 Cycles](https://dev.to/meridian-ai/the-loop-as-laboratory-what-3190-cycles-of-autonomous-ai-operation-reveal-23je) — Meridian AI (30-day autonomous operation, identity persistence, 9 sub-agents)
-- [Agent Loops Forever: How to Stop](https://matrixtrak.com/blog/agents-loop-forever-how-to-stop) — MatrixTrak (fingerprint detection, error classification, stopping conditions)
-- [Agentic AI Coding: Best Practice Patterns](https://codescene.com/blog/agentic-ai-coding-best-practice-patterns-for-speed-with-quality) — CodeScene (Code Health 9.5+ threshold, multi-level safeguarding, 2-3x speedup)
-- [How to Tell If Your AI Agent Is Stuck (220 Loops)](https://dev.to/boucle2026/how-to-tell-if-your-ai-agent-is-stuck-with-real-data-from-220-loops-4d4h) — Boucle (55%/45% productive/problematic, 50% remediation effectiveness, 13.3x feedback amplification)
-- [AgentRx: Systematic Debugging for AI Agents](https://www.microsoft.com/en-us/research/blog/systematic-debugging-for-ai-agents-introducing-the-agentrx-framework/) — Microsoft Research (+23.6% failure localization, 9-category taxonomy, 115 trajectories)
-- [Checkpoint Commit Patterns](https://understandingdata.com/posts/checkpoint-commit-patterns/) — James Phoenix (4 git checkpoint patterns for AI-assisted development)
-- [Trace-Driven Development](https://www.nickwinder.com/blog/trace-driven-development-langsmith-claude-code) — Nick Winder (LangSmith MCP + Claude Code, autonomous fix proposals)
-- [Preventing Agent Drift at CRED](https://dev.to/singhdevhub/how-we-prevent-ai-agents-drift-code-slop-generation-2eb7) — SinghDevHub (8 safeguards, dual-threshold circuit breakers, explicit termination tools)
-- [Self-Evolving Agents Cookbook](https://developers.openai.com/cookbook/examples/partners/self_evolving_agents/autonomous_agent_retraining) — OpenAI + Weco (canonical meta-loop: execute → evaluate → metaprompt → redeploy)
-- [Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) — Anthropic (Swiss Cheese Model, 8-step eval roadmap)
-- [Pass@k vs Pass^k](https://www.philschmid.de/agents-pass-at-k-pass-power-k) — Phil Schmid (reliability gap: 70% success = 97% pass@3 but 34% pass^3)
-- [The Reliability Gap](https://simmering.dev/blog/agent-benchmarks/) — Paul Simmering (3-tier enterprise readiness based on pass^k degradation)
-- [GitHub Agentic Workflows](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/) — GitHub ("Continuous AI" — Markdown+YAML frontmatter compiled to Actions)
-- [Cursor Cloud Agents](https://devops.com/cursor-cloud-agents-get-their-own-computers-and-35-of-internal-prs-to-prove-it/) — DevOps.com (35% of internal PRs, each agent gets own VM)
-- [Cron Scheduler for AI Agents at Scale](https://blog.geta.team/how-we-built-a-cron-scheduler-for-ai-agents-at-scale/) — Geta Team (100+ agents, centralized scheduler, ~200 lines JS)
-- [Optimizing Coding Agent Rules](https://arize.com/blog/optimizing-coding-agent-rules-claude-md-agents-md-clinerules-cursor-rules-for-improved-accuracy/) — Arize AI (PromptLearning for CLAUDE.md, +6% on SWE-bench)
-- [Promptfoo: Evaluate Coding Agents](https://www.promptfoo.dev/docs/guides/evaluate-coding-agents/) — Promptfoo/OpenAI (trajectory tracing, cost assertions, CI/CD eval gates)
-- [Humans and Agents in Software Engineering Loops](https://martinfowler.com/articles/exploring-gen-ai/humans-and-agents.html) — Kief Morris / Martin Fowler (in/on/out of the loop framework)
-- [Building AI Coding Agents for the Terminal](https://arxiv.org/abs/2603.05344) — Nghi D. Q. Bui (OpenDev, 6-phase ReAct loop, first academic systematization of harness engineering)
-- [35-Agent AI Coding Swarm](https://earezki.com/ai-news/2026-03-20-i-built-a-35-agent-ai-coding-swarm-that-runs-overnight/) — earezki (6,500+ runs, 124 duplicate PRs, $65/day, 5-layer memory)
-- [Context Engineering Lessons from Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) — Peak Ji (KV-cache as #1 metric, 100:1 input-to-output, rebuilt 4x)
-- [Stripe Minions at Scale](https://www.infoq.com/news/2026/03/stripe-autonomous-coding-agents/) — InfoQ (1,300+ PRs/week, "Blueprints" architecture)
-- [Databricks Genie Code](https://www.databricks.com/company/newsroom/press-releases/databricks-launches-genie-code-bringing-agentic-engineering-data) — Databricks (32.1%→77.1% success rate, 80%+ databases launched by agents)
-- [State of AI Agent Security 2026](https://www.gravitee.io/blog/state-of-ai-agent-security-2026-report-when-adoption-outpaces-control) — Gravitee (47.1% monitored, 88% experienced incidents)
-- [Observability for AI Systems](https://www.microsoft.com/en-us/security/blog/2026/03/18/observability-ai-systems-strengthening-visibility-proactive-risk-detection/) — Microsoft (observability as release requirement, behavioral baselines)
-- [Ralph Pentest Loop](https://mykalseceng.github.io/posts/ralph-pentest-loop/) — Dark Knight Blog (two-stage security pipeline, Burp Suite MCP)
-- [Ralph Loops for DevOps Engineering](https://blog.ogunlana.net/2026/01/22/agentic-frameworks-in-cloud-infrastructure-an-exhaustive-analysis-of-ralph-and-get-shit-done-for-devops-engineering/) — Bola Ogunlana (Day 2 operations, never direct deploy permissions)
-- [ETH Zurich: AGENTS.md Value Review](https://www.infoq.com/news/2026/03/agents-context-file-value-review/) — InfoQ (context files reduced success by ~3%, increased costs 19-20%)
-- [State of Secrets Sprawl 2026](https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/) — GitGuardian (29M secrets on GitHub, AI commits 2x leak rate, Claude Code 3.2% vs 1.5% baseline)
-- [Security Boundaries in Agentic Architectures](https://vercel.com/blog/security-boundaries-in-agentic-architectures) — Vercel (credential injection proxy, application sandbox + secret injection)
-- [Keycard: Runtime Governance for Coding Agents](https://www.globenewswire.com/news-release/2026/03/19/3259248/0/en/Keycard-Releases-Runtime-Governance-for-Autonomous-Coding-Agents.html) — Keycard (identity-bound, task-scoped, ephemeral credentials, March 19 2026)
-- [Agentic AI Foundation Formation](https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation) — Linux Foundation (AAIF: MCP + goose + AGENTS.md, Dec 2025)
-- [MCP vs A2A: Complete Guide 2026](https://dev.to/pockit_tools/mcp-vs-a2a-the-complete-guide-to-ai-agent-protocols-in-2026-30li) — DEV Community (protocol roles, complementary positioning, adoption data)
-- [State of MCP Server Security 2025](https://astrix.security/learn/blog/state-of-mcp-server-security-2025/) — Astrix Security (88% need auth, 53% static secrets, 8.5% OAuth, 24K exposed secrets)
-- [AG-UI: Agent-User Interaction Protocol](https://docs.ag-ui.com/introduction) — CopilotKit (16 event types, typed handoffs, mid-flow pause/approve/retry)
-- [QCon: AI for Developers in a Dangerous State](https://www.theregister.com/2026/03/18/ai_for_software_developers_qcon/) — The Register (expertise erosion paradox)
-- [Memory Compression Failure Modes](https://www.indium.tech/blog/agent-memory-compression-failure-modes/) — Indium Tech (5 failure modes for long-running agents)
-- [4 Memory Architectures for AI Agents](https://dev.to/ai_agent_digest/your-ai-agents-memory-is-broken-here-are-4-architectures-racing-to-fix-it-55j1) — DEV Community (Observational, Graph, Self-Editing, RAG)
-- [Google Always On Memory Agent](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent) — Google (no vector DB, SQLite + LLM consolidation)
-- [State of Agent Engineering](https://www.langchain.com/state-of-agent-engineering) — LangChain (89% observability, 52.4% evals, 57% agents in prod)
-- [Compaction as Gradient Descent Momentum](https://jxnl.co/writing/2025/08/30/context-engineering-compaction/) — Jason Liu (lossy compaction, experiential texture loss)
-- [Spec-Driven Development (Thoughtworks)](https://www.thoughtworks.com/en-us/insights/blog/agile-engineering-practices/spec-driven-development-unpacking-2025-new-engineering-practices) — Thoughtworks (SDD as 2025's key new practice, spec-first vs spec-anchored vs spec-as-source)
-- [How to Write a Good Spec for AI Agents](https://addyosmani.com/blog/good-spec/) — Addy Osmani (five principles, three-tier boundaries, modular prompts, conformance suites)
-- [Spec-Driven Development: From Code to Contract (ICSE 2026)](https://arxiv.org/abs/2602.00180) — arXiv (three rigor levels, 50% error reduction with specs, taxonomy of spec types)
-- [Stripe Minions Blueprint Architecture](https://www.mindstudio.ai/blog/stripe-minions-blueprint-architecture-deterministic-agentic-nodes) — MindStudio (deterministic+agentic nodes, 1,300 PRs/week, dependency update blueprint example)
-- [GitHub Spec Kit](https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/) — GitHub Blog (72K+ stars, specify->plan->tasks->implement, 22+ agent platforms)
-- [OpenSpec Deep Dive](https://redreamality.com/garden/notes/openspec-guide/) — Redreamality (brownfield-first, 4-phase state machine, GIVEN/WHEN/THEN format)
-- [Intent Formalization: A Grand Challenge](https://arxiv.org/html/2603.17150) — Microsoft Research (specification spectrum, TiCoder doubled accuracy 40%→84%)
-- [AI Made Every Test Pass. The Code Was Still Wrong.](https://doodledapp.com/feed/ai-made-every-test-pass-the-code-was-still-wrong) — Doodledapp (independent ground truth vs self-validation)
-- [Recent Frontier Models Are Reward Hacking](https://metr.org/blog/2025-06-05-recent-reward-hacking/) — METR (30.4% reward hacking rate, o3 admits misalignment when asked)
-- [AI Coding Agents Rely Too Much on Fallbacks](https://www.seangoedecke.com/agents-and-fallbacks/) — Sean Goedecke (silent fallback insertion pattern)
-- [AI Broke Your Code Review](https://bryanfinster.substack.com/p/ai-broke-your-code-review-heres-how) — Bryan Finster (Nyquist principle for defect detection rate)
-- [Code Review in the Age of AI](https://addyosmani.com/blog/code-review-ai/) — Addy Osmani (PR Contract framework, threat model review)
-- [The Future of Agentic Coding: Conductors to Orchestrators](https://addyosmani.com/blog/future-agentic-coding/) — Addy Osmani (conductor/orchestrator duality, role evolution)
-- [Understanding SDD: Kiro, spec-kit, Tessl](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html) — Boeckeler / Martin Fowler (three SDD tools compared)
-- [Amazon Vibe Coding Failures](https://www.getautonoma.com/blog/amazon-vibe-coding-lessons) — Autonoma AI (4 Sev-1s in 90 days, 6.3M lost orders)
-- [Claude Code Review (multi-agent)](https://thenewstack.io/anthropic-launches-a-multi-agent-code-review-tool-for-claude-code/) — Anthropic (5 independent reviewer agents, 84% finding rate on large PRs)
-- [Technical Design Spec Pattern](https://www.arguingwithalgorithms.com/posts/technical-design-spec-pattern.html) — Tom Yedwab (specs as long-term memory, 6 key ideas, rollback-and-revise)
-- [Spec-Driven Verification for Coding Agents](https://agent-wars.com/news/2026-03-14-spec-driven-verification-claude-code-agents) — Agent Wars (4-stage verification pipeline, self-congratulation machine problem)
-- [Constitutional Spec-Driven Development](https://arxiv.org/abs/2602.02584) — arXiv (security by construction, 26.1% of AI agent skills contain vulnerabilities)
-- [Improving Deep Agents with Harness Engineering](https://blog.langchain.com/improving-deep-agents-with-harness-engineering/) — LangChain (Top 30→Top 5, middleware stack, reasoning sandwich)
-- [Open SWE: Internal Coding Agents](https://blog.langchain.com/open-swe-an-open-source-framework-for-internal-coding-agents/) — LangChain (Stripe/Coinbase/Ramp patterns, middleware safety nets)
-- [The Agent That Investigates Itself](https://techcommunity.microsoft.com/blog/appsonazureblog/the-agent-that-investigates-itself/4500073) — Microsoft (Azure SRE Agent, 80% error reduction via self-diagnosis)
-- [Context Engineering for Azure SRE Agent](https://techcommunity.microsoft.com/blog/appsonazureblog/context-engineering-lessons-from-building-azure-sre-agent/4481200/) — Microsoft (filesystem-as-world, 45%→75% Intent Met)
-- [$20K Eval Bug](https://zencoder.ai/blog/20k-bug-that-changed-evals) — Zencoder (spec quality as hidden variable, multi-model complementarity)
-- [Grounded Take on Agentic Coding](https://iximiuz.com/en/posts/grounded-take-on-agentic-coding/) — iximiuz (50K lines/month production reality, dangerous failure modes)
-- [How to Sandbox AI Agents in 2026](https://northflank.com/blog/how-to-sandbox-ai-agents) — Northflank (3-tier isolation, microVM/gVisor/container trade-offs)
-- [Run Autonomous Agents Safely with NVIDIA OpenShell](https://developer.nvidia.com/blog/run-autonomous-self-evolving-agents-more-safely-with-nvidia-openshell/) — NVIDIA (out-of-process enforcement, privacy router, deny-by-default)
-- [Practical Security Guidance for Sandboxing Agentic Workflows](https://developer.nvidia.com/blog/practical-security-guidance-for-sandboxing-agentic-workflows-and-managing-execution-risk/) — NVIDIA (tiered permissions, approval caching risk, OS-level controls)
+- [Karpathy's Autoresearch](https://github.com/karpathy/autoresearch) — 630 lines, 700 experiments, 3 primitives
+- [Meta's REA](https://engineering.fb.com/2026/03/17/developer-tools/ranking-engineer-agent-rea-autonomous-ai-system-accelerating-meta-ads-ranking-innovation/) — 5x productivity, hibernate-and-wake
+- [Harness Engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) — Martin Fowler / Thoughtworks (8-13% real productivity)
+- [Effective Context Engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic (context as finite resource)
+- [Scaling Long-Running Autonomous Coding](https://cursor.com/blog/scaling-agents) — Cursor (planner-worker-judge, 1M+ lines)
+- [Testing Pyramid for AI Agents](https://engineering.block.xyz/blog/testing-pyramid-for-ai-agents) — Block Engineering (record/playback)
+- [Improving Deep Agents with Harness Engineering](https://blog.langchain.com/improving-deep-agents-with-harness-engineering/) — LangChain (Top 30→Top 5, middleware stack)
+- [Harness Engineering (OpenAI)](https://openai.com/index/harness-engineering/) — OpenAI (entropy management, 1M+ lines)
+- [Stripe Minions at Scale](https://www.infoq.com/news/2026/03/stripe-autonomous-coding-agents/) — 1,300+ PRs/week, Blueprints
+- [35-Agent AI Coding Swarm](https://earezki.com/ai-news/2026-03-20-i-built-a-35-agent-ai-coding-swarm-that-runs-overnight/) — earezki (6,500+ runs, 5-layer memory)
+- [Context Engineering Lessons from Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus) — KV-cache as #1 metric
+- [Self-Evolving Agents Cookbook](https://developers.openai.com/cookbook/examples/partners/self_evolving_agents/autonomous_agent_retraining) — OpenAI + Weco (canonical meta-loop)
+- [The Agent That Investigates Itself](https://techcommunity.microsoft.com/blog/appsonazureblog/the-agent-that-investigates-itself/4500073) — Azure SRE Agent (80% error reduction)
+- [Measuring AI Agent Autonomy in Practice](https://www.anthropic.com/research/measuring-agent-autonomy) — Anthropic (20%→40% auto-approve)
+- [GitHub Spec Kit](https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/) — 72K+ stars, spec-driven development
+- [How to Tell If Your AI Agent Is Stuck (220 Loops)](https://dev.to/boucle2026/how-to-tell-if-your-ai-agent-is-stuck-with-real-data-from-220-loops-4d4h) — Boucle (50% remediation, 13.3x amplification)
+- [The Loop as Laboratory: 3,190 Cycles](https://dev.to/meridian-ai/the-loop-as-laboratory-what-3190-cycles-of-autonomous-ai-operation-reveal-23je) — 30-day autonomous operation
+- [Pass@k vs Pass^k](https://www.philschmid.de/agents-pass-at-k-pass-power-k) — Phil Schmid (70% success = 34% pass^3)
+- [Run Autonomous Agents Safely with NVIDIA OpenShell](https://developer.nvidia.com/blog/run-autonomous-self-evolving-agents-more-safely-with-nvidia-openshell/) — out-of-process enforcement
+- [State of Secrets Sprawl 2026](https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/) — AI commits 2x leak rate
+- [Recent Frontier Models Are Reward Hacking](https://metr.org/blog/2025-06-05-recent-reward-hacking/) — METR (30.4% rate)
+- [Databricks Genie Code](https://www.databricks.com/company/newsroom/press-releases/databricks-launches-genie-code-bringing-agentic-engineering-data) — 32%→77% data engineering success
+- [State of AI Agent Security 2026](https://www.gravitee.io/blog/state-of-ai-agent-security-2026-report-when-adoption-outpaces-control) — 47.1% monitored, 88% incidents
+- [Guardrails for Agentic Coding](https://jvaneyck.wordpress.com/2026/02/22/guardrails-for-agentic-coding-how-to-move-up-the-ladder-without-lowering-your-bar/) — hooks as superpower, XP rediscovered
+- [Humans and Agents in Software Engineering Loops](https://martinfowler.com/articles/exploring-gen-ai/humans-and-agents.html) — in/on/out of the loop framework
+- [Skill Issue: Harness Engineering](https://www.humanlayer.dev/blog/skill-issue-harness-engineering-for-coding-agents) — context flooding, auto-CLAUDE.md hurts 20%+
+- [ETH Zurich: AGENTS.md Value Review](https://www.infoq.com/news/2026/03/agents-context-file-value-review/) — context files reduced success by ~3%
+- [$20K Eval Bug](https://zencoder.ai/blog/20k-bug-that-changed-evals) — spec quality as hidden variable

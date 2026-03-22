@@ -754,3 +754,41 @@ After 23 iterations and 24 chapters, the report is comprehensive but needs tight
 - Refine cycle: 22 insights, 25 chapters — the chapter count is high. Consider final quality pass.
 - Or: research the practical implementation of domain-specific ralphs — what do actual RALPH.md files look like for DevOps, security, data engineering?
 - Or: explore the "agent economy" and marketplace trends — skills, services, pricing models
+
+## Iteration 26 — 2026-03-22
+
+**Decision: HYBRID — refine (primary) + targeted research (secondary)**
+
+After 25 iterations, the research is mature (25 chapters, 22 insights, 210+ sources). New searches hit diminishing returns. This iteration focuses on:
+
+**Refine focus:**
+1. Update Ch06 (implications) with Ch25 findings: domain-specific ralph patterns, observability monitoring, "any metric" positioning
+2. Quality pass on REPORT.md — ensure intro paragraph and insights are sharp
+3. Add domain-specific cookbook recipes to Ch06 (security scan, DevOps migration, data pipeline ralphs)
+
+**Research focus (secondary):**
+- One fresh web sweep for the very latest (March 22-25, 2026) developments — agent-computer interfaces, new tools, new practitioner voices
+
+**What was done:**
+- Updated Ch06 (Implications) with Ch25 findings:
+  - Added "Domain-Specific Ralph Patterns" section with 3 concrete RALPH.md recipes (security scan, DevOps migration, data pipeline)
+  - Added "Observability as a First-Class Concern" section with telemetry recommendations
+  - Added 12th competitive differentiator: "domain-agnostic 'any metric' positioning"
+  - Added cookbook recipes #6 (Data Pipeline Quality Ralph) and #7 (DevOps Migration Ralph)
+- REPORT.md quality pass:
+  - Updated intro paragraph with domain-agnostic finding (Databricks 32%→77%) and observability data (47% monitored)
+  - Trimmed Key Sources from 110+ entries to top 30 with pointer to notes/sources.md
+  - REPORT.md now 131 lines (down from 211), well within 150-line target
+- Updated Open Questions: marked domain-specific verification and observability gap as partially answered by Ch25
+- Updated questions.md with Ch25 partial answers
+- Launched 2 background research agents for latest March 2026 content and agent-computer interfaces
+
+**Key refinements:**
+- REPORT.md was 211 lines — 40% over target. Key Sources was 112 lines with 110 entries. Trimming to top 30 with a link to the full sources list is cleaner and keeps the report scannable.
+- The domain-agnostic positioning is the strongest growth vector from Ch25 — not just coding loops but security/DevOps/data/content/business loops. Worth highlighting in intro.
+- The observability crisis data (47.1% monitored, 88% incidents) is a concrete "why this matters" for ralphify's built-in telemetry recommendation.
+
+**Next iteration should focus on:**
+- Research: incorporate any findings from background agents (if they return useful results)
+- Or: explore the "agent economy" — skills marketplace, pricing, commercial agent services
+- Or: refine cycle — final pass on chapter coherence, consider consolidating some of the 25 chapters

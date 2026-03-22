@@ -127,7 +127,21 @@ Iterative security review loop:
 - **Commands**: `run security scanner`, `list open findings`
 - **Why**: Continuous security improvement with diminishing-returns stopping criterion. securing-ralph-loop runs 5 scanners with 3-retry auto-fix.
 
-### 6. Three-Phase Development Ralph
+### 6. Data Pipeline Quality Ralph
+
+Data engineering loop with dbt as verification:
+- **RALPH.md prompt**: Data quality objectives + `{{ commands.test_results }}` + `{{ commands.coverage }}`
+- **Commands**: `dbt test --select tag:quality`, `./scripts/dbt-coverage.sh`, count failures
+- **Why**: Databricks proved autonomous data engineering (32%→77% success). The verification adapter pattern generalizes: any domain-specific test that produces pass/fail works.
+
+### 7. DevOps Migration Ralph
+
+Infrastructure-as-code migration with terraform validate:
+- **RALPH.md prompt**: Migration spec with `{{ commands.remaining }}` + `{{ commands.validate }}`
+- **Commands**: `grep -r old_pattern | wc -l`, `terraform validate`, `terraform plan | tail -20`
+- **Why**: DevOps is the second-most-proven domain after coding. Verification is binary (validate passes or not), and the "remaining count" metric drives clear convergence.
+
+### 8. Three-Phase Development Ralph (Highest Complexity)
 
 The research→plan→implement pattern (HumanLayer, Anthropic, Test Double):
 - Three separate ralphs, each loading only the previous phase's output
@@ -481,6 +495,62 @@ With 5,000+ MCP servers and 97M monthly SDK downloads, ralphs increasingly need 
 
 A2A's Agent Card format (JSON-LD with capabilities, auth requirements, rate limits) maps to RALPH.md metadata. A ralph could expose itself as an A2A agent, enabling multi-ralph coordination beyond file-based handoff. This is future-looking but architecturally free — RALPH.md already has the right shape.
 
+## Domain-Specific Ralph Patterns
+
+Ch25 research validates that ralph loops transfer far beyond coding — the three primitives (editable asset, measurable metric, time-boxed cycle) are universal. Ralphify's "any metric" positioning is its strongest growth vector.
+
+### Cookbook Recipes for Non-Code Domains
+
+**Security Scan Ralph** — iterative vulnerability remediation with binary verification:
+```yaml
+agent: claude -p
+commands:
+  - name: scan_results
+    run: ./scripts/run-security-scan.sh
+  - name: baseline
+    run: cat security-baseline.json
+  - name: open_issues
+    run: jq '.findings | length' scan-results.json
+```
+
+**DevOps Migration Ralph** — infrastructure-as-code migration with `terraform validate` as verification:
+```yaml
+agent: claude -p
+commands:
+  - name: remaining
+    run: grep -r "aws_old_resource" infra/ | wc -l
+  - name: validate
+    run: terraform validate
+  - name: plan_diff
+    run: terraform plan -no-color 2>&1 | tail -20
+```
+
+**Data Pipeline Ralph** — data quality loops with `dbt test` as verification gate:
+```yaml
+agent: claude -p
+commands:
+  - name: test_results
+    run: dbt test --select tag:quality 2>&1
+  - name: coverage
+    run: ./scripts/dbt-coverage.sh
+  - name: failures
+    run: cat target/run_results.json | jq '[.results[] | select(.status=="fail")] | length'
+```
+
+Key finding: Databricks Genie Code doubled success rates (32.1%→77.1%) for autonomous data engineering. Over 80% of new Databricks databases are launched by agents, not humans. The verification adapter pattern (domain-specific command that produces a pass/fail signal) generalizes across all domains.
+
+### Observability as a First-Class Concern
+
+Only 47.1% of deployed AI agents are actively monitored (Gravitee 2026). 88% of firms have experienced agent security/privacy incidents. Traditional monitoring is insufficient because agents fail in novel ways (reward hacking, silent fallback, context degradation).
+
+**Recommendation**: Add iteration-level telemetry to ralphify's core loop:
+- Files changed per iteration (0 = stalled)
+- Command pass/fail ratio (health signal)
+- Iteration duration trend (declining = degrading)
+- Cumulative cost estimate (budget awareness)
+
+This data feeds loop fingerprinting (Ch15) and circuit breakers (Ch16), creating an integrated observability layer without external dependencies. Microsoft now positions observability as a **release requirement** for agents, not an optional add-on.
+
 ## Competitive Positioning
 
 Ralphify sits at a validated sweet spot: simpler than full orchestration frameworks (LangGraph, CrewAI) but more structured than raw bash loops. The Karpathy autoresearch moment — 630 lines running 700 experiments — proves that "simple harness, powerful results" wins.
@@ -497,3 +567,4 @@ The key differentiators to develop:
 9. **Rippable-by-design architecture.** As models improve, ralphify should get simpler. Design features to be removable (e.g., loop detection can be a plugin, not core). This positions ralphify as a framework that evolves with models rather than fighting them.
 10. **Practitioner-to-production bridge.** The 6 converged cookbook patterns are individual-use today. Ralphify can be the framework that adds operational safeguards (revert, fingerprinting, budget, circuit breakers) to make them production-ready. This is the most differentiated positioning: not a new pattern, but the production wrapper around patterns people already use.
 11. **Zero-secret architecture.** RALPH.md already declares dependencies — extending to credential scopes enables harness-managed secret injection where agents never touch credentials directly. With AI commits leaking secrets at 2x the baseline, this is both a security and a trust differentiator.
+12. **Domain-agnostic "any metric" positioning.** Ralph loops work wherever the three primitives exist (editable asset, measurable metric, time-boxed cycle). Databricks proved autonomous data engineering (32%→77% success); pentest loops run security audits; DevOps loops migrate infrastructure. Ralphify's RALPH.md format is domain-neutral by design — the verification command is the only domain-specific component. This positions ralphify as the universal harness, not a coding-only tool.
