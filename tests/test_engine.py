@@ -9,7 +9,7 @@ import pytest
 from helpers import MOCK_RUN_COMMAND, MOCK_SUBPROCESS, drain_events, event_types, events_of_type, fail_result, make_config, make_state, ok_result, ok_run_result
 
 from ralphify._events import BoundEmitter, EventType, NullEmitter, QueueEmitter
-from ralphify._run_types import Command, RunStatus
+from ralphify._run_types import Command, RunConfig, RunStatus
 from ralphify.engine import (
     _assemble_prompt,
     _delay_if_needed,
@@ -875,6 +875,22 @@ class TestAssemblePrompt:
         assert "Filter: {{ commands.tests }}" in result
         assert "Tests: 5 passed" in result
 
+    def test_resolves_context_placeholders(self, tmp_path):
+        config = make_config(
+            tmp_path,
+            "---\nagent: echo\n---\n"
+            "Name: {{ context.name }}, Iter: {{ context.iteration }}, Max: {{ context.max_iterations }}",
+            max_iterations=5,
+            credit=False,
+        )
+
+        result = _assemble_prompt(
+            config, {},
+            {"name": "my-ralph", "iteration": "3", "max_iterations": "5"},
+        )
+
+        assert result == "Name: my-ralph, Iter: 3, Max: 5"
+
 
 class TestCreditInLoop:
     @patch(MOCK_SUBPROCESS, side_effect=ok_result)
@@ -894,3 +910,53 @@ class TestCreditInLoop:
 
         call_input = mock_run.call_args.kwargs["input"]
         assert "Co-authored-by" not in call_input
+
+
+class TestContextInLoop:
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_context_placeholders_resolved_in_agent_input(self, mock_run, tmp_path):
+        ralph_dir = tmp_path / "my-ralph"
+        ralph_dir.mkdir()
+        ralph_file = ralph_dir / "RALPH.md"
+        ralph_file.write_text(
+            "---\nagent: echo\n---\n"
+            "Name: {{ context.name }}, Iter: {{ context.iteration }}, Max: {{ context.max_iterations }}"
+        )
+        config = RunConfig(
+            agent="echo",
+            ralph_dir=ralph_dir,
+            ralph_file=ralph_file,
+            max_iterations=3,
+            credit=False,
+        )
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        # Check the first iteration's input
+        first_call_input = mock_run.call_args_list[0].kwargs["input"]
+        assert "Name: my-ralph" in first_call_input
+        assert "Iter: 1" in first_call_input
+        assert "Max: 3" in first_call_input
+
+    @patch(MOCK_SUBPROCESS, side_effect=ok_result)
+    def test_context_iteration_increments(self, mock_run, tmp_path):
+        ralph_dir = tmp_path / "counter"
+        ralph_dir.mkdir()
+        ralph_file = ralph_dir / "RALPH.md"
+        ralph_file.write_text(
+            "---\nagent: echo\n---\nIter: {{ context.iteration }}"
+        )
+        config = RunConfig(
+            agent="echo",
+            ralph_dir=ralph_dir,
+            ralph_file=ralph_file,
+            max_iterations=3,
+            credit=False,
+        )
+        state = make_state()
+        run_loop(config, state, NullEmitter())
+
+        inputs = [c.kwargs["input"] for c in mock_run.call_args_list]
+        assert "Iter: 1" in inputs[0]
+        assert "Iter: 2" in inputs[1]
+        assert "Iter: 3" in inputs[2]
