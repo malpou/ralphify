@@ -250,6 +250,112 @@ class TestRunStopped:
         assert "timed out" not in output
 
 
+class TestStreakTracking:
+    def test_streak_shown_after_two_successes(self):
+        emitter, console = _capture_emitter()
+        for i in range(1, 3):
+            emitter.emit(_make_event(
+                EventType.ITERATION_COMPLETED,
+                iteration=i, detail="completed (1s)", log_file=None, result_text=None,
+            ))
+        output = console.export_text()
+        assert "2 streak" in output
+
+    def test_streak_not_shown_after_one_success(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.ITERATION_COMPLETED,
+            iteration=1, detail="completed (1s)", log_file=None, result_text=None,
+        ))
+        output = console.export_text()
+        assert "streak" not in output
+
+    def test_streak_resets_on_failure(self):
+        emitter, console = _capture_emitter()
+        # Two successes
+        for i in range(1, 3):
+            emitter.emit(_make_event(
+                EventType.ITERATION_COMPLETED,
+                iteration=i, detail="completed (1s)", log_file=None, result_text=None,
+            ))
+        # One failure
+        emitter.emit(_make_event(
+            EventType.ITERATION_FAILED,
+            iteration=3, detail="failed (1s)", log_file=None, result_text=None,
+        ))
+        assert emitter._streak == 0
+        assert emitter._best_streak == 2
+
+    def test_best_streak_in_summary(self):
+        emitter, console = _capture_emitter()
+        # Three successes
+        for i in range(1, 4):
+            emitter.emit(_make_event(
+                EventType.ITERATION_COMPLETED,
+                iteration=i, detail="completed (1s)", log_file=None, result_text=None,
+            ))
+        emitter.emit(_make_event(
+            EventType.RUN_STOPPED,
+            reason="completed", total=3, completed=3, failed=0, timed_out=0, total_elapsed=10.0,
+        ))
+        output = console.export_text()
+        assert "Best streak" in output
+        assert "3" in output
+
+
+class TestProgressDisplay:
+    def test_iteration_header_shows_max_iterations(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STARTED, timeout=0, commands=0, max_iterations=10,
+        ))
+        emitter.emit(_make_event(EventType.ITERATION_STARTED, iteration=3))
+        emitter._stop_live()
+        output = console.export_text()
+        assert "3 / 10" in output
+
+    def test_iteration_header_no_max_iterations(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STARTED, timeout=0, commands=0, max_iterations=None,
+        ))
+        emitter.emit(_make_event(EventType.ITERATION_STARTED, iteration=3))
+        emitter._stop_live()
+        output = console.export_text()
+        assert "Iteration 3" in output
+        assert "/" not in output
+
+
+class TestSummaryPanel:
+    def test_summary_shows_success_rate(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STOPPED,
+            reason="completed", total=4, completed=3, failed=1, timed_out=0, total_elapsed=60.0,
+        ))
+        output = console.export_text()
+        assert "75%" in output
+
+    def test_summary_shows_total_elapsed(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STOPPED,
+            reason="completed", total=1, completed=1, failed=0, timed_out=0, total_elapsed=125.0,
+        ))
+        output = console.export_text()
+        assert "2m 5s" in output
+
+    def test_summary_uses_panel(self):
+        emitter, console = _capture_emitter()
+        emitter.emit(_make_event(
+            EventType.RUN_STOPPED,
+            reason="completed", total=1, completed=1, failed=0, timed_out=0, total_elapsed=1.0,
+        ))
+        output = console.export_text()
+        # Panel renders with box-drawing characters
+        assert "Done" in output
+
+
 class TestIterationSpinner:
     def test_renders_elapsed_time(self):
         spinner = _IterationSpinner()
