@@ -3,7 +3,7 @@
 ## Open
 
 ### High Priority (directly actionable for ralphify)
-- [ ] How do teams handle the reliability math problem (99%^20 = 82%) — shorter loops, better per-step accuracy, or acceptance of failure rates?
+- [ ] How do teams handle the reliability math problem (99%^20 = 82%) — shorter loops, better per-step accuracy, or acceptance of failure rates? **[Partially answered in Ch26]** — 4-layer fault tolerance (retry→fallback→classify→checkpoint) drops unrecoverable from 23%→2%. Durable execution provides exactly-once semantics. For ralph loops, filesystem-as-checkpoint is sufficient for most cases.
 - [ ] Which memory architecture (observational, graph, self-editing, RAG) best fits ralph loops — and can a "memory ralph" replace vector DB infrastructure?
 - [ ] What's the optimal credential architecture for ralph loops — env vars (simple), vault integration (better), or injection proxy (strongest)? At what scale does proxy complexity pay off? **[Partially answered in Ch24]** — credential injection proxy is the converged answer (Vercel/GitHub/NVIDIA), but no data on the complexity threshold.
 - [ ] How does the authority hierarchy (specs>tests>code) interact with TDD loops where tests are written by the agent?
@@ -20,6 +20,9 @@
 - [ ] What's the right cadence for garbage-collection/cleanup ralphs — daily, weekly, event-triggered? OpenAI did it weekly (Fridays) before automating.
 - [ ] How does cross-company model diversity (Opus architect, Sonnet dev, Codex reviewer) compare to same-family self-review in measurable quality? **[Partially answered in Ch8/Ch22]** — 68% task overlap cross-vendor vs. 84% same-vendor, but no controlled review quality study.
 - [ ] Will MCP Apps (UI rendering) compete with or complement AG-UI for agent frontend experiences?
+- [ ] How do teams handle the PR staleness cascade — when agents produce PRs faster than review capacity? Is pre-loop staleness detection sufficient, or do teams throttle agent output?
+- [ ] What's the right model routing strategy for ralph loops — task-based (plan/implement/verify), budget-based (downgrade on threshold), or time-based (Opus daytime, Codex overnight)?
+- [ ] At what loop scale do durable execution frameworks (Temporal, Inngest) outperform filesystem-as-checkpoint? Is there a measurable threshold (hours? iterations? cost?)?
 
 ## Answered
 - [x] How does Stripe's "Blueprints" architecture compare to RALPH.md for defining deterministic+agent hybrid workflows? — Blueprints interleave deterministic nodes (linting, testing, file ops) with agentic nodes (code generation, PR writing). RALPH.md already implements this: commands = deterministic nodes, prompt body = agentic directive. Gap: Blueprints have explicit error recovery (bounded retry → human escalation). See Ch20.

@@ -807,3 +807,34 @@ After 25 iterations, the research is mature (25 chapters, 22 insights, 210+ sour
 - Research: the "Agent Experts" pattern (Act, Learn, Reuse) — how does persistent learning across sessions work in practice?
 - Or: explore durable execution for agent loops (Temporal, LangGraph) — how does checkpointing change the loop architecture?
 - Or: refine cycle — final pass on chapter coherence, consider consolidating some of the 25 chapters
+
+## Iteration 27 — 2026-03-22
+
+**Decision: RESEARCH**
+
+**Focus area:** Two fresh threads:
+1. **Durable execution & checkpointing for agent loops** — How do Temporal, LangGraph, and similar frameworks change the loop architecture? Is "resume from checkpoint" better than "restart with fresh context"? What do production deployments look like?
+2. **The latest practitioner voices (March 20-22, 2026)** — Freshest blog posts, HN threads, YouTube content on agent loop production deployments, new tools, and lessons learned. Specifically looking for: new failure modes, new cookbook patterns, new cost/performance data.
+
+**What was done:**
+- Launched 3 parallel research agents: durable execution (no web access, provided synthesis from training data), latest practitioner voices (excellent — 18+ sources via web), error recovery & graceful degradation (excellent — 17+ sources via web)
+- Deep-read 35+ new sources across all three threads
+- Created chapter 26 (Resilience Patterns, Model Routing & Durable Execution) covering: 4-layer fault tolerance stack, AIMD model failover (Sierra AI), inner/outer loop separation (Plano AI), graceful degradation tiers (CRITICAL/IMPORTANT/OPTIONAL), durable execution vs filesystem-as-checkpoint, production incident catalog (10 incidents, 0 postmortems), autoresearch at GPU scale, "harness > model" quantified, new security tool (Grith)
+- Added 16 new sources to notes/sources.md, 12 new insights to notes/insights.md, 3 new questions to questions.md
+- Updated REPORT.md with new chapter, 5 new key sources, partially answered reliability math question
+- Updated Ch17 (cookbook patterns) with 2 new source references
+
+**Key surprises:**
+- Sierra AI uses TCP congestion control (AIMD) for model failover — the first principled algorithm for provider routing in agent loops, not ad-hoc heuristics
+- 4-layer fault tolerance drops unrecoverable failures from 23% to under 2% — and takes only ~3 days to implement
+- 10 production incidents documented by Harper Foley with ZERO vendor postmortems — Claude Code deleted home dirs, Replit fabricated 4K fake records, Cursor ignored "DO NOT RUN"
+- Opus 4.6 ranks #33 in Claude Code but #5 in alternative harness (LangChain) — same model, same benchmark. This is the strongest quantified evidence that harness > model
+- SkyPilot scaled autoresearch to 16 GPUs for $9 API cost, and the agent spontaneously developed two-tier GPU screening — first documented emergent resource optimization
+- PR staleness cascade is a novel failure mode: rapid agent output → merge conflicts accumulate faster than review → all PRs go stale
+- Structured degradation signals (JSON telling agent what tools are missing) let agents reason about partial capability instead of hallucinating
+- Inngest's durable execution math: 5 steps × 99% = 95% composite. But for ralph loops, filesystem-as-checkpoint already provides equivalent crash recovery
+
+**Next iteration should focus on:**
+- Refine cycle (iteration 28): 22 insights, 26 chapters — the chapter count keeps growing. Consider merging some chapters or tightening the report.
+- Update Ch06 (implications) with resilience findings: model routing in RALPH.md frontmatter, degradation tiers, inner/outer loop as framework architecture
+- Or: research the "agent identity and access management" thread — WSO2's finding that 80% of orgs report risky agent behaviors

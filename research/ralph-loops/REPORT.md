@@ -77,6 +77,7 @@
 | 23 | [Agent Security & Sandboxing](chapters/23-agent-security-sandboxing.md) | 3-tier isolation (microVM/gVisor/container), NVIDIA OpenShell (out-of-process enforcement, browser tab model, privacy router), 4 agent-specific attack vectors, ephemeral sandbox lifecycle, OS-level controls, permission manifests from RALPH.md, "Beyond Agentic Coding" practitioner consensus |
 | 24 | [Protocol Stack & Credential Security](chapters/24-protocol-stack-credential-security.md) | Three-protocol stack (MCP/A2A/AG-UI), AAIF governance, GitGuardian 2x leak rate, credential injection proxy (Vercel/GitHub/NVIDIA), Keycard runtime governance, MCP OAuth gap (53% static secrets), token rotation for long-running loops, zero-secret ralph architecture |
 | 25 | [Domain-Specific Loops & The Observability Gap](chapters/25-domain-specific-loops-observability.md) | Ralph loops beyond coding (security/DevOps/data/content/business), Databricks Genie Code (32→77% success), observability crisis (47.1% monitored, 88% incidents), traditional monitoring insufficient, AgenticOS concept, "any metric" positioning |
+| 26 | [Resilience Patterns, Model Routing & Durable Execution](chapters/26-resilience-patterns-durable-execution.md) | 4-layer fault tolerance (23%→2% unrecoverable), AIMD model failover, inner/outer loop separation, graceful degradation tiers, durable execution vs filesystem-as-checkpoint, production incident catalog (10 incidents, 0 postmortems), autoresearch at GPU scale, "harness > model" quantified |
 
 ## Open Questions
 
@@ -85,7 +86,7 @@
 - How do teams decide between session-scoped, CI/CD-integrated, and cloud-native deployment for their agent loops?
 - What's the right cadence for garbage-collection/cleanup ralphs — daily, weekly, event-triggered?
 - How does guardrails.md scale — at what point do accumulated guardrails become contradictory or context-consuming?
-- How do teams handle the reliability math problem (99%^20 = 82%) — shorter loops, better per-step accuracy, or acceptance of failure rates?
+- How do teams handle the reliability math problem (99%^20 = 82%) — shorter loops, better per-step accuracy, or acceptance of failure rates? **[Partially answered in Ch26]** — 4-layer fault tolerance (retry→fallback→classify→checkpoint) drops unrecoverable failures from 23%→2%. Durable execution provides exactly-once step semantics. But for ralph loops, filesystem-as-checkpoint + fresh context is sufficient for most cases.
 - Which memory architecture (observational, graph, self-editing, RAG) best fits ralph loops — and can a "memory ralph" replace vector DB infrastructure?
 - What's the optimal middleware stack for ralph loops — which layers provide the most value per token of overhead? **[Partially answered in Ch22]** — LangChain's 4-layer stack (env mapping, loop detection, reasoning budget, pre-completion verification) is the best documented example.
 - How does Azure SRE Agent's concurrent memory staleness problem manifest in multi-ralph scenarios with shared state files?
@@ -129,3 +130,8 @@
 - [Skill Issue: Harness Engineering](https://www.humanlayer.dev/blog/skill-issue-harness-engineering-for-coding-agents) — context flooding, auto-CLAUDE.md hurts 20%+
 - [ETH Zurich: AGENTS.md Value Review](https://www.infoq.com/news/2026/03/agents-context-file-value-review/) — context files reduced success by ~3%
 - [$20K Eval Bug](https://zencoder.ai/blog/20k-bug-that-changed-evals) — spec quality as hidden variable
+- [Scaling Autoresearch to 16 GPUs](https://blog.skypilot.co/scaling-autoresearch/) — SkyPilot (910 experiments, $9 API, emergent GPU tiering)
+- [Model Failover with AIMD](https://sierra.ai/blog/model-failover) — Sierra AI (production model routing, congestion control)
+- [The Anatomy of an Agent Harness](https://blog.langchain.com/the-anatomy-of-an-agent-harness/) — LangChain (harness > model, quantified)
+- [Ten AI Agents Destroyed Production](https://www.harperfoley.com/blog/ai-agents-destroyed-production-zero-postmortems) — Harper Foley (10 incidents, 0 postmortems)
+- [4 Fault Tolerance Patterns](https://dev.to/klement_gunndu/4-fault-tolerance-patterns-every-ai-agent-needs-in-production-jih) — klement_gunndu (23%→2% unrecoverable)

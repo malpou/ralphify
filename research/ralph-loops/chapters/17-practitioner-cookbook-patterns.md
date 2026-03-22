@@ -264,3 +264,5 @@ Both studies validate the 80/20 split: ralph loops handle ~80% of mechanical wor
 - [Real World Example: Ralph Wiggum Loop](https://blog.lpains.net/posts/2026-01-31-real-world-example-ralph/) — LPains — 60% time savings, 5 iterations, spec quality as critical success factor
 - [Ralph Loops for SDK Migrations](https://stacktoheap.com/blog/2026/02/23/how-i-code-from-the-gym-part-4/) — StackToHeap — 9 stories, 81 min, 60 files changed, abstract vs concrete story comparison
 - [Coding Agents in Feb 2026](https://calv.info/agents-feb-2026) — Calvin — Time-based model selection, skills at ~50-100 tokens, 3-4 overnight tasks standard
+- [Linear-Driven Agent Loop](https://www.damiangalarza.com/posts/2026-02-13-linear-agent-loop/) — Damian Galarza — Linear MCP integration, PR staleness detection, fresh Claude Code per iteration
+- [Scaling Autoresearch to 16 GPUs](https://blog.skypilot.co/scaling-autoresearch/) — SkyPilot — 910 experiments, emergent GPU tiering, $9 API + $300 GPU
