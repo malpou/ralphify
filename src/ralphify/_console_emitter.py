@@ -21,6 +21,7 @@ from ralphify._events import (
     LOG_ERROR,
     STOP_COMPLETED,
     CommandsCompletedData,
+    DelayStartedData,
     Event,
     EventType,
     IterationEndedData,
@@ -54,6 +55,19 @@ class _IterationSpinner:
         yield text
 
 
+class _DelayCountdown:
+    """Rich renderable that shows a countdown timer for inter-iteration delays."""
+
+    def __init__(self, total: float) -> None:
+        self._total = total
+        self._start = time.monotonic()
+
+    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
+        elapsed = time.monotonic() - self._start
+        remaining = max(0, self._total - elapsed)
+        yield Text(f"Waiting {remaining:.0f}s...", style="dim")
+
+
 class ConsoleEmitter:
     """Renders engine events to the Rich console."""
 
@@ -67,6 +81,8 @@ class ConsoleEmitter:
             EventType.ITERATION_FAILED: partial(self._on_iteration_ended, color="red", icon=_ICON_FAILURE),
             EventType.ITERATION_TIMED_OUT: partial(self._on_iteration_ended, color="yellow", icon=_ICON_TIMEOUT),
             EventType.COMMANDS_COMPLETED: self._on_commands_completed,
+            EventType.DELAY_STARTED: self._on_delay_started,
+            EventType.DELAY_ENDED: self._on_delay_ended,
             EventType.LOG_MESSAGE: self._on_log_message,
             EventType.RUN_STOPPED: self._on_run_stopped,
         }
@@ -129,6 +145,19 @@ class ConsoleEmitter:
         count = data["count"]
         if count:
             self._console.print(f"  [bold]Commands:[/bold] {count} ran")
+
+    def _on_delay_started(self, data: DelayStartedData) -> None:
+        countdown = _DelayCountdown(data["delay"])
+        self._live = Live(
+            countdown,
+            console=self._console,
+            transient=True,
+            refresh_per_second=_LIVE_REFRESH_RATE,
+        )
+        self._live.start()
+
+    def _on_delay_ended(self, data: dict) -> None:  # noqa: ARG002
+        self._stop_live()
 
     def _on_log_message(self, data: LogMessageData) -> None:
         msg = escape_markup(data["message"])
