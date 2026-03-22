@@ -22,6 +22,10 @@
 - [ ] What's the optimal number of MCP servers per agent loop before tool selection accuracy degrades? Speakeasy handles 400 tools with Search-Describe-Execute, but what about in practice?
 - [ ] How do MCP gateway solutions (Composio, TrueFoundry) compare for multi-agent ralph loop deployments?
 - [ ] Will MCP's Tasks primitive enable a new class of async ralph loops that hibernate between MCP task completions?
+- [ ] How do teams implement the "closed knowledge loop" (observation harness analyzing JSONL logs) in practice — and does it actually improve loop performance over time?
+- [ ] What's the right threshold for "show output only on failure" — should all command output be suppressed by default, or only output above a certain size?
+- [ ] How does Vercel's feedback injection pattern (verify → reason string → next prompt) compare to the "signs" pattern (persistent guardrails file) for guided recovery?
+- [ ] At what point does architectural drift from agent-generated code become unrepairable — is there a measurable "point of no return"?
 
 ## Answered
 - [x] What are the most effective patterns for keeping agents on track during long-running loops? — Fresh context resets + file-based state + verification gates. See chapters 01-02.

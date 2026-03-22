@@ -46,6 +46,12 @@
 
 21. **MCP servers extend the harness, not the loop.** 5,000+ MCP servers and 97M monthly SDK downloads have created an infrastructure layer for agent loops — debugging (Deebo), profiling (CodSpeed), live docs (Context7), cost tracking (Budget Guard), browser testing (Playwright). But tool definitions consume up to 72% of context window; dynamic tool loading (85% token reduction via Anthropic's Tool Search) is essential. Start with 3-5 high-value servers, not 50.
 
+22. **Context engineering replaces prompt engineering.** Context is a finite, depletable resource. The goal: "the smallest set of high-signal tokens that maximize likelihood of desired outcome." Preference order: raw > compaction > summarization. Context rot degrades output after 20-30 exchanges — fresh-context-per-iteration (ralphify's design) is the architectural fix. Projects with architecture documentation see 40% fewer agent errors and 55% faster completion.
+
+23. **Greater autonomy demands tighter constraints.** Counter-intuitive but validated: strict dependency flows and deterministic guardrails enable more agent freedom, not less. Hooks make guardrails unavoidable — run on every tool call, file write, and commit. Van Eyck: agentic coding is XP rediscovered. When agents generate 10-100x more code, CI, strong typing, and architecture tests become non-negotiable.
+
+24. **Agent throughput exceeds human review capacity.** The new bottleneck is human attention, not agent speed. 78% of Claude Code sessions involve multi-file edits with 47 tool calls. Intent-failure detection — agents that follow rules but miss product intent — is the hardest gap. Agents can pass all tests while building the wrong thing.
+
 ## Chapters
 
 | # | Chapter | Summary |
@@ -63,6 +69,7 @@
 | 11 | [Trust, Testing, and Convergence](chapters/11-trust-testing-convergence.md) | Autonomy scaling data, harness testing pyramids, spec+ralph integration |
 | 12 | [Harness Evolution & Entropy Management](chapters/12-harness-evolution-entropy.md) | Rippable harnesses, garbage collection agents, completion promises, evolutionary software |
 | 13 | [MCP & the Agent Infrastructure Layer](chapters/13-mcp-agent-infrastructure.md) | 5,000+ MCP servers, dynamic tool loading, context window management, ralph+MCP integration |
+| 14 | [Context Engineering & Loop Maturation](chapters/14-context-engineering-advances.md) | Context rot, compaction hierarchy, guardrails as infrastructure, two-tier loops, intent-failure detection |
 
 ## Open Questions
 
@@ -76,6 +83,9 @@
 - How do teams decide which harness layers to rip when a new model ships — is there a systematic evaluation process?
 - What's the optimal number of MCP servers per agent loop before tool selection accuracy degrades?
 - How do MCP gateway solutions (Composio, TrueFoundry) compare for multi-agent ralph loop deployments?
+- How do teams implement "closed knowledge loops" (observation harnesses analyzing JSONL logs) in practice?
+- Does Vercel's feedback injection pattern outperform persistent guardrails files for guided recovery?
+- At what point does architectural drift from agent-generated code become unrepairable?
 
 ## Key Sources
 
@@ -112,3 +122,8 @@
 - [Advanced Tool Use](https://www.anthropic.com/engineering/advanced-tool-use) — Anthropic (Tool Search, 85% token reduction, dynamic loading)
 - [Tool Calling Without MCP Server Composition](https://hackteam.io/blog/tool-calling-is-broken-without-mcp-server-composition/) — Hackteam (RAG-MCP, 4 composition patterns)
 - [Deep Dive into MCP](https://a16z.com/a-deep-dive-into-mcp-and-the-future-of-ai-tooling/) — a16z (MCP architecture, agent-centric execution model)
+- [Effective Context Engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic (context as finite resource, JIT retrieval, sub-agent architectures)
+- [Context Engineering Part 2](https://www.philschmid.de/context-engineering-part-2) — Phil Schmid (compaction hierarchy, agent-as-tool MapReduce, Manus lessons)
+- [Harness Engineering: Infrastructure Moat](https://earezki.com/ai-news/2026-03-15-harness-engineering-why-the-model-is-a-commodity-and-the-infrastructure-is-your-moat/) — earezki (Evolve 5-layer control plane, closed knowledge loops)
+- [Guardrails for Agentic Coding](https://jvaneyck.wordpress.com/2026/02/22/guardrails-for-agentic-coding-how-to-move-up-the-ladder-without-lowering-your-bar/) — Van Eyck (6 guardrails, hooks as superpower, XP rediscovered)
+- [Anthropic Agentic Coding Trends 2026](https://getbeam.dev/blog/anthropic-agentic-coding-trends-2026.html) — Beam (78% multi-file, 23-min sessions, 47 tool calls, 40% fewer errors with docs)

@@ -113,6 +113,22 @@
 - **Mother MCP solves the instruction ceiling differently.** Instead of one monolithic CLAUDE.md, auto-detect tech stack and load modular ~500-token skills. 25+ skill registries. An alternative to the "router" approach from Ch08.
 - **MCP gateways (Composio, TrueFoundry) are emerging for production agent deployments.** Centralized auth, observability, and cost tracking across MCP servers. Important for multi-agent ralph loops running in CI/scheduled.
 
+## Context Engineering & Loop Maturation (NEW — Iteration 11)
+- **Context is a finite, depletable resource — minimize, don't maximize.** Anthropic's 2026 guide: "the smallest set of high-signal tokens that maximize likelihood of desired outcome." Preference order: raw > compaction > summarization.
+- **Context rot degrades output after 20-30 exchanges.** Concrete symptoms: repeated suggestions, hallucinated APIs, lost variable tracking, scope drift. Fresh context resets (ralph loops) are the architectural fix.
+- **Opus 4.6 context compaction: 76% vs 18.5% accuracy at 1M tokens.** 4x improvement over Sonnet 4.5 on multi-needle retrieval. Within-iteration compaction is becoming model-native; between-iteration resets remain essential.
+- **Agent throughput now exceeds human review capacity.** Epsilla: teams generate more code in hours than senior engineers review in weeks. Human attention, not processing speed, is the scarce resource.
+- **Greater autonomy demands tighter constraints, not looser ones.** Epsilla's counter-intuitive finding. Strict dependency flows prevent chaos specifically because the agent has more freedom within them. "Achieve detectability before granting autonomy."
+- **Vercel's two-tier loop: inner (tool calls) + outer (verification + feedback injection).** The `verifyCompletion` function returns a `reason` string injected into the next prompt — guided recovery, not blind retries.
+- **The "signs" pattern: agents document their own failures as learnable guardrails.** Guardrail entries survive context rotation, preventing repeated mistakes. Self-improving context across iterations.
+- **Hooks make guardrails unavoidable, not advisory.** Van Eyck: hooks at session start/end, pre/post tool calls, before writes, before commits. Combined with "OK on success, details on failure" output pattern.
+- **XP (Extreme Programming) is being rediscovered through agentic coding.** When agents generate 10-100x more code, CI, strong typing, automated testing, and architecture discipline become non-negotiable infrastructure.
+- **Anthropic data: 78% of sessions are multi-file, 23-min average, 47 tool calls.** Architecture documentation = 40% fewer errors + 55% faster completion. The context engineering dividend is measurable.
+- **Closed knowledge loops: secondary LLMs analyze JSONL operational logs.** Earezki's Evolve pattern creates a feedback mechanism where agents learn from operational history without retraining.
+- **Intent-failure detection: agents that follow rules but miss product intent.** Epsilla's fourth validation component. An agent can pass all tests while building the wrong thing — requires product-context verification.
+- **The quadratic cost problem: tool call chains multiply tokens unpredictably.** By 50K tokens, cached input tokens dominate costs. Each tool hop compounds. Structured per-step logging identifies bottlenecks.
+- **"Show output only on failure" preserves context budget.** Van Eyck: when tools pass, emit "OK." Reserve context for error details. This is the operational version of output redirection.
+
 ## Ralphify-Specific
 - **Ralphify's command system naturally supports the "commands as verifiers" pattern.** Running tests/metrics as commands and injecting results into the prompt is exactly what Spotify and Karpathy do — ralphify just needs to formalize verification as a first-class concept.
 - **Agent skills as portable packages is a validated trend.** Ralphify's skill system aligns with the industry direction of installable, reusable instruction sets.

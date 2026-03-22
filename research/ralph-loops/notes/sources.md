@@ -141,6 +141,23 @@
 - https://blog.modelcontextprotocol.io/posts/2026-mcp-roadmap/ — MCP team — 2026 roadmap: transport scalability, Tasks primitive, governance, enterprise readiness — **medium**
 - https://www.truefoundry.com/blog/best-mcp-gateways — TrueFoundry — MCP gateway comparison: Composio, TrueFoundry, Portkey — **medium**
 
+- https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents — Anthropic — Context as finite resource, just-in-time retrieval, sub-agent architectures, tool design for minimal context — **high**
+- https://www.philschmid.de/context-engineering-part-2 — Phil Schmid — Context compaction vs summarization hierarchy, hierarchical action spaces, agent-as-tool MapReduce, Manus 5x rewrites — **high**
+- https://www.epsilla.com/blogs/2026-03-12-harness-engineering — Epsilla — "LLM is CPU, harness is OS", functional correctness gap (intent-failure detection), greater autonomy demands tighter constraints, 30-60-90 roadmap — **high**
+- https://earezki.com/ai-news/2026-03-15-harness-engineering-why-the-model-is-a-commodity-and-the-infrastructure-is-your-moat/ — earezki — Evolve control plane (5-layer harness), closed knowledge loop from JSONL logs, infrastructure as competitive moat — **high**
+- https://www.infoq.com/news/2026/03/opus-4-6-context-compaction/ — InfoQ — Opus 4.6 context compaction: 76% vs 18.5% on MRCR v2 at 1M tokens, adaptive thinking effort controls — **high**
+- https://jvaneyck.wordpress.com/2026/02/22/guardrails-for-agentic-coding-how-to-move-up-the-ladder-without-lowering-your-bar/ — Van Eyck — 6 guardrails (CI, domain types, deterministic tools, arch tests, scenario tests, scanners), hooks as superpower, XP rediscovered — **high**
+- https://getbeam.dev/blog/anthropic-agentic-coding-trends-2026.html — Beam/Anthropic — 78% multi-file edits, 23-min sessions, 47 tool calls/session, 40% fewer errors with arch docs, 8 trends — **high**
+- https://dev.to/alexandergekov/2026-the-year-of-the-ralph-loop-agent-1gkj — Alexander Gekov — Ralph loop overview: token management signals, guardrails/signs pattern, concrete use cases, Fruit Ninja example — **high**
+- https://antran.app/blogs/2026/ralph_wiggum/ — An Tran — Ralph loop implementations (bash, stop-hook, orchestrator, ralphy), prompt structure patterns, when loops fail — **high**
+- https://github.com/vercel-labs/ralph-loop-agent — Vercel Labs — Two-tier loop (inner tool calls, outer verification), composable stop conditions, feedback injection from verify — **high**
+- https://github.com/iannuttall/ralph — iannuttall — Minimal file-based agent loop, PRD JSON state, STALE_SECONDS auto-reopen, multi-agent support — **medium**
+- https://www.mindstudio.ai/blog/context-rot-ai-coding-agents-explained — MindStudio — Context rot symptoms (repeated suggestions, hallucinated APIs, scope drift), degradation after 20-30 exchanges — **high**
+- https://news.ycombinator.com/item?id=47000034 — HN — Quadratic cost curve: cached input tokens dominate by 50K tokens, tool call chains multiply costs unpredictably — **high**
+- https://news.ycombinator.com/item?id=47378792 — HN — Autonomous coding agents astroturfing: skepticism on claims, disconnect between hype and usage, financial incentives — **medium**
+- https://news.ycombinator.com/item?id=46737630 — HN — Codex agent loop internals: encrypted compaction, reasoning token lifecycle, skills as JIT context — **high**
+- https://openai.com/index/unrolling-the-codex-agent-loop/ — OpenAI — Codex loop internals: call-tool-append-repeat, /responses/compact endpoint, encrypted latent-space compaction — **high**
+
 ## Lower Relevance
 
 - https://www.permit.io/blog/human-in-the-loop-for-ai-agents-best-practices-frameworks-use-cases-and-demo — Permit.io — Human-in-the-loop patterns for AI agents — **low**

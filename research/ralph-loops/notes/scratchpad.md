@@ -220,3 +220,33 @@
 **Research focus (secondary):**
 - **MCP servers and the agent infrastructure layer** — the most under-explored topic with high practitioner relevance. How are MCP servers changing what autonomous loops can do? What new capabilities do they unlock for ralph loops?
 - This addresses the gap: research covers architecture, verification, anti-patterns, trust, testing, entropy — but NOT the tooling/infrastructure layer that practitioners are building around their loops
+
+## Iteration 11 — 2026-03-22
+
+**Decision: RESEARCH**
+
+**Focus area:** Two threads:
+1. **Latest March 2026 practitioner techniques** — what's brand new in the last 2-3 weeks? New tools, new patterns, new blog posts about running autonomous agent loops at scale. Focus on cutting-edge developments.
+2. **Practical cookbook patterns people are actually sharing** — concrete ralph/loop configurations, workflow examples, and templates that could become ralphify cookbook entries.
+
+**What was done:**
+- Searched across 4 parallel threads: latest March 2026 blog posts, Reddit (blocked by crawler), YouTube/conference talks, cookbook patterns
+- Deep-read 12+ new sources: Anthropic context engineering, Phil Schmid Part 2, Epsilla harness engineering, earezki infrastructure moat, Van Eyck guardrails, Anthropic 2026 trends, Alexander Gekov ralph loops, An Tran ralph implementations, Vercel ralph-loop-agent, iannuttall/ralph, MindStudio context rot, OpenAI Codex loop unrolling
+- Created chapter 14 (Context Engineering & Loop Maturation) covering context rot, compaction hierarchy, guardrails as infrastructure, two-tier loops, intent-failure detection
+- Added 3 new insights to REPORT.md (#22-#24), 14 new insights to notes, 16 new sources, 5 new questions
+- Found HN skepticism thread on autonomous coding astroturfing — essential counterpoint
+
+**Key surprises:**
+- Context rot degrades output after just 20-30 exchanges — lower than expected, validates fresh-context-per-iteration
+- Opus 4.6 context compaction: 76% vs 18.5% at 1M tokens — but between-iteration resets still essential
+- Agent throughput now exceeds human review capacity — human attention is the new bottleneck, not agent speed
+- Greater autonomy demands TIGHTER constraints (Epsilla) — counter-intuitive but validated
+- Van Eyck: agentic coding is XP rediscovered — the old discipline becomes mandatory when agents generate 10-100x more code
+- Vercel's two-tier loop with feedback injection (reason string → next prompt) is a clean formalization of guided recovery
+- The "signs" pattern (agents document their own failures as guardrails) is gaining traction independently across implementations
+- "Intent-failure detection" is a new category: agents pass all tests while building the wrong thing
+- HN skeptics: "they absolutely never show their code" — real disconnect between marketing and practitioner reality
+
+**Next iteration should focus on:**
+- Refine cycle (iteration 12): 24 insights in REPORT.md — trim back to ~20. 14 chapters may be too many — consider merging Ch09 (prompt assembly) and Ch14 (context engineering).
+- Update Ch06 (implications) with new context engineering findings: output minimization, guardrails file, feedback injection, 30-60-90 roadmap.
