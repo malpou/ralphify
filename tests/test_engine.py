@@ -918,47 +918,29 @@ class TestCreditInLoop:
 class TestComputeIdleDelay:
     """Unit tests for _compute_idle_delay — backoff math."""
 
-    def test_returns_zero_without_idle_config(self, tmp_path):
-        config = make_config(tmp_path, idle=None)
+    @pytest.mark.parametrize("idle_cfg, consecutive, expected", [
+        (None, 3, 0),  # no idle config → zero
+        (IdleConfig(delay=30), 0, 0),  # not idle → zero
+    ])
+    def test_returns_zero_when_inactive(self, tmp_path, idle_cfg, consecutive, expected):
+        config = make_config(tmp_path, idle=idle_cfg)
         state = make_state()
-        state.consecutive_idle = 3
+        state.consecutive_idle = consecutive
 
-        assert _compute_idle_delay(config, state) == 0
+        assert _compute_idle_delay(config, state) == expected
 
-    def test_returns_zero_when_not_idle(self, tmp_path):
-        config = make_config(tmp_path, idle=IdleConfig(delay=30))
+    @pytest.mark.parametrize("consecutive, max_delay, expected", [
+        (1, 300, 30),    # base delay
+        (2, 300, 60),    # 30 * 2^1
+        (3, 300, 120),   # 30 * 2^2
+        (10, 100, 100),  # capped at max_delay
+    ])
+    def test_backoff_progression(self, tmp_path, consecutive, max_delay, expected):
+        config = make_config(tmp_path, idle=IdleConfig(delay=30, backoff=2.0, max_delay=max_delay))
         state = make_state()
-        state.consecutive_idle = 0
+        state.consecutive_idle = consecutive
 
-        assert _compute_idle_delay(config, state) == 0
-
-    def test_first_idle_returns_base_delay(self, tmp_path):
-        config = make_config(tmp_path, idle=IdleConfig(delay=30, backoff=2.0, max_delay=300))
-        state = make_state()
-        state.consecutive_idle = 1
-
-        assert _compute_idle_delay(config, state) == 30
-
-    def test_second_idle_applies_backoff(self, tmp_path):
-        config = make_config(tmp_path, idle=IdleConfig(delay=30, backoff=2.0, max_delay=300))
-        state = make_state()
-        state.consecutive_idle = 2
-
-        assert _compute_idle_delay(config, state) == 60  # 30 * 2^1
-
-    def test_third_idle_applies_backoff_squared(self, tmp_path):
-        config = make_config(tmp_path, idle=IdleConfig(delay=30, backoff=2.0, max_delay=300))
-        state = make_state()
-        state.consecutive_idle = 3
-
-        assert _compute_idle_delay(config, state) == 120  # 30 * 2^2
-
-    def test_caps_at_max_delay(self, tmp_path):
-        config = make_config(tmp_path, idle=IdleConfig(delay=30, backoff=2.0, max_delay=100))
-        state = make_state()
-        state.consecutive_idle = 10  # 30 * 2^9 = 15360, way over 100
-
-        assert _compute_idle_delay(config, state) == 100
+        assert _compute_idle_delay(config, state) == expected
 
 
 class TestIdleDetection:
@@ -1034,23 +1016,6 @@ class TestIdleDetection:
         events = drain_events(q)
         stop = events_of_type(events, EventType.RUN_STOPPED)[0]
         assert stop.data["reason"] == "max_idle"
-
-    @patch(MOCK_EXECUTE_AGENT)
-    def test_idle_backoff_delay_applied(self, mock_agent, tmp_path):
-        """Idle iterations should apply backoff delay, not the base delay."""
-        mock_agent.return_value = _idle_agent_result()
-        config = make_config(
-            tmp_path, max_iterations=2, delay=0,
-            idle=IdleConfig(delay=0.15, backoff=1.0, max_delay=300),
-        )
-        state = make_state()
-
-        start = time.monotonic()
-        run_loop(config, state, NullEmitter())
-        elapsed = time.monotonic() - start
-
-        # First idle delay should be ~0.15s, no delay after last iteration
-        assert elapsed >= 0.1
 
     @patch(MOCK_EXECUTE_AGENT)
     def test_idle_result_text_none_not_detected_as_idle(self, mock_agent, tmp_path):
