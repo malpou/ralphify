@@ -3,15 +3,9 @@
 import queue
 from datetime import datetime, timezone
 
+from helpers import drain_events
+
 from ralphify._events import BoundEmitter, Event, EventType, FanoutEmitter, NullEmitter, QueueEmitter
-
-
-def _drain(emitter: QueueEmitter) -> list[Event]:
-    """Drain all events from a QueueEmitter."""
-    events = []
-    while not emitter.queue.empty():
-        events.append(emitter.queue.get())
-    return events
 
 
 class TestEvent:
@@ -94,7 +88,7 @@ class TestBoundEmitter:
         emit = BoundEmitter(q, "run-abc")
         emit(EventType.ITERATION_STARTED, {"iteration": 1})
 
-        events = _drain(q)
+        events = drain_events(q)
         assert len(events) == 1
         assert events[0].run_id == "run-abc"
         assert events[0].type == EventType.ITERATION_STARTED
@@ -105,7 +99,7 @@ class TestBoundEmitter:
         emit = BoundEmitter(q, "run-xyz")
         emit(EventType.RUN_PAUSED)
 
-        events = _drain(q)
+        events = drain_events(q)
         assert len(events) == 1
         assert events[0].data == {}
 
@@ -116,7 +110,7 @@ class TestBoundEmitter:
         emit(EventType.ITERATION_STARTED, {"iteration": 1})
         emit(EventType.RUN_STOPPED)
 
-        events = _drain(q)
+        events = drain_events(q)
         assert all(e.run_id == "run-123" for e in events)
         assert len(events) == 3
 
