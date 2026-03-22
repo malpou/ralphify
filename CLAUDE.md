@@ -23,7 +23,7 @@ Key modules:
 - `manager.py` — Multi-run orchestration (concurrent runs via threads)
 - `_frontmatter.py` — YAML frontmatter parsing (uses PyYAML) and the `RALPH_MARKER` constant
 - `_run_types.py` — `RunConfig`, `RunState`, `RunStatus`, `Command` dataclasses
-- `resolver.py` — Template placeholder resolution (`{{ commands.name }}`, `{{ args.name }}`)
+- `_resolver.py` — Template placeholder resolution (`{{ commands.name }}`, `{{ args.name }}`)
 - `_agent.py` — Run agent subprocesses (streaming + blocking modes, log writing)
 - `_runner.py` — Generic command execution with timeout
 - `_events.py` — Event types, emitter protocol (NullEmitter, QueueEmitter, FanoutEmitter), and BoundEmitter convenience wrapper
@@ -65,6 +65,6 @@ A **ralph** is a directory containing a `RALPH.md` file. That's it. No project-l
 - Commands use `_runner.py:run_command()` with `shlex.split()` — no shell features (pipes, redirections, `&&`). Scripts are the escape hatch.
 - Commands starting with `./` run relative to the ralph directory. Other commands run from the project root.
 - The `agent` field in frontmatter is split with `shlex.split()` to build the command list.
-- Placeholder resolution uses `resolver.py` — `{{ commands.<name> }}` and `{{ args.<name> }}` are the two supported kinds.
+- Placeholder resolution uses `_resolver.py` — `{{ commands.<name> }}` and `{{ args.<name> }}` are the two supported kinds.
 
 The project has a website called ralphify.co and the docs live a ralphify.co/docs/

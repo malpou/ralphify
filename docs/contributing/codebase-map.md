@@ -21,7 +21,7 @@ src/ralphify/           # All source code
 ├── cli.py              # CLI commands (run, new, init) — delegates to engine for the loop
 ├── engine.py           # Core run loop orchestration with structured event emission
 ├── manager.py          # Multi-run orchestration (concurrent runs via threads)
-├── resolver.py         # Template placeholder resolution ({{ commands.* }}, {{ args.* }})
+├── _resolver.py        # Template placeholder resolution ({{ commands.* }}, {{ args.* }})
 ├── _agent.py           # Run agent subprocesses (streaming + blocking modes, log writing)
 ├── _run_types.py       # RunConfig, RunState, RunStatus, Command — shared data types
 ├── _runner.py          # Execute shell commands with timeout and capture output
@@ -67,7 +67,7 @@ ralph run my-ralph
 
 ### Placeholder resolution
 
-The resolver (`resolver.py`) handles:
+The resolver (`_resolver.py`) handles:
 
 - `{{ commands.tests }}` — replaced with the test command's output
 - `{{ args.dir }}` — replaced with the user argument value
@@ -113,7 +113,7 @@ The CLI uses a `ConsoleEmitter` (defined in `_console_emitter.py`) that renders 
 2. **`_run_types.py`** — `RunConfig`, `RunState`, `RunStatus`, and `Command`. These are the shared data types used by the engine, CLI, and manager.
 3. **`cli.py`** — All CLI commands. Delegates to `engine.run_loop()` for the actual loop. Terminal event rendering lives in `_console_emitter.py`.
 4. **`_frontmatter.py`** — YAML frontmatter parsing. Extracts `agent`, `commands`, `args` from the RALPH.md file.
-5. **`resolver.py`** — Template placeholder logic. Small file but critical.
+5. **`_resolver.py`** — Template placeholder logic. Small file but critical.
 6. **`_skills.py`** + **`skills/`** — The skill system behind `ralph new`. `_skills.py` handles agent detection, reads bundled skill definitions from `skills/`, installs them into the agent's skill directory, and builds the command to launch the agent.
 
 ## Traps and gotchas

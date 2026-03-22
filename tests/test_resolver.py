@@ -1,6 +1,6 @@
-"""Tests for ralphify.resolver — the template placeholder resolution engine."""
+"""Tests for ralphify._resolver — the template placeholder resolution engine."""
 
-from ralphify.resolver import resolve_args, resolve_commands
+from ralphify._resolver import resolve_args, resolve_commands
 
 
 class TestResolveCommands:

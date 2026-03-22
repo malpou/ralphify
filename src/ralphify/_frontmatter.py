@@ -20,7 +20,7 @@ import yaml
 RALPH_MARKER = "RALPH.md"
 
 # Frontmatter field names — used in parsing (cli.py) and placeholder
-# resolution (resolver.py).  Centralised here so renames stay in sync.
+# resolution (_resolver.py).  Centralised here so renames stay in sync.
 FIELD_AGENT = "agent"
 FIELD_COMMANDS = "commands"
 FIELD_ARGS = "args"
@@ -35,7 +35,7 @@ CMD_FIELD_TIMEOUT = "timeout"
 _FRONTMATTER_DELIMITER = "---"
 
 # Valid characters for command and arg names — letters, digits, hyphens,
-# underscores.  Used by cli.py (validation) and resolver.py (placeholders).
+# underscores.  Used by cli.py (validation) and _resolver.py (placeholders).
 CMD_NAME_RE = re.compile(r"[a-zA-Z0-9_-]+")
 
 # Human-readable description of allowed name characters, paired with CMD_NAME_RE.
