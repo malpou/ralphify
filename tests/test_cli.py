@@ -815,11 +815,10 @@ class TestValidateIdle:
         assert _validate_idle(None) is None
 
     def test_empty_dict_returns_defaults(self):
-        from ralphify._run_types import DEFAULT_IDLE_BACKOFF, DEFAULT_IDLE_DELAY, DEFAULT_IDLE_MAX_DELAY
         config = _validate_idle({})
-        assert config.delay == DEFAULT_IDLE_DELAY
-        assert config.backoff == DEFAULT_IDLE_BACKOFF
-        assert config.max_delay == DEFAULT_IDLE_MAX_DELAY
+        assert config.delay == 30
+        assert config.backoff == 2.0
+        assert config.max_delay == 300
         assert config.max is None
 
     def test_duration_strings_parsed(self):

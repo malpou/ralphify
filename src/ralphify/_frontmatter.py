@@ -56,32 +56,18 @@ _HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
 # Pattern for human-readable duration strings (e.g. "30s", "5m", "6h", "1d").
 _DURATION_RE = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*([smhd])\s*$")
-
-_DURATION_MULTIPLIERS: dict[str, float] = {
-    "s": 1,
-    "m": 60,
-    "h": 3600,
-    "d": 86400,
-}
+_DURATION_MULTIPLIERS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
 
 
 def parse_duration(value: str) -> float:
-    """Parse a human-readable duration string into seconds.
-
-    Supported suffixes: ``s`` (seconds), ``m`` (minutes), ``h`` (hours),
-    ``d`` (days).  Examples: ``"30s"`` → 30.0, ``"5m"`` → 300.0.
-
-    Raises :class:`ValueError` for invalid formats.
-    """
+    """Parse a duration string (e.g. ``"30s"``, ``"5m"``) into seconds."""
     match = _DURATION_RE.match(value)
     if not match:
         raise ValueError(
             f"Invalid duration '{value}'. Use a number with a suffix: "
             f"s (seconds), m (minutes), h (hours), d (days). Examples: 30s, 5m, 6h."
         )
-    amount = float(match.group(1))
-    unit = match.group(2)
-    return amount * _DURATION_MULTIPLIERS[unit]
+    return float(match.group(1)) * _DURATION_MULTIPLIERS[match.group(2)]
 
 
 def _extract_frontmatter_block(text: str) -> tuple[str, str]:

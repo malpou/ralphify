@@ -113,13 +113,6 @@ class IterationEndedData(TypedDict):
     result_text: str | None
 
 
-class IterationIdleData(TypedDict):
-    iteration: int
-    consecutive_idle: int
-    next_delay: float
-    cumulative_idle_time: float
-
-
 class CommandsStartedData(TypedDict):
     iteration: int
     count: int
@@ -151,7 +144,6 @@ EventData = (
     | RunStoppedData
     | IterationStartedData
     | IterationEndedData
-    | IterationIdleData
     | CommandsStartedData
     | CommandsCompletedData
     | PromptAssembledData

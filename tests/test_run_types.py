@@ -8,9 +8,6 @@ import pytest
 from ralphify._frontmatter import RALPH_MARKER
 from ralphify._run_types import (
     DEFAULT_COMMAND_TIMEOUT,
-    DEFAULT_IDLE_BACKOFF,
-    DEFAULT_IDLE_DELAY,
-    DEFAULT_IDLE_MAX_DELAY,
     RUN_ID_LENGTH,
     Command,
     IdleConfig,
@@ -48,9 +45,9 @@ class TestCommand:
 class TestIdleConfig:
     def test_defaults(self):
         cfg = IdleConfig()
-        assert cfg.delay == DEFAULT_IDLE_DELAY
-        assert cfg.backoff == DEFAULT_IDLE_BACKOFF
-        assert cfg.max_delay == DEFAULT_IDLE_MAX_DELAY
+        assert cfg.delay == 30
+        assert cfg.backoff == 2.0
+        assert cfg.max_delay == 300
         assert cfg.max is None
 
     def test_custom_values(self):

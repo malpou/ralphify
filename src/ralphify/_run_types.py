@@ -23,15 +23,6 @@ from ralphify._events import (
 )
 
 
-DEFAULT_IDLE_DELAY: float = 30
-"""Default initial delay in seconds when idle state is detected."""
-
-DEFAULT_IDLE_BACKOFF: float = 2.0
-"""Default backoff multiplier applied each consecutive idle iteration."""
-
-DEFAULT_IDLE_MAX_DELAY: float = 300
-"""Default maximum delay in seconds (5 minutes) for idle backoff."""
-
 DEFAULT_COMMAND_TIMEOUT: float = 60
 """Default timeout in seconds for commands defined in RALPH.md frontmatter."""
 
@@ -86,17 +77,11 @@ _STATUS_REASONS: dict[RunStatus, StopReason] = {
 
 @dataclass
 class IdleConfig:
-    """Configuration for idle detection and backoff behavior.
+    """Configuration for idle detection and backoff behavior."""
 
-    When an agent signals idle state, the engine waits ``delay`` seconds
-    before the next iteration, multiplying by ``backoff`` each consecutive
-    idle iteration, capped at ``max_delay``.  If cumulative idle time
-    exceeds ``max``, the loop stops.
-    """
-
-    delay: float = DEFAULT_IDLE_DELAY
-    backoff: float = DEFAULT_IDLE_BACKOFF
-    max_delay: float = DEFAULT_IDLE_MAX_DELAY
+    delay: float = 30
+    backoff: float = 2.0
+    max_delay: float = 300
     max: float | None = None
 
 

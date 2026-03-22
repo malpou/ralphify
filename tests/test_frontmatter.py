@@ -3,7 +3,6 @@
 import pytest
 
 from ralphify._frontmatter import (
-    IDLE_STATE_MARKER,
     RALPH_MARKER,
     _extract_frontmatter_block,
     parse_duration,
@@ -175,11 +174,6 @@ class TestParseDuration:
     def test_invalid_durations_raise(self, value):
         with pytest.raises(ValueError, match="Invalid duration"):
             parse_duration(value)
-
-
-class TestIdleStateMarker:
-    def test_marker_value(self):
-        assert IDLE_STATE_MARKER == "<!-- ralph:state idle -->"
 
 
 class TestSerializeFrontmatter:

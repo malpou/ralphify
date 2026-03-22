@@ -8,12 +8,10 @@ from helpers import drain_events
 from ralphify._events import (
     LOG_ERROR,
     LOG_INFO,
-    STOP_MAX_IDLE,
     BoundEmitter,
     Event,
     EventType,
     FanoutEmitter,
-    IterationIdleData,
     NullEmitter,
     QueueEmitter,
 )
@@ -192,17 +190,9 @@ class TestIterationIdleEvent:
     def test_emit_iteration_idle_via_bound_emitter(self):
         q = QueueEmitter()
         emit = BoundEmitter(q, "run-idle")
-        data: IterationIdleData = {
-            "iteration": 1,
-            "consecutive_idle": 1,
-            "next_delay": 30.0,
-            "cumulative_idle_time": 30.0,
-        }
-        emit(EventType.ITERATION_IDLE, data)
+        emit(EventType.ITERATION_IDLE, {"iteration": 1, "detail": "idle (1.0s)"})
 
         events = drain_events(q)
         assert len(events) == 1
         assert events[0].type == EventType.ITERATION_IDLE
-        assert events[0].data["consecutive_idle"] == 1
-        assert events[0].data["next_delay"] == 30.0
-        assert STOP_MAX_IDLE == "max_idle"
+        assert events[0].data["iteration"] == 1

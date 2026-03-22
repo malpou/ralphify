@@ -86,7 +86,6 @@ Event data uses TypedDict classes — one per event type — rather than free-fo
 - **`CommandsStartedData`** / **`CommandsCompletedData`** — command execution bookends
 - **`PromptAssembledData`** — prompt length after placeholder resolution
 - **`AgentActivityData`** — streaming agent output
-- **`IterationIdleData`** — idle detection data (consecutive idle count, next delay)
 - **`LogMessageData`** — info/error messages with optional traceback
 
 All payload types are unioned as `EventData`.
