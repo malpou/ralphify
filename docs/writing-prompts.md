@@ -314,15 +314,11 @@ The most powerful feature of ralph loops is that you can edit `RALPH.md` while t
 - Do not refactor code that isn't directly related to the current task
 ```
 
-## Notes with HTML comments
+### Notes with HTML comments
 
-HTML comments in your RALPH.md are automatically stripped before the prompt is assembled. They never reach the agent. Use them for notes to yourself:
+HTML comments in your RALPH.md are automatically stripped before the prompt is assembled. They never reach the agent. Use them to annotate why rules were added, what to change next, or when to remove a temporary constraint:
 
 ```markdown
----
-agent: claude -p --dangerously-skip-permissions
----
-
 <!-- Added 2025-01-20: agent kept deleting tests, so added the rule below -->
 
 ## Rules
@@ -332,7 +328,7 @@ agent: claude -p --dangerously-skip-permissions
 <!-- TODO: remove the coverage command once we hit 80% -->
 ```
 
-This is handy for the edit-while-running pattern — you can annotate why certain rules exist without wasting the agent's context window.
+You can freely add and edit comments while the loop runs — they're stripped every iteration, so they never waste the agent's context window.
 
 ## Prompt size and context windows
 
@@ -342,8 +338,8 @@ Rules of thumb:
 
 - **Core prompt:** 20-50 lines is the sweet spot. Enough to be specific, short enough to leave room for work.
 - **Commands:** Pick the 2-3 most useful signals. Don't add commands whose output the agent doesn't need.
-- **User args:** Use `{{ args.name }}` to make ralphs reusable — pass project-specific values from the CLI instead of hardcoding them in the prompt. Args also work in command `run` strings (e.g., `run: gh issue view {{ args.issue }}`).
 - **Command output:** Can be long. If your commands produce verbose output, consider using scripts that filter to the relevant lines.
+- **User args:** Use `{{ args.name }}` to make ralphs reusable — pass project-specific values from the CLI instead of hardcoding them in the prompt. Args also work in command `run` strings (e.g., `run: gh issue view {{ args.issue }}`).
 - **Working directory:** Commands run from the project root by default. Commands starting with `./` run from the ralph directory — handy for bundling helper scripts next to your `RALPH.md`.
 
 ## Next steps
