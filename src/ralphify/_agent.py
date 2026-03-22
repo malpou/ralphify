@@ -231,6 +231,8 @@ def _run_agent_blocking(
     Raises ``FileNotFoundError`` if the command binary does not exist.
     """
     start = time.monotonic()
+    returncode: int | None = None
+    timed_out = False
 
     try:
         result = subprocess.run(
@@ -240,25 +242,21 @@ def _run_agent_blocking(
             timeout=timeout,
             capture_output=log_path_dir is not None,
         )
+        returncode = result.returncode
+        stdout, stderr = result.stdout, result.stderr
     except subprocess.TimeoutExpired as exc:
-        log_file = _write_log(log_path_dir, iteration, exc.stdout, exc.stderr)
-        if log_path_dir:
-            _echo_output(exc.stdout, exc.stderr)
-        return AgentResult(
-            returncode=None,
-            elapsed=time.monotonic() - start,
-            log_file=log_file,
-            timed_out=True,
-        )
+        timed_out = True
+        stdout, stderr = exc.stdout, exc.stderr
 
-    log_file = _write_log(log_path_dir, iteration, result.stdout, result.stderr)
+    log_file = _write_log(log_path_dir, iteration, stdout, stderr)
     if log_path_dir:
-        _echo_output(result.stdout, result.stderr)
+        _echo_output(stdout, stderr)
 
     return AgentResult(
-        returncode=result.returncode,
+        returncode=returncode,
         elapsed=time.monotonic() - start,
         log_file=log_file,
+        timed_out=timed_out,
     )
 
 
